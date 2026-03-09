@@ -1,7 +1,7 @@
 
   # Frontend Design for Room 1221 (Copy)
 
-  This is a code bundle for Frontend Design for Room 1221 (Copy). The original project is available at https://www.figma.com/design/PCoe5smfvRMLdPRjdzTfQ6/Frontend-Design-for-Room-1221--Copy-.
+  This is a code bundle for Frontend Design for Room 1221 (Copy). The original project is available at 
 
   ## Running the code
 
