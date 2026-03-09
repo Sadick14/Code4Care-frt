@@ -1,0 +1,26 @@
+{
+  "name": "Room 1221 - Smart, Safe & Discreet SRHR Support",
+  "short_name": "Room 1221",
+  "description": "A safe, anonymous space for Sexual and Reproductive Health Rights support for youth in Ghana",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F9FB",
+  "theme_color": "#00C27A",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "education", "lifestyle"],
+  "screenshots": []
+}
