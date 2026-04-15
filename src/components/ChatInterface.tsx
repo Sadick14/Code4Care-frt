@@ -1,9 +1,13 @@
-import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Mic } from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { Send, Sparkles, Mic, Clock, User, ShieldCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from "motion/react";
+
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { motion, AnimatePresence } from "motion/react";
-import { getBotResponse, getFollowUpSuggestions } from "../services/chatbotService";
+import { useApp } from "@/providers/AppProvider";
+import { ChatbotSession } from "@/services/chatbotService";
+import { logger } from "@/utils/logger";
 
 interface Message {
   id: string;
@@ -11,420 +15,153 @@ interface Message {
   sender: 'bot' | 'user';
   timestamp: Date;
   options?: string[];
-  mode?: 'chatbot' | 'consultant'; // Track which mode generated this message
+  mode?: 'chatbot' | 'consultant';
 }
 
 interface ChatInterfaceProps {
-  selectedLanguage: string;
   onRequestFollowUpId: () => void;
-  isGuest?: boolean;
-  username?: string;
-  botName?: string;
-  sessionId?: string;
-  clearTrigger?: number; // Used to trigger chat clear from parent
-  consultantMode?: boolean; // Whether user is chatting with a consultant
+  clearTrigger?: number;
 }
 
 export function ChatInterface({ 
-  selectedLanguage, 
   onRequestFollowUpId, 
-  isGuest = true, 
-  username, 
-  botName = "Room 1221",
-  sessionId = "default",
-  clearTrigger = 0,
-  consultantMode = false
+  clearTrigger = 0 
 }: ChatInterfaceProps) {
+  const { t, i18n } = useTranslation();
+  const { nickname, botName, sessionId, consultantMode } = useApp();
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  
+  const chatSession = useMemo(() => new ChatbotSession(i18n.language), [sessionId, i18n.language]);
   const STORAGE_KEY = `room1221_chat_${sessionId}`;
 
-  const content = {
-    en: {
-      placeholder: "Type your question...",
-      send: "Send",
-      voiceInput: "Tap to speak",
-      voiceListening: "Listening...",
-      statusGuest: "Anonymous chat",
-      statusLoggedIn: "Logged in as",
-      initialMessage: "Hi! I'm here to help you with any questions about sexual and reproductive health. Everything we discuss is private and confidential. What would you like to know?",
-      consultantMessage: "Hi! I'm a Room 1221 consultant. I'm here to provide personalized support and guidance on sexual and reproductive health matters. Your conversation is completely private and confidential. How can I help you today?",
-      quickReplies: [
-        "Tell me about contraception",
-        "What are STIs?",
-        "What are signs of pregnancy?"
-      ]
-    },
-    twi: {
-      placeholder: "Kyerɛw wo nsɛm ha...",
-      send: "Soma",
-      voiceInput: "Mia sɛ wobɛkasa",
-      voiceListening: "Meretie...",
-      statusGuest: "Woreka nkɔmmɔ a wonnim wo",
-      statusLoggedIn: "Wokɔ mu sɛ",
-      initialMessage: "Akwaaba! Mewɔ ha sɛ meboa wo wɔ nsɛm a ɛfa nna ne awo ho akwahosan ho. Biribiara a yɛbɛka no yɛ kokoam. Dɛn na wopɛ sɛ wuhu?",
-      consultantMessage: "Akwaaba! Meyɛ Room 1221 ɔfotufoɔ. Mewɔ ha sɛ mema wo mmoa ne akwankyerɛ wɔ nna ne awo ho akwahosan ho. Wo nkɔmmɔbɔ yɛ kokoam koraa. Mɛtumi aboa wo dɛn?",
-      quickReplies: [
-        "Ka contraception ho asɛm kyerɛ me",
-        "STI yɛ dɛn?",
-        "Nyinsɛn nsɛnkyerɛnne bɛn na ɛwɔ?"
-      ]
-    },
-    ewe: {
-      placeholder: "Ŋlɔ wò nyabiase ɖe afisia...",
-      send: "Dɔ",
-      voiceInput: "Zi be nàƒo nu",
-      voiceListening: "Mele ɖoɖom...",
-      statusGuest: "Èle nuƒoƒo me ɣaɣlalãtɔe",
-      statusLoggedIn: "Ège ɖe eme abe",
-      initialMessage: "Alo! Meli afii be makpe ɖe ŋuwò le nyabiase ɖesiaɖe si ku ɖe nɔnɔme kple vidzidzi ƒe lãmesɛ ŋuti. Nu sia nu si míaƒo nu tso eŋu nye ɣaɣla. Nuka nèdi be yeanya?",
-      consultantMessage: "Alo! Menye Room 1221 aɖaŋuɖola. Meli afii be mana kpekpeɖeŋu kple mɔfiame tɔxɛ le nɔnɔme kple vidzidzi ƒe lãmesɛ ŋuti. Wò nuƒoƒo nye ɣaɣla bliboa. Aleke mate ŋu akpe ɖe ŋuwò egbe?",
-      quickReplies: [
-        "Gblɔ contraception ŋuti nam",
-        "STI nye nuka?",
-        "Fufɔfɔ ƒe dzesiwo kae nye?"
-      ]
-    },
-    ga: {
-      placeholder: "Ŋlɔ wo nsɛm lɛ...",
-      send: "Shia",
-      voiceInput: "Mi be o kasa",
-      voiceListening: "Mi tie...",
-      statusGuest: "O yɛɔ kɛ amɛ nyɛ oo",
-      statusLoggedIn: "O kɔ mu",
-      initialMessage: "Mɔɔ baa! Mi wɔ lɛ be mi boa wo wɔ bibi ni ɛfa nna lɛ awo akwahosan. Biribiara ni yɛ ka yɛ kokoam. Dɛn ni o pɛ sɛ o hu?",
-      consultantMessage: "Mɔɔ baa! Mi yɛ Room 1221 ɔfotufoɔ. Mi wɔ lɛ be mi ma wo mmoa lɛ akwankyerɛ wɔ nna lɛ awo akwahosan. Wo yɛɔbɔɔ yɛ kokoam koraa. Mɛ tumi boa wo dɛn?",
-      quickReplies: [
-        "Ka contraception ho asɛm kyerɛ mi",
-        "STI yɛ dɛn?",
-        "Nyinsɛn nsɛnkyerɛnne bɛn ni ɛwɔ?"
-      ]
+  useEffect(() => {
+    try {
+      const storedMessages = localStorage.getItem(STORAGE_KEY);
+      if (storedMessages && messages.length === 0) {
+        const parsed = JSON.parse(storedMessages);
+        setMessages(parsed.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })));
+      } else if (messages.length === 0) {
+        const initialText = consultantMode ? t('chat.consultantMessage') : t('chat.initialMessage');
+        const quickReplies = t('chat.quickReplies', { returnObjects: true }) as Record<string, string>;
+        setMessages([{
+          id: '1',
+          text: initialText,
+          sender: 'bot',
+          timestamp: new Date(),
+          options: Object.values(quickReplies),
+          mode: consultantMode ? 'consultant' : 'chatbot'
+        }]);
+      }
+    } catch (error) {
+      logger.error('Error loading chat history:', error);
     }
-  };
-
-  const lang = content[selectedLanguage as keyof typeof content] || content.en;
+  }, [sessionId, clearTrigger, consultantMode, t, i18n.language]);
 
   useEffect(() => {
-    // Update initial message when language changes or consultant mode changes
-    const initialMsg = consultantMode ? lang.consultantMessage : lang.initialMessage;
-    
-    if (messages.length > 0 && messages[0].sender === 'bot') {
-      setMessages(prev => {
-        const updated = [...prev];
-        updated[0] = {
-          ...updated[0],
-          text: initialMsg,
-          options: lang.quickReplies,
-          mode: consultantMode ? 'consultant' : 'chatbot'
-        };
-        return updated;
-      });
-    } else if (messages.length === 0) {
-      // Initial bot message
-      setMessages([{
-        id: '1',
-        text: initialMsg,
-        sender: 'bot',
-        timestamp: new Date(),
-        options: lang.quickReplies,
-        mode: consultantMode ? 'consultant' : 'chatbot'
-      }]);
+    if (messages.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
+  }, [messages, STORAGE_KEY]);
 
-    // Initialize speech recognition
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
+
+  useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
-      recognitionRef.current.maxAlternatives = 1;
-      
-      // Set language based on selected language with fallbacks
-      const langCodes: { [key: string]: string } = {
-        'en': 'en-US',
-        'twi': 'en-GH', // Fallback to English Ghana for Twi
-        'ewe': 'en-GH',  // Fallback to English Ghana for Ewe
-        'ga': 'en-GH'  // Fallback to English Ghana for Ga
-      };
-      recognitionRef.current.lang = langCodes[selectedLanguage] || 'en-US';
-
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInputValue(transcript);
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onerror = () => {
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
+      const langCodes: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
+      recognitionRef.current.lang = langCodes[i18n.language] || 'en-US';
+      recognitionRef.current.onresult = (event: any) => { setInputValue(event.results[0][0].transcript); setIsListening(false); };
+      recognitionRef.current.onerror = () => setIsListening(false);
+      recognitionRef.current.onend = () => setIsListening(false);
     }
-  }, [selectedLanguage, consultantMode]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  useEffect(() => {
-    // Improved scrolling with delay for animations and layout
-    const scrollTimer = setTimeout(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ 
-          behavior: "smooth",
-          block: "end",
-          inline: "nearest"
-        });
-      }
-    }, 100);
-
-    return () => clearTimeout(scrollTimer);
-  }, [messages, isTyping]);
-
-  // Load chat history from localStorage on mount and when clearTrigger changes
-  useEffect(() => {
-    console.log('🔄 [CHAT] Loading chat history from localStorage...');
-    console.log('🔑 [CHAT] Storage key:', STORAGE_KEY);
-    console.log('🔢 [CHAT] Clear trigger:', clearTrigger);
-    
-    try {
-      const storedMessages = localStorage.getItem(STORAGE_KEY);
-      
-      if (storedMessages) {
-        const parsed = JSON.parse(storedMessages);
-        // Convert timestamp strings back to Date objects
-        const messagesWithDates = parsed.map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        }));
-        setMessages(messagesWithDates);
-        console.log('✅ [CHAT] Loaded', messagesWithDates.length, 'messages from storage');
-      } else {
-        // Initialize with welcome message
-        const welcomeMessage: Message = {
-          id: '1',
-          text: lang.initialMessage,
-          sender: 'bot',
-          timestamp: new Date(),
-          options: lang.quickReplies,
-          mode: 'chatbot'
-        };
-        setMessages([welcomeMessage]);
-        console.log('✅ [CHAT] No stored messages, initialized with welcome message');
-      }
-    } catch (error) {
-      console.error('🔴 [CHAT] Error loading messages from localStorage:', error);
-      // Initialize with welcome message on error
-      const welcomeMessage: Message = {
-        id: '1',
-        text: lang.initialMessage,
-        sender: 'bot',
-        timestamp: new Date(),
-        options: lang.quickReplies,
-        mode: 'chatbot'
-      };
-      setMessages([welcomeMessage]);
-    }
-  }, [clearTrigger, sessionId]); // Re-run when clearTrigger or sessionId changes
-
-  // Save messages to localStorage whenever they change
-  useEffect(() => {
-    if (messages.length > 0) {
-      console.log('💾 [CHAT] Saving', messages.length, 'messages to localStorage');
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-        console.log('✅ [CHAT] Messages saved successfully');
-      } catch (error) {
-        console.error('🔴 [CHAT] Error saving messages to localStorage:', error);
-      }
-    }
-  }, [messages, STORAGE_KEY]);
+  }, [i18n.language]);
 
   const handleSend = () => {
-    try {
-      console.log('📤 [CHAT] Sending message:', inputValue);
-      
-      if (!inputValue.trim()) {
-        console.log('⚠️ [CHAT] Empty message, ignoring');
-        return;
-      }
-
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        text: inputValue,
-        sender: 'user',
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, userMessage]);
-      const sentMessage = inputValue; // Store before clearing
-      setInputValue("");
-      setIsTyping(true);
-
-      console.log('✅ [CHAT] User message added to chat');
-
-      // Simulate bot response with typing indicator
-      setTimeout(() => {
-        try {
-          console.log('🤖 [CHAT] Getting bot response...');
-          const botResponseText = getBotResponse(sentMessage, selectedLanguage, consultantMode);
-          
-          const botResponse: Message = {
-            id: (Date.now() + 1).toString(),
-            text: botResponseText,
-            sender: 'bot',
-            timestamp: new Date(),
-            mode: consultantMode ? 'consultant' : 'chatbot'
-          };
-          
-          setMessages(prev => [...prev, botResponse]);
-          setIsTyping(false);
-          console.log('✅ [CHAT] Bot response added successfully');
-        } catch (error) {
-          console.error('🔴 [CHAT] Error generating bot response:', error);
-          
-          // Add error message to chat
-          const errorMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            text: "I'm having trouble responding right now. Please try again in a moment.",
-            sender: 'bot',
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, errorMessage]);
-          setIsTyping(false);
-        }
-      }, 1500 + Math.random() * 1000);
-    } catch (error) {
-      console.error('🔴 [CHAT] Error in handleSend:', error);
+    if (!inputValue.trim()) return;
+    const userMsg: Message = { id: Date.now().toString(), text: inputValue, sender: 'user', timestamp: new Date() };
+    setMessages(prev => [...prev, userMsg]);
+    const sentText = inputValue;
+    setInputValue("");
+    setIsTyping(true);
+    setTimeout(() => {
+      const botResponseText = chatSession.getResponse(sentText, consultantMode);
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: botResponseText, sender: 'bot', timestamp: new Date(), mode: consultantMode ? 'consultant' : 'chatbot' };
+      setMessages(prev => [...prev, botMsg]);
       setIsTyping(false);
-    }
-  };
-
-  const handleVoiceInput = () => {
-    if (!recognitionRef.current) {
-      alert('Voice input is not supported in your browser');
-      return;
-    }
-
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      recognitionRef.current.start();
-      setIsListening(true);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const handleQuickReply = (reply: string) => {
-    setInputValue(reply);
-    setTimeout(() => handleSend(), 100);
+    }, 1200);
   };
 
   return (
-    <div className="flex flex-col h-full relative" style={{ background: 'linear-gradient(to bottom, #FFFFFF 0%, #F8FAFE 100%)' }}>
-      {/* Messages - Scrollable area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-2">
-        <div className="max-w-3xl mx-auto space-y-4 pb-4">
+    <div className="flex flex-col h-full bg-[#f8faff]">
+      <div className="flex-1 overflow-y-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto space-y-6">
+           <div className="flex flex-col items-center justify-center py-10 opacity-40 select-none grayscale">
+              <ShieldCheck className="w-12 h-12 text-blue-600 mb-2" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em] font-mono">{t('common.privacyFirst')}</p>
+           </div>
+
           <AnimatePresence initial={false}>
             {messages.map((message) => (
               <motion.div
                 key={message.id}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className={`flex gap-3 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
               >
-                <div className={`max-w-[85%] sm:max-w-[75%] ${message.sender === 'bot' ? 'space-y-3' : ''}`}>
-                  {/* Bot Avatar with Custom Name */}
-                  {message.sender === 'bot' && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <div 
-                        className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ 
-                          background: message.mode === 'consultant'
-                            ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                            : 'linear-gradient(135deg, #0048ff 0%, #0066ff 100%)',
-                          boxShadow: message.mode === 'consultant'
-                            ? '0 2px 8px rgba(16, 185, 129, 0.2)'
-                            : '0 2px 8px rgba(0, 72, 255, 0.2)'
-                        }}
-                      >
-                        <Sparkles className="w-4 h-4 text-white" />
-                      </div>
-                      <span className="text-sm font-medium" style={{ color: message.mode === 'consultant' ? '#059669' : '#0048ff' }}>
-                        {message.mode === 'consultant' ? `👨‍⚕️ ${botName} Consultant` : `${botName}`}
-                      </span>
-                    </div>
-                  )}
+                <div className={`w-10 h-10 rounded-2xl flex-shrink-0 flex items-center justify-center shadow-sm ${
+                    message.sender === 'bot' 
+                        ? (message.mode === 'consultant' ? 'bg-emerald-600' : 'bg-blue-600') 
+                        : 'bg-white border border-slate-100'
+                }`}>
+                    {message.sender === 'bot' ? <Sparkles className="w-5 h-5 text-white" /> : <User className="w-5 h-5 text-slate-400" />}
+                </div>
+
+                <div className={`flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'} max-w-[80%]`}>
+                  <div className={`p-4 rounded-[24px] shadow-sm relative group ${
+                    message.sender === 'user' 
+                        ? 'bg-blue-600 text-white rounded-tr-none' 
+                        : (message.mode === 'consultant' ? 'bg-emerald-50 text-emerald-900 border border-emerald-100 rounded-tl-none' : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none')
+                  }`}>
+                    <p className="text-sm leading-relaxed">{message.text}</p>
+                  </div>
                   
-                  <div
-                    className={`rounded-3xl px-5 py-3.5 ${
-                      message.sender === 'user' ? 'rounded-br-md' : 'rounded-tl-md'
-                    }`}
-                    style={{
-                      backgroundColor: message.sender === 'user' 
-                        ? '#0048ff' 
-                        : message.mode === 'consultant'
-                          ? '#F0FDF4'
-                          : 'white',
-                      color: message.sender === 'user' 
-                        ? 'white' 
-                        : message.mode === 'consultant'
-                          ? '#065F46'
-                          : '#1A1A1A',
-                      border: message.mode === 'consultant' ? '1px solid #86EFAC' : 'none',
-                      boxShadow: message.sender === 'bot' 
-                        ? message.mode === 'consultant'
-                          ? '0 2px 12px rgba(16, 185, 129, 0.1)'
-                          : '0 2px 12px rgba(0, 0, 0, 0.06)' 
-                        : '0 4px 16px rgba(0, 72, 255, 0.2)'
-                    }}
-                  >
-                    <p className="whitespace-pre-wrap break-words leading-relaxed">{message.text}</p>
-                    <p className={`text-xs mt-2 ${
-                      message.sender === 'user' 
-                        ? 'text-blue-100' 
-                        : message.mode === 'consultant'
-                          ? 'text-green-600/60'
-                          : 'text-gray-400'
-                    }`}>
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                  <div className="mt-1.5 flex items-center gap-2 px-1">
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {message.sender === 'bot' ? (message.mode === 'consultant' ? `${botName} Consultant` : botName) : (nickname || t('chat.anonymous'))}
+                      </span>
+                      <span className="text-[10px] text-slate-300">•</span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                   </div>
 
-                  {/* Quick Reply Options */}
                   {message.options && (
-                    <div className="flex flex-wrap gap-2 mt-3 ml-10">
-                      {message.options.map((option, index) => (
-                        <motion.button
-                          key={index}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: index * 0.1 }}
-                          onClick={() => handleQuickReply(option)}
-                          className="px-4 py-2.5 rounded-full text-sm transition-all hover:scale-105 active:scale-95"
-                          style={{ 
-                            backgroundColor: 'white',
-                            color: '#0048ff',
-                            border: '1.5px solid #E8ECFF',
-                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
-                          }}
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {message.options.map((option, idx) => (
+                        <Button
+                          key={idx}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { setInputValue(option); setTimeout(handleSend, 50); }}
+                          className="rounded-xl border-blue-100 text-blue-600 bg-white hover:bg-blue-50 text-xs py-1 h-9"
                         >
                           {option}
-                        </motion.button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -433,151 +170,60 @@ export function ChatInterface({
             ))}
           </AnimatePresence>
 
-          {/* Typing Indicator */}
           {isTyping && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-start"
-            >
-              <div className="flex items-center gap-2">
-                <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ 
-                    background: consultantMode 
-                      ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                      : 'linear-gradient(135deg, #0048ff 0%, #0066ff 100%)',
-                    boxShadow: consultantMode
-                      ? '0 2px 8px rgba(16, 185, 129, 0.2)'
-                      : '0 2px 8px rgba(0, 72, 255, 0.2)'
-                  }}
-                >
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <div 
-                  className="rounded-3xl rounded-tl-md px-5 py-4"
-                  style={{ 
-                    backgroundColor: consultantMode ? '#F0FDF4' : 'white',
-                    border: consultantMode ? '1px solid #86EFAC' : 'none',
-                    boxShadow: consultantMode 
-                      ? '0 2px 12px rgba(16, 185, 129, 0.1)'
-                      : '0 2px 12px rgba(0, 0, 0, 0.06)' 
-                  }}
-                >
-                  <div className="flex gap-1.5">
-                    <div 
-                      className="w-2 h-2 rounded-full animate-bounce" 
-                      style={{ 
-                        backgroundColor: consultantMode ? '#10B981' : '#0048ff', 
-                        animationDelay: '0ms' 
-                      }}
-                    ></div>
-                    <div 
-                      className="w-2 h-2 rounded-full animate-bounce" 
-                      style={{ 
-                        backgroundColor: consultantMode ? '#10B981' : '#0048ff', 
-                        animationDelay: '150ms' 
-                      }}
-                    ></div>
-                    <div 
-                      className="w-2 h-2 rounded-full animate-bounce" 
-                      style={{ 
-                        backgroundColor: consultantMode ? '#10B981' : '#0048ff', 
-                        animationDelay: '300ms' 
-                      }}
-                    ></div>
-                  </div>
-                </div>
+            <div className="flex gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center shadow-sm">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
-            </motion.div>
+              <div className="bg-white border border-slate-100 rounded-[24px] rounded-tl-none px-6 py-4 flex gap-1.5">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '200ms' }} />
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '400ms' }} />
+              </div>
+            </div>
           )}
-
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-4" />
         </div>
       </div>
 
-      {/* Input Area - Fixed/Sticky at bottom */}
-      <div className="flex-shrink-0 sticky bottom-0 p-4 bg-white border-t" style={{ borderColor: '#E8ECFF' }}>
-        <div className="max-w-3xl mx-auto">
-          {/* Voice Listening Indicator */}
-          {isListening && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-3 flex items-center justify-center gap-2 py-2 px-4 rounded-full mx-auto w-fit"
-              style={{ 
-                background: 'linear-gradient(135deg, #0048ff 0%, #0066ff 100%)',
-                boxShadow: '0 4px 16px rgba(0, 72, 255, 0.3)'
-              }}
-            >
-              <div className="flex gap-1">
-                <div className="w-1 h-4 bg-white rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-1 h-6 bg-white rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-1 h-4 bg-white rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
-                <div className="w-1 h-6 bg-white rounded-full animate-pulse" style={{ animationDelay: '450ms' }}></div>
-                <div className="w-1 h-4 bg-white rounded-full animate-pulse" style={{ animationDelay: '600ms' }}></div>
-              </div>
-              <span className="text-white text-sm">{lang.voiceListening}</span>
-            </motion.div>
-          )}
-          
-          <div className="flex items-center gap-3">
-            <div className="flex-1 relative">
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={lang.placeholder}
-                className="rounded-full h-12 pr-12 border-2 transition-all focus:shadow-lg"
-                style={{ 
-                  borderColor: '#E8ECFF',
-                  backgroundColor: '#F8FAFE'
-                }}
-              />
-              <button
-                className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${
-                  isListening 
-                    ? 'animate-pulse' 
-                    : 'hover:bg-blue-50'
-                }`}
-                onClick={handleVoiceInput}
-                type="button"
-                title={isListening ? lang.voiceListening : lang.voiceInput}
-                style={{
-                  backgroundColor: isListening ? '#E8ECFF' : 'transparent'
-                }}
-              >
-                <Mic className={`w-5 h-5 ${isListening ? 'text-[#0048ff]' : 'text-gray-400'}`} />
-              </button>
-            </div>
-            <Button
-              onClick={handleSend}
-              size="icon"
-              className="rounded-full h-12 w-12 flex-shrink-0 transition-all hover:scale-105 active:scale-95"
-              style={{ 
-                background: inputValue.trim() 
-                  ? 'linear-gradient(135deg, #0048ff 0%, #0066ff 100%)' 
-                  : '#E8ECFF',
-                boxShadow: inputValue.trim() 
-                  ? '0 4px 16px rgba(0, 72, 255, 0.3)' 
-                  : 'none'
-              }}
-              disabled={!inputValue.trim()}
-            >
-              <Send className={`w-5 h-5 ${inputValue.trim() ? 'text-white' : 'text-gray-400'}`} />
-            </Button>
-          </div>
-          
-          {messages.length > 4 && !isGuest && (
+      <div className="bg-white border-t border-slate-100 p-6 pb-8">
+        <div className="max-w-3xl mx-auto flex gap-4 items-center">
+          <div className="flex-1 relative group">
+            <Input
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              placeholder={t('chat.placeholder')}
+              className="h-14 rounded-2xl pl-6 pr-14 bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-400 transition-all text-sm font-medium"
+            />
             <button
-              onClick={onRequestFollowUpId}
-              className="mt-3 text-sm transition-all hover:underline"
-              style={{ color: '#0048ff' }}
+              onClick={() => { if(!recognitionRef.current) return; isListening ? recognitionRef.current.stop() : (recognitionRef.current.start(), setIsListening(true)); }}
+              className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-colors ${isListening ? 'bg-red-100 text-red-600' : 'text-slate-400 hover:text-blue-600'}`}
             >
-              Get Follow-up ID
+              <Mic className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
             </button>
-          )}
+          </div>
+          <Button
+            onClick={handleSend}
+            disabled={!inputValue.trim()}
+            className="h-14 w-14 rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-90 disabled:opacity-50"
+          >
+            <Send className="w-6 h-6 text-white" />
+          </Button>
         </div>
+        
+        <AnimatePresence>
+            {messages.length > 5 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto mt-4 text-center">
+                <button 
+                    onClick={onRequestFollowUpId} 
+                    className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-700 transition-colors"
+                >
+                {t('common.followUpKey')}
+                </button>
+            </motion.div>
+            )}
+        </AnimatePresence>
       </div>
     </div>
   );

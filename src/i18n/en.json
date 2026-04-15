@@ -1,0 +1,214 @@
+{
+  "common": {
+    "online": "Online",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "success": "Success",
+    "error": "Error",
+    "loading": "Loading...",
+    "privacyFirst": "Privacy First",
+    "privacyNotice": "Your data stays on this device. We don't track your identity.",
+    "followUpKey": "Enter Follow-up Key",
+    "setNickname": "Set Nickname",
+    "changeNickname": "Change Nickname",
+    "logout": "Logout",
+    "settings": "Settings"
+  },
+  "nav": {
+    "chat": "Safe Chat",
+    "story": "Your Story",
+    "myths": "Myth Buster",
+    "support": "Support & Clinics",
+    "pharmacy": "Pharmacy Hub"
+  },
+  "chat": {
+    "welcome": "Welcome back, {{name}}!",
+    "anonymous": "Anonymous",
+    "typing": "Bot is typing...",
+    "placeholder": "Type your question...",
+    "voiceInput": "Tap to speak",
+    "voiceListening": "Listening...",
+    "statusGuest": "Anonymous chat",
+    "statusLoggedIn": "Logged in as",
+    "initialMessage": "Hi! I'm here to help you with any questions about sexual and reproductive health. Everything we discuss is private and confidential. What would you like to know?",
+    "consultantMessage": "Hi! I'm a Room 1221 consultant. I'm here to provide personalized support and guidance on sexual and reproductive health matters. Your conversation is completely private and confidential. How can I help you today?",
+    "quickReplies": {
+       "contraception": "Tell me about contraception",
+       "sti": "What are STIs?",
+       "pregnancy": "What are signs of pregnancy?"
+    },
+    "voicePrompt": "Speak now...",
+    "consultantConnected": "Consultant Connected",
+    "endConsultant": "End Consultant Session",
+    "clearChat": "Clear Conversation",
+    "clearChatDesc": "Are you sure? This will delete all messages on this device.",
+    "clearChatMsg": "Chat history cleared",
+    "logoutTitle": "End Session",
+    "logoutDesc": "This will reset all your settings and clear your data from this device.",
+    "logoutConfirm": "End Session",
+    "logoutSuccess": "Session ended successfully"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "retention": "Message Retention",
+    "chooseLanguage": "Choose Language",
+    "chooseRetention": "Choose how long to keep your chats",
+    "botName": "Chatbot Name",
+    "dataForGood": "Data for Good",
+    "analyticsDesc": "Share anonymous usage data to help us improve."
+  },
+  "onboarding": {
+    "page1": {
+      "title": "Welcome to Room 1221",
+      "subtitle": "Your Safe Space for SRHR Support",
+      "features": {
+        "anonymous": { "title": "100% Anonymous", "desc": "No personal data collected. Your privacy is our priority." },
+        "expert": { "title": "Expert Guidance", "desc": "Get accurate SRHR information from trusted sources." },
+        "youth": { "title": "Youth-Friendly", "desc": "Designed specifically for young people in Ghana." }
+      },
+      "next": "Get Started"
+    },
+    "page2": {
+      "title": "Meet Your AI Companion",
+      "subtitle": "Give your chatbot a friendly name!",
+      "placeholder": "e.g., Ada, Kojo, Friend...",
+      "label": "What would you like to call me?",
+      "skip": "Skip (Use default name)",
+      "continue": "Continue",
+      "defaultName": "Friend"
+    }
+  },
+  "nickname": {
+    "title": "Welcome to Room 1221",
+    "desc": "A safe, anonymous space for SRHR support. Set a nickname to personalize your experience, or chat anonymously.",
+    "label": "Nickname (optional)",
+    "placeholder": "Enter your nickname",
+    "skip": "Chat Anonymously",
+    "continue": "Continue",
+    "privacy": "Your privacy is our priority. We never collect personal information or store identifying data."
+  },
+  "myths": {
+    "title": "Myth Busters",
+    "subtitle": "Separating fact from fiction",
+    "labels": { "myth": "MYTH", "fact": "FACT" },
+    "list": [
+      {
+        "category": "Pregnancy",
+        "myth": "You cannot get pregnant the first time you have sex",
+        "fact": "This is FALSE. Pregnancy can occur any time you have unprotected sex, including the first time.",
+        "source": "SRH Guide Ghana"
+      }
+    ]
+  },
+  "stories": {
+    "title": "Story Mode",
+    "subtitle": "Learn through interactive scenarios",
+    "list": [
+      {
+        "title": "The Party",
+        "scenario": "Sarah's friend invites her to a party where there will be alcohol. What should Sarah do?",
+        "choices": ["Option A", "Option B", "Option C", "Talk to a trusted adult"],
+        "correct": 3,
+        "feedback": ["Hint...", "Hint...", "Hint...", "Correct! Always consult a trusted adult."]
+      }
+    ]
+  },
+  "support": {
+    "title": "Support & Clinics",
+    "subtitle": "Get help and find youth-friendly services",
+    "tabs": { "crisis": "Crisis Support", "clinics": "Find Clinics" },
+    "callNow": "Call",
+    "legal": {
+      "title": "Important Legal Information",
+      "age": "Age of consent in Ghana: 16 years",
+      "desc": "Any sexual activity with someone under 16 is illegal. Please contact authorities if needed."
+    },
+    "emergency": {
+      "prefix": "IN EMERGENCY",
+      "text": "Call 191 for Police or 193 for Ambulance immediately."
+    },
+    "hotlines": [
+      {
+        "id": 1,
+        "type": "Abuse / Violence",
+        "contact": "DOVVSU Helpline",
+        "phone": "055-1000-900",
+        "description": "For domestic violence and sexual assault cases."
+      },
+      {
+        "id": 2,
+        "type": "Mental Health",
+        "contact": "Mental Health Authority",
+        "phone": "050-911-4396",
+        "description": "Counseling and crisis support."
+      }
+    ]
+  },
+  "clinics": {
+    "title": "Find Youth-Friendly Clinics",
+    "search": "Search by location...",
+    "filterAll": "All",
+    "filterClinic": "Clinics",
+    "filterPharmacy": "Pharmacies",
+    "locationBtn": "Find Nearest",
+    "locating": "Locating...",
+    "nearest": "Nearest",
+    "list": [
+      {
+        "id": 1,
+        "name": "PPAG Youth Clinics",
+        "type": "Clinic",
+        "services": ["Contraceptive counseling", "STI testing"],
+        "centers": [
+          {
+            "id": "ppag-accra",
+            "address": "Asylum Down, Accra",
+            "phone": "0302-219-038",
+            "hours": "Mon-Fri: 8am-5pm",
+            "coordinates": { "lat": 5.5717, "lng": -0.2057 }
+          }
+        ]
+      }
+    ]
+  },
+  "pharmacy": {
+    "title": "Pharmacy & Products",
+    "subtitle": "Order SRH medications and products safely",
+    "tabs": { "products": "Products", "locations": "Nearby Pharmacies" },
+    "callToOrder": "Call to Order",
+    "price": "Price",
+    "categories": {
+      "emergencyContraception": "Emergency Contraception",
+      "contraceptives": "Contraceptives",
+      "testKits": "Test Kits",
+      "supplements": "Supplements"
+    },
+    "medications": [
+      {
+        "id": "1",
+        "name": "Postinor-2",
+        "category": "emergencyContraception",
+        "description": "Emergency contraception used within 72 hours.",
+        "price": "GH₵ 15-25"
+      },
+      {
+        "id": "2",
+        "name": "Birth Control Pills",
+        "category": "contraceptives",
+        "description": "Daily pills to prevent pregnancy.",
+        "price": "GH₵ 8-20/mo"
+      }
+    ]
+  },
+  "followUp": {
+    "title": "Your Follow-up ID",
+    "desc": "Save this ID to continue your conversation later on any of our channels.",
+    "yourId": "Your ID:",
+    "copy": "Copy ID",
+    "copied": "Copied!",
+    "note": "Important: This ID works across Web, WhatsApp, and Telegram.",
+    "close": "Close"
+  }
+}

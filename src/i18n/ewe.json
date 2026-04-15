@@ -1,0 +1,55 @@
+{
+  "common": {
+    "online": "Le Internet Dzi",
+    "cancel": "Gblẽ",
+    "save": "Dzra ŋkɔ ɖo",
+    "delete": "Tutu",
+    "success": "Nyuie",
+    "error": "Vodada",
+    "loading": "Ele wɔwɔm...",
+    "privacyFirst": "Ɣaɣla Gbã",
+    "privacyNotice": "Wò ɣaɣladzraɖoƒe le vevie. Room 1221 medzraa wò nyatakakawo ɖe eme o.",
+    "followUpKey": "Kplɔla Safui",
+    "setNickname": "Ðo Ŋkɔ Kpui",
+    "changeNickname": "Trɔ Ŋkɔ Kpui",
+    "logout": "Do Go",
+    "settings": "Ðoɖowɔwɔwo"
+  },
+  "nav": {
+    "chat": "Nuƒoƒo",
+    "story": "Ŋutinyawo",
+    "myths": "Alakpatɔwo",
+    "support": "Xaxa & Kliniko",
+    "pharmacy": "Atikewɔƒe"
+  },
+  "chat": {
+    "welcome": "Woezɔ, {{name}}! 👋",
+    "anonymous": "Èle nuƒoƒo me ɣaɣlalãtɔe",
+    "typing": "Bot la le nu ŋlɔm...",
+    "placeholder": "Ŋlɔ wò nyabiase ɖe afisia...",
+    "voiceInput": "Zi be nàƒo nu",
+    "voiceListening": "Mele ɖoɖom...",
+    "statusGuest": "Èle nuƒoƒo me ɣaɣlalãtɔe",
+    "statusLoggedIn": "Ège ɖe eme abe",
+    "initialMessage": "Alo! Meli afii be makpe ɖe ŋuwò le nyabiase ɖesiaɖe si ku ɖe nɔnɔme kple vidzidzi ƒe lãmesɛ ŋuti. Nu sia nu si míaƒo nu tso eŋu nye ɣaɣla. Nuka nèdi be yeanya?",
+    "consultantMessage": "Alo! Menye Room 1221 aɖaŋuɖola. Meli afii be mana kpekpeɖeŋu kple mɔfiame tɔxɛ le nɔnɔme kple vidzidzi ƒe lãmesɛ ŋuti. Wò nuƒoƒo nye ɣaɣla bliboa. Aleke mate ŋu akpe ɖe ŋuwò egbe?",
+    "quickReplies": {
+       "contraception": "Gblɔ contraception ŋuti nam",
+       "sti": "STI nye nuka?",
+       "pregnancy": "Fufɔfɔ ƒe dzesiwo kae nye?"
+    },
+    "voicePrompt": "Ƒo nu fifia...",
+    "consultantConnected": "Wokpe ɖe aɖaŋuɖola ŋu",
+    "endConsultant": "Wu Aɖaŋuɖola Nuƒoƒo Nu"
+  },
+  "settings": {
+    "title": "Ðoɖowɔwɔwo kple Ɣaɣlawo",
+    "language": "Gbegbɔgblɔ",
+    "retention": "Auto-Tutu Ðoɖowo",
+    "chooseLanguage": "Tia gbegbɔgblɔ si nèlɔ̃ wu",
+    "chooseRetention": "Tia ɣeyiɣi didime si woadzra wò nuƒoƒo ŋutinya ɖo",
+    "botName": "Bot ŋkɔ",
+    "dataForGood": "Nyatakaka na Nyonyo",
+    "analyticsDesc": "Anonymous nyatakaka kpena ɖe SRHR nufiafia ŋu."
+  }
+}

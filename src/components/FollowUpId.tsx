@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Copy, Check, ShieldCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,118 +8,97 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from "motion/react";
 
 interface FollowUpIdProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedLanguage: string;
 }
 
-export function FollowUpId({ isOpen, onClose, selectedLanguage }: FollowUpIdProps) {
+export function FollowUpId({ isOpen, onClose }: FollowUpIdProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
-  const followUpId = generateId();
 
-  function generateId() {
+  // Generate ID once and memoize it
+  const followUpId = useMemo(() => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let id = '#';
     for (let i = 0; i < 5; i++) {
-      id += chars.charAt(Math.floor(Math.random() * chars.length));
+        id += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return id;
-  }
-
-  const content = {
-    en: {
-      title: "Your Follow-up ID",
-      description: "Save this ID to continue your conversation later. Share it with any of our channels to pick up where you left off.",
-      yourId: "Your ID:",
-      copyButton: "Copy ID",
-      copiedButton: "Copied!",
-      saveNote: "Important: This ID will work across all our platforms (Web, WhatsApp, Telegram, SMS).",
-      closeButton: "Close",
-      copiedToast: "ID copied to clipboard!"
-    },
-    twi: {
-      title: "Wo Nkɔmmɔbɔ ID",
-      description: "Kora ID yi na toaa wo nkɔmmɔbɔ so akyire yi. Fa kyɛ yɛn akwan biara so na toaa so.",
-      yourId: "Wo ID:",
-      copyButton: "Fa ID",
-      copiedButton: "Wɔafa!",
-      saveNote: "Ɛho hia: ID yi bɛyɛ adwuma wɔ yɛn akwan nyinaa so (Web, WhatsApp, Telegram, SMS).",
-      closeButton: "To mu",
-      copiedToast: "Wɔafa ID no kɔ!"
-    },
-    ewe: {
-      title: "Wò Nuƒoƒo ID",
-      description: "Dzra ID sia ɖo be nàyi wò nuƒoƒo dzi emegbe. Ðɔe ɖe míaƒe mɔ̃wo dometɔ ɖesiaɖe dzi ne nàyi edzi.",
-      yourId: "Wò ID:",
-      copyButton: "Ŋlɔ ID",
-      copiedButton: "Woŋlɔe!",
-      saveNote: "Vevie: ID sia awɔ dɔ le míaƒe mɔ̃wo katã dzi (Web, WhatsApp, Telegram, SMS).",
-      closeButton: "Tu",
-      copiedToast: "Woŋlɔ ID la ɖe agbalẽ me!"
-    }
-  };
-
-  const lang = content[selectedLanguage as keyof typeof content] || content.en;
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(followUpId);
     setCopied(true);
-    toast.success(lang.copiedToast);
+    toast.success(t('followUp.copied', 'ID copied to clipboard!'));
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="rounded-lg">
-        <DialogHeader>
-          <DialogTitle style={{ color: '#006d77' }}>{lang.title}</DialogTitle>
-          <DialogDescription>{lang.description}</DialogDescription>
+      <DialogContent className="sm:max-w-md rounded-[32px] p-8 border-none shadow-2xl overflow-hidden bg-white">
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-blue-400" />
+        
+        <DialogHeader className="text-center">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+             <ShieldCheck className="w-8 h-8 text-blue-600" />
+          </div>
+          <DialogTitle className="text-2xl font-bold text-slate-900">{t('followUp.title')}</DialogTitle>
+          <DialogDescription className="text-slate-500 pt-2">
+            {t('followUp.desc')}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">{lang.yourId}</p>
-            <div className="inline-flex items-center gap-3 p-6 rounded-2xl" style={{ backgroundColor: '#e6f4f5' }}>
-              <span className="text-3xl tracking-wider" style={{ color: '#006d77' }}>
+        <div className="space-y-8 mt-6">
+          <div className="text-center group">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{t('followUp.yourId')}</p>
+            <div 
+                className="inline-flex items-center gap-4 p-8 rounded-3xl bg-slate-50 border-2 border-slate-100 group-hover:border-blue-100 transition-all cursor-pointer"
+                onClick={handleCopy}
+            >
+              <span className="text-5xl font-mono font-black text-blue-600 tracking-wider">
                 {followUpId}
               </span>
             </div>
           </div>
 
-          <Button
-            onClick={handleCopy}
-            className="w-full rounded-full"
-            style={{ backgroundColor: copied ? '#006d77' : '#006d77' }}
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 mr-2" />
-                {lang.copiedButton}
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4 mr-2" />
-                {lang.copyButton}
-              </>
-            )}
-          </Button>
+          <div className="flex gap-3">
+             <Button
+                onClick={handleCopy}
+                className="flex-1 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 text-lg transition-transform active:scale-95"
+              >
+                <AnimatePresence mode="wait">
+                  {copied ? (
+                    <motion.div key="check" initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="flex items-center">
+                        <Check className="w-5 h-5 mr-3" />
+                        {t('followUp.copied')}
+                    </motion.div>
+                  ) : (
+                    <motion.div key="copy" initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="flex items-center">
+                        <Copy className="w-5 h-5 mr-3" />
+                        {t('followUp.copy')}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Button>
+          </div>
 
-          <div className="p-4 rounded-lg" style={{ backgroundColor: '#fff0ed' }}>
-            <p className="text-sm" style={{ color: '#ff7b6e' }}>
-              {lang.saveNote}
+          <div className="p-5 rounded-2xl bg-blue-50/50 border border-blue-50">
+            <p className="text-xs text-blue-600 leading-relaxed font-medium">
+               {t('followUp.note')}
             </p>
           </div>
 
           <Button
             onClick={onClose}
-            variant="outline"
-            className="w-full rounded-full"
-            style={{ borderColor: '#006d77', color: '#006d77' }}
+            variant="ghost"
+            className="w-full h-12 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-50"
           >
-            {lang.closeButton}
+            {t('followUp.close')}
           </Button>
         </div>
       </DialogContent>

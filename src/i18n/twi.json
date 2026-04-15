@@ -1,0 +1,112 @@
+{
+  "common": {
+    "online": "Wɔ Nkrataa",
+    "cancel": "Gyae",
+    "save": "Kora Din",
+    "delete": "Popa",
+    "success": "Yie",
+    "error": "Mfomsoɔ",
+    "loading": "Ɛreyɛ...",
+    "privacyFirst": "Kokoam Di Kan",
+    "privacyNotice": "Wo kokoam ho hia. Room 1221 nkora wo nsɛm koraa.",
+    "followUpKey": "Ɔdi-Akyi Safoa",
+    "setNickname": "Fa Din Kakra Si Hɔ",
+    "changeNickname": "Sesa Din Kakra",
+    "logout": "Fi Mu",
+    "settings": "Nhyehyɛe"
+  },
+  "nav": {
+    "chat": "Nkɔmmɔbɔ",
+    "story": "Asɛm Mode",
+    "myths": "Nsɛm a Ɛnyɛ Nokware",
+    "support": "Adesua & Ayaresabea",
+    "pharmacy": "Aduruyɛ"
+  },
+  "chat": {
+    "welcome": "Akwaaba, {{name}}! 👋",
+    "anonymous": "Woreka nkɔmmɔ a wonnim wo",
+    "typing": "Bot no rekyerɛw...",
+    "placeholder": "Kyerɛw wo nsɛm ha...",
+    "voiceInput": "Mia sɛ wobɛkasa",
+    "voiceListening": "Meretie...",
+    "statusGuest": "Woreka nkɔmmɔ a wonnim wo",
+    "statusLoggedIn": "Wokɔ mu sɛ",
+    "initialMessage": "Akwaaba! Mewɔ ha sɛ meboa wo wɔ nsɛm a ɛfa nna ne awo ho akwahosan ho. Biribiara a yɛbɛka no yɛ kokoam. Dɛn na wopɛ sɛ wuhu?",
+    "consultantMessage": "Akwaaba! Meyɛ Room 1221 ɔfotufoɔ. Mewɔ ha sɛ mema wo mmoa ne akwankyerɛ wɔ nna ne awo ho akwahosan ho. Wo nkɔmmɔbɔ yɛ kokoam koraa. Mɛtumi aboa wo dɛn?",
+    "quickReplies": {
+       "contraception": "Ka contraception ho asɛm kyerɛ me",
+       "sti": "STI yɛ dɛn?",
+       "pregnancy": "Nyinsɛn nsɛnkyerɛnne bɛn na ɛwɔ?"
+    },
+    "voicePrompt": "Kasa seesei...",
+    "consultantConnected": "Wɔaka ɔfotufoɔ ho",
+    "endConsultant": "Gyae Ɔfotufoɔ Nkɔmmɔbɔ"
+  },
+  "settings": {
+    "title": "Nhyehyɛe ne Kokoam",
+    "language": "Kasa",
+    "retention": "Auto-Yi Fi Hɔ",
+    "chooseLanguage": "Paw kasa a wopɛ",
+    "chooseRetention": "Paw bere tenten a wɔbɛkora wo nkɔmmɔbɔ abakɔsɛm",
+    "botName": "Bot Din",
+    "dataForGood": "Data ma Papa",
+    "analyticsDesc": "Anonymous data boa ma SRHR nkyerɛkyerɛ yɛ papa."
+  },
+  "onboarding": {
+    "page1": {
+      "title": "Akwaaba kɔ Room 1221",
+      "subtitle": "Wo Ahobammɔ Beaeɛ ma SRHR Mmoa",
+      "features": {
+        "anonymous": { "title": "Ahobammɔ 100%", "desc": "Yɛnnboaboa wo nsɛm. Wo ahobammɔ ho hia yɛn paa." },
+        "expert": { "title": "Nimdeɛ a Ɛyɛ Pɛpɛɛpɛ", "desc": "Nya SRHR nsɛm a wɔtumi de ho to so." },
+        "youth": { "title": "Mmerante & Mmabaa Kwan", "desc": "Wɔayɛ no ama Ghana mmerante ne mmabaa." }
+      },
+      "next": "Fi Aseɛ"
+    },
+    "page2": {
+      "title": "Hyia Wo AI Adamfo",
+      "subtitle": "Ma chatbot no din a ɛyɛ anigye!",
+      "placeholder": "sɛ nhwɛsoɔ: Ada, Kojo, Adamfo...",
+      "label": "Dɛn na wopɛ sɛ wofrɛ me?",
+      "skip": "Twa Mu (Fa din a ɛwɔ hɔ dada)",
+      "continue": "Kɔ So",
+      "defaultName": "Adamfo"
+    }
+  },
+  "nickname": {
+    "title": "Akwaaba kɔ Room 1221",
+    "desc": "Ahobammɔ beaeɛ ma SRHR mmoa. Paw din kakra na yɛne wo nkasa yie.",
+    "label": "Wo Din (Optional)",
+    "placeholder": "Kyerɛw wo din ha",
+    "skip": "Kasa a wonnim wo",
+    "continue": "Kɔ So",
+    "privacy": "Wo kokoam ho hia. Yɛmmboaboa onipa biara nsɛm."
+  },
+  "myths": {
+    "title": "Nsɛm a Ɛnyɛ Nokware",
+    "subtitle": "Kyerɛ nea ɛyɛ nokware ne nea ɛnyɛ",
+    "labels": { "myth": "ƐNYƐ NOKWARE", "fact": "NOKWARE" },
+    "list": [
+      {
+        "category": "Pregnancy",
+        "myth": "Worentumi nyinsɛn bere a wone obi da a edi kan",
+        "fact": "Eyi yɛ ATORO. Wubetumi anyinsɛn bere biara a wone obi bɛda a woammfa nnyinsɛn ano aduru anni dwuma.",
+        "source": "SRH Guide Ghana"
+      }
+    ]
+  },
+  "stories": {
+    "title": "Asɛm Mode",
+    "subtitle": "Sua nneɛma wɔ akwan a ɛdɔɔso so",
+    "list": []
+  },
+  "support": {
+    "title": "Mmoa & Ayaresabea",
+    "subtitle": "Nya mmoa na hwehwɛ ayaresabea a ɛyɛ pɛ",
+    "tabs": { "crisis": "Mmoa Mpofirim", "clinics": "Hwehwɛ Ayaresabea" }
+  },
+  "followUp": {
+     "title": "Wo Follow-up ID",
+     "desc": "Kora ID yi na woatumi atoaa wo nkɔmmɔbɔ so akyire yi."
+  }
+}

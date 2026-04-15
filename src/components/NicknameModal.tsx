@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -14,11 +15,11 @@ import { Shield, UserCircle2 } from "lucide-react";
 interface NicknameModalProps {
   isOpen: boolean;
   onSubmit: (nickname: string) => void;
-  onSkip: () => void;
-  selectedLanguage?: string; // Added for localization support
+  onClose: () => void;
 }
 
-export function NicknameModal({ isOpen, onSubmit, onSkip }: NicknameModalProps) {
+export function NicknameModal({ isOpen, onSubmit, onClose }: NicknameModalProps) {
+  const { t } = useTranslation();
   const [nickname, setNickname] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -29,14 +30,14 @@ export function NicknameModal({ isOpen, onSubmit, onSkip }: NicknameModalProps) 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl text-center" style={{ color: '#1A1A1A' }}>
-            Welcome to Room 1221
+            {t('nickname.title')}
           </DialogTitle>
           <DialogDescription className="text-center">
-            A safe, anonymous space for SRHR support. Set a nickname to personalize your experience, or chat anonymously.
+            {t('nickname.desc')}
           </DialogDescription>
         </DialogHeader>
         
@@ -54,7 +55,7 @@ export function NicknameModal({ isOpen, onSubmit, onSkip }: NicknameModalProps) 
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="nickname" className="text-sm">Nickname (optional)</Label>
+            <Label htmlFor="nickname" className="text-sm">{t('nickname.label')}</Label>
             <div className="relative mt-2">
               <UserCircle2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
@@ -62,7 +63,7 @@ export function NicknameModal({ isOpen, onSubmit, onSkip }: NicknameModalProps) 
                 type="text"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                placeholder="Enter your nickname"
+                placeholder={t('nickname.placeholder')}
                 className="pl-10 rounded-xl"
                 maxLength={20}
               />
@@ -72,11 +73,11 @@ export function NicknameModal({ isOpen, onSubmit, onSkip }: NicknameModalProps) 
           <div className="flex gap-3">
             <Button
               type="button"
-              onClick={onSkip}
+              onClick={onClose}
               variant="outline"
               className="flex-1 rounded-xl"
             >
-              Chat Anonymously
+              {t('nickname.skip')}
             </Button>
             <Button
               type="submit"
@@ -87,16 +88,14 @@ export function NicknameModal({ isOpen, onSubmit, onSkip }: NicknameModalProps) 
               }}
               disabled={!nickname.trim()}
             >
-              Continue
+              {t('nickname.continue')}
             </Button>
           </div>
 
           <div className="pt-4 border-t">
-            <div className="flex items-start gap-2 text-xs text-gray-500">
-              <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#0048ff' }} />
-              <p>
-                Your privacy is our priority. We never collect personal information or store identifying data.
-              </p>
+            <div className="flex items-start gap-2 text-[10px] text-gray-500">
+              <Shield className="w-3 h-3 flex-shrink-0 mt-0.5 text-[#0048ff]" />
+              <p>{t('nickname.privacy')}</p>
             </div>
           </div>
         </form>
