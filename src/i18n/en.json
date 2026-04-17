@@ -20,7 +20,8 @@
     "story": "Your Story",
     "myths": "Myth Buster",
     "support": "Support & Clinics",
-    "pharmacy": "Pharmacy Hub"
+    "pharmacy": "Pharmacy Hub",
+    "settings": "Settings"
   },
   "chat": {
     "welcome": "Welcome back, {{name}}!",
@@ -78,6 +79,29 @@
       "skip": "Skip (Use default name)",
       "continue": "Continue",
       "defaultName": "Friend"
+    },
+    "page3": {
+      "title": "Help us personalize your support",
+      "subtitle": "Your age group and gender help us tailor safer, more relevant guidance.",
+      "finish": "Start Chat",
+      "age": {
+        "label": "Age range",
+        "options": {
+          "10-14": "10-14",
+          "15-19": "15-19",
+          "20-24": "20-24",
+          "25+": "25+"
+        }
+      },
+      "gender": {
+        "label": "Gender identity",
+        "options": {
+          "female": "Female",
+          "male": "Male",
+          "non-binary": "Non-binary",
+          "prefer-not-say": "Prefer not to say"
+        }
+      }
     }
   },
   "nickname": {

@@ -14,6 +14,7 @@ import { StoryMode } from "./components/StoryMode";
 import { MythBusters } from "./components/MythBusters";
 import { SupportAndClinics } from "./components/SupportAndClinics";
 import { Pharmacy } from "./components/Pharmacy";
+import { SettingsPage } from "./components/SettingsPage";
 import { PanicScreen } from "./components/PanicScreen";
 import { NicknameModal } from "./components/NicknameModal";
 import { FollowUpId } from "./components/FollowUpId";
@@ -23,14 +24,17 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 type Section = "chat" | "story" | "myths" | "support" | "pharmacy" | "settings";
 
 function AppContent() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { 
     hasSeenOnboarding, setHasSeenOnboarding,
     nickname, setNickname,
     botName, setBotName,
+    setAgeRange,
+    setGenderIdentity,
     sessionId, setSessionId,
     resetAll,
-    consultantMode
+    consultantMode,
+    setConsultantMode
   } = useApp();
 
   const [currentSection, setCurrentSection] = useState<Section>("chat");
@@ -63,7 +67,16 @@ function AppContent() {
   };
 
   if (!hasSeenOnboarding) {
-    return <OnboardingScreen onComplete={(name) => { setBotName(name); setHasSeenOnboarding(true); }} />;
+    return (
+      <OnboardingScreen
+        onComplete={({ botName: nextBotName, ageRange, genderIdentity }) => {
+          setBotName(nextBotName);
+          setAgeRange(ageRange);
+          setGenderIdentity(genderIdentity);
+          setHasSeenOnboarding(true);
+        }}
+      />
+    );
   }
 
   if (showPanicScreen) {
@@ -125,7 +138,12 @@ function AppContent() {
               {currentSection === "myths" && <MythBusters />}
               {currentSection === "support" && <SupportAndClinics />}
               {currentSection === "pharmacy" && <Pharmacy />}
-              {currentSection === "settings" && <div className="p-8 text-center text-gray-400">Settings component coming soon...</div>}
+              {currentSection === "settings" && (
+                <SettingsPage
+                  onClearChat={() => setShowClearDialog(true)}
+                  onLogout={() => setShowLogoutDialog(true)}
+                />
+              )}
             </motion.div>
           </AnimatePresence>
         </main>

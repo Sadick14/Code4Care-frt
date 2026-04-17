@@ -14,7 +14,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ 
   onMenuClick, 
   onPanicClick, 
-  onFollowUpClick 
+  onFollowUpClick
 }) => {
   const { t } = useTranslation();
   const { nickname, botName, consultantMode } = useApp();

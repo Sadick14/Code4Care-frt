@@ -31,14 +31,14 @@
   --chart-4: #93c5fd;
   --chart-5: #dbeafe;
   --radius: 1rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #1A1A1A;
+  --sidebar: #F7FAFF;
+  --sidebar-foreground: #0F2A6B;
   --sidebar-primary: #0048ff;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #E8ECFF;
-  --sidebar-accent-foreground: #0048ff;
-  --sidebar-border: #E8ECFF;
-  --sidebar-ring: #0048ff;
+  --sidebar-accent: #E3EDFF;
+  --sidebar-accent-foreground: #003FDE;
+  --sidebar-border: #CFE0FF;
+  --sidebar-ring: #0066FF;
 }
 
 .dark {

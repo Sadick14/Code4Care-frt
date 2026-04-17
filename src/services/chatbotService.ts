@@ -8,6 +8,11 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+export interface UserDemographics {
+  ageRange?: string;
+  genderIdentity?: string;
+}
+
 // Comprehensive SRH Knowledge Base (Ghana-Specific)
 const knowledge = {
   puberty: {
@@ -77,9 +82,11 @@ export class ChatbotSession {
   private concerns: string[] = [];
   private depth: number = 0;
   private language: string;
+  private demographics?: UserDemographics;
 
-  constructor(language: string = 'en') {
+  constructor(language: string = 'en', demographics?: UserDemographics) {
     this.language = language;
+    this.demographics = demographics;
   }
 
   public getResponse(message: string, consultantMode: boolean = false): string {
@@ -151,7 +158,8 @@ export class ChatbotSession {
       twi: "Akwaaba! Mewɔ ha sɛ meboa wo wɔ nsɛm a ɛfa nna ne awo ho akwahosan ho. Nea yɛka nyinaa yɛ kokoam.\n\nDɛn na wopɛ sɛ yɛka ho asɛm nnɛ?",
       ewe: "Alo! Mele afisia be makpe ɖe ŋuwò tso lãmesɛ ŋuti. Nu sia nu si míaƒo nu tso eŋu la nye ɣaɣla.\n\nNane pɔtee aɖe li si ŋuti nèdi be yeanya?"
     };
-    return (responses as any)[this.language] || responses.en;
+    const baseResponse = (responses as any)[this.language] || responses.en;
+    return `${baseResponse}\n\n${this.getDemographicGuidanceIntro()}`;
   }
 
   private handleUrgent(): string {
@@ -173,7 +181,52 @@ export class ChatbotSession {
   }
 
   private generateFollowUp(): string {
-    return "\n\nDoes that help? Is there anything else you'd like to know?";
+    return `\n\n${this.getDemographicFollowUpPrompt()}`;
+  }
+
+  private getDemographicGuidanceIntro(): string {
+    const ageLine = this.getAgeToneLine();
+    const genderLine = this.getGenderToneLine();
+
+    if (!ageLine && !genderLine) {
+      return "I will tailor explanations to your needs and keep things clear, safe, and non-judgmental.";
+    }
+
+    return [ageLine, genderLine].filter(Boolean).join(" ");
+  }
+
+  private getDemographicFollowUpPrompt(): string {
+    const ageRange = this.demographics?.ageRange;
+    if (ageRange === '10-14' || ageRange === '15-19') {
+      return "Does that help? I can also explain this in simple, step-by-step language for teens if you want.";
+    }
+
+    return "Does that help? Is there anything else you'd like to know?";
+  }
+
+  private getAgeToneLine(): string {
+    const ageRange = this.demographics?.ageRange;
+    if (ageRange === '10-14' || ageRange === '15-19') {
+      return "I will keep feedback youth-friendly and practical.";
+    }
+    if (ageRange === '20-24' || ageRange === '25+') {
+      return "I will keep feedback practical, clear, and action-focused.";
+    }
+    return "";
+  }
+
+  private getGenderToneLine(): string {
+    const gender = this.demographics?.genderIdentity;
+    if (gender === 'female') {
+      return "I will include guidance relevant to women's SRH concerns when useful.";
+    }
+    if (gender === 'male') {
+      return "I will include guidance relevant to men's SRH concerns when useful.";
+    }
+    if (gender === 'non-binary') {
+      return "I will use inclusive language and avoid gender assumptions in guidance.";
+    }
+    return "";
   }
 
   private getErrorResponse(): string {
@@ -189,15 +242,20 @@ export class ChatbotSession {
 /**
  * Factory function to create a new session
  */
-export function createChatSession(language: string) {
-  return new ChatbotSession(language);
+export function createChatSession(language: string, demographics?: UserDemographics) {
+  return new ChatbotSession(language, demographics);
 }
 
 /**
  * Legacy support for direct calls (not recommended for persistent chat)
  */
-export function getBotResponse(message: string, language: string = 'en', consultantMode: boolean = false): string {
-  const session = new ChatbotSession(language);
+export function getBotResponse(
+  message: string,
+  language: string = 'en',
+  consultantMode: boolean = false,
+  demographics?: UserDemographics,
+): string {
+  const session = new ChatbotSession(language, demographics);
   return session.getResponse(message, consultantMode);
 }
 

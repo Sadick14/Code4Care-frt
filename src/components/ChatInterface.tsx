@@ -28,44 +28,106 @@ export function ChatInterface({
   clearTrigger = 0 
 }: ChatInterfaceProps) {
   const { t, i18n } = useTranslation();
-  const { nickname, botName, sessionId, consultantMode } = useApp();
+  const { nickname, botName, sessionId, consultantMode, sessionDuration, ageRange, genderIdentity } = useApp();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [chatLanguage, setChatLanguage] = useState(i18n.resolvedLanguage?.split('-')[0] || i18n.language || 'en');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   
-  const chatSession = useMemo(() => new ChatbotSession(i18n.language), [sessionId, i18n.language]);
+  const chatSession = useMemo(
+    () => new ChatbotSession(i18n.language, { ageRange, genderIdentity }),
+    [sessionId, i18n.language, ageRange, genderIdentity],
+  );
   const STORAGE_KEY = `room1221_chat_${sessionId}`;
+
+  const getInitialMessage = () => {
+    const initialText = consultantMode ? t('chat.consultantMessage') : t('chat.initialMessage');
+    const quickReplies = t('chat.quickReplies', { returnObjects: true }) as Record<string, string>;
+
+    return {
+      id: '1',
+      text: initialText,
+      sender: 'bot' as const,
+      timestamp: new Date(),
+      options: Object.values(quickReplies),
+      mode: consultantMode ? 'consultant' as const : 'chatbot' as const,
+    };
+  };
+
+  const rebuildMessagesForLanguage = (existingMessages: Message[]) => {
+    const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+    const rebuiltSession = new ChatbotSession(languageCode, { ageRange, genderIdentity });
+
+    return existingMessages.map((message, index) => {
+      if (message.sender === 'user') {
+        return message;
+      }
+
+      // Keep the first bot greeting localized with localized quick replies.
+      if (index === 0 || message.options?.length) {
+        return {
+          ...message,
+          ...getInitialMessage(),
+          id: message.id,
+          timestamp: message.timestamp,
+          mode: message.mode || (consultantMode ? 'consultant' : 'chatbot'),
+        };
+      }
+
+      // Rebuild historical bot responses against prior user prompt in selected language.
+      const previousUser = [...existingMessages.slice(0, index)].reverse().find((msg) => msg.sender === 'user');
+      if (!previousUser) {
+        return message;
+      }
+
+      return {
+        ...message,
+        text: rebuiltSession.getResponse(previousUser.text, message.mode === 'consultant'),
+        options: undefined,
+      };
+    });
+  };
 
   useEffect(() => {
     try {
       const storedMessages = localStorage.getItem(STORAGE_KEY);
-      if (storedMessages && messages.length === 0) {
+      if (storedMessages) {
         const parsed = JSON.parse(storedMessages);
         setMessages(parsed.map((msg: any) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
         })));
-      } else if (messages.length === 0) {
-        const initialText = consultantMode ? t('chat.consultantMessage') : t('chat.initialMessage');
-        const quickReplies = t('chat.quickReplies', { returnObjects: true }) as Record<string, string>;
-        setMessages([{
-          id: '1',
-          text: initialText,
-          sender: 'bot',
-          timestamp: new Date(),
-          options: Object.values(quickReplies),
-          mode: consultantMode ? 'consultant' : 'chatbot'
-        }]);
+      } else {
+        setMessages([getInitialMessage()]);
       }
+      setIsLoaded(true);
+      setChatLanguage((i18n.resolvedLanguage || i18n.language || 'en').split('-')[0]);
     } catch (error) {
       logger.error('Error loading chat history:', error);
+      setMessages([getInitialMessage()]);
+      setIsLoaded(true);
     }
-  }, [sessionId, clearTrigger, consultantMode, t, i18n.language]);
+  }, [STORAGE_KEY, clearTrigger, consultantMode]);
+
+  useEffect(() => {
+    if (!isLoaded || messages.length === 0 || isTyping) {
+      return;
+    }
+
+    const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+    if (languageCode === chatLanguage) {
+      return;
+    }
+
+    setMessages((prev) => rebuildMessagesForLanguage(prev));
+    setChatLanguage(languageCode);
+  }, [i18n.language, i18n.resolvedLanguage, isLoaded, isTyping, messages.length, chatLanguage]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -110,9 +172,22 @@ export function ChatInterface({
     <div className="flex flex-col h-full bg-[#f8faff]">
       <div className="flex-1 overflow-y-auto px-4 py-8">
         <div className="max-w-3xl mx-auto space-y-6">
-           <div className="flex flex-col items-center justify-center py-10 opacity-40 select-none grayscale">
-              <ShieldCheck className="w-12 h-12 text-blue-600 mb-2" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.3em] font-mono">{t('common.privacyFirst')}</p>
+           <div className="rounded-3xl border border-[#CFE0FF] bg-gradient-to-r from-white to-[#EDF4FF] p-4 md:p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0048ff] to-[#00a3ff] flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#0048ff]">{t('common.privacyFirst')}</p>
+                    <p className="text-xs text-[#4A66A8]">{t('common.privacyNotice')}</p>
+                  </div>
+                </div>
+                <div className="hidden sm:flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-[#4A66A8]">
+                  <Clock className="w-3.5 h-3.5" />
+                  {sessionDuration}
+                </div>
+              </div>
            </div>
 
           <AnimatePresence initial={false}>

@@ -2907,14 +2907,14 @@
   --chart-4: #93c5fd;
   --chart-5: #dbeafe;
   --radius: 1rem;
-  --sidebar: #fff;
-  --sidebar-foreground: #1a1a1a;
+  --sidebar: #f7faff;
+  --sidebar-foreground: #0f2a6b;
   --sidebar-primary: #0048ff;
   --sidebar-primary-foreground: #fff;
-  --sidebar-accent: #e8ecff;
-  --sidebar-accent-foreground: #0048ff;
-  --sidebar-border: #e8ecff;
-  --sidebar-ring: #0048ff;
+  --sidebar-accent: #e3edff;
+  --sidebar-accent-foreground: #003fde;
+  --sidebar-border: #cfe0ff;
+  --sidebar-ring: #0066ff;
 }
 
 .dark {
