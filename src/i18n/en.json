@@ -101,6 +101,28 @@
           "non-binary": "Non-binary",
           "prefer-not-say": "Prefer not to say"
         }
+      },
+      "region": {
+        "label": "Region in Ghana",
+        "placeholder": "Select your region",
+        "options": {
+          "greater-accra": "Greater Accra",
+          "ashanti": "Ashanti",
+          "western": "Western",
+          "western-north": "Western North",
+          "central": "Central",
+          "eastern": "Eastern",
+          "volta": "Volta",
+          "oti": "Oti",
+          "northern": "Northern",
+          "savannah": "Savannah",
+          "north-east": "North East",
+          "upper-east": "Upper East",
+          "upper-west": "Upper West",
+          "bono": "Bono",
+          "bono-east": "Bono East",
+          "ahafo": "Ahafo"
+        }
       }
     }
   },

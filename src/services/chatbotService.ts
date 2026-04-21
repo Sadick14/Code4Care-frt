@@ -11,6 +11,160 @@ export interface ChatMessage {
 export interface UserDemographics {
   ageRange?: string;
   genderIdentity?: string;
+  region?: string;
+}
+
+export interface ChatApiRequest {
+  message: string;
+  language: string;
+  session_id: string;
+}
+
+export interface ChatCitation {
+  title?: string;
+  source?: string;
+  excerpt?: string;
+  text?: string;
+  url?: string;
+  page?: string | number;
+  [key: string]: unknown;
+}
+
+export interface SafetyFlag {
+  label?: string;
+  reason?: string;
+  severity?: string;
+  message?: string;
+  [key: string]: unknown;
+}
+
+export interface ChatApiResponse {
+  answer: string;
+  citations: ChatCitation[];
+  safety_flags: SafetyFlag[];
+  language_detected: string;
+  response_time_ms: number;
+}
+
+const CHAT_API_BASE_URL =
+  import.meta.env.VITE_CHAT_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://code4care-backend-production.up.railway.app';
+
+const CHAT_ENDPOINTS = ['/v1/chat'];
+
+function buildChatUrl(path: string) {
+  return new URL(path, CHAT_API_BASE_URL).toString();
+}
+
+function safeParseJson(value: string) {
+  try {
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return value;
+  }
+}
+
+function normalizeArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function normalizeChatResponse(payload: unknown, fallbackLanguage: string): ChatApiResponse {
+  const record = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+  const answer = typeof record.answer === 'string'
+    ? record.answer
+    : typeof record.response === 'string'
+      ? record.response
+      : '';
+
+  return {
+    answer,
+    citations: normalizeArray<ChatCitation>(record.citations),
+    safety_flags: normalizeArray<SafetyFlag>(record.safety_flags),
+    language_detected: typeof record.language_detected === 'string' ? record.language_detected : fallbackLanguage,
+    response_time_ms: typeof record.response_time_ms === 'number' ? record.response_time_ms : 0,
+  };
+}
+
+async function postChatCompletion(payload: ChatApiRequest, endpoint: string) {
+  return fetch(buildChatUrl(endpoint), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function readErrorMessage(response: Response): Promise<string> {
+  const bodyText = await response.text();
+  const parsedBody = safeParseJson(bodyText);
+
+  if (parsedBody && typeof parsedBody === 'object') {
+    const record = parsedBody as Record<string, unknown>;
+
+    if (typeof record.detail === 'string') {
+      return record.detail;
+    }
+
+    if (Array.isArray(record.detail)) {
+      return record.detail
+        .map((item) => {
+          if (!item || typeof item !== 'object') {
+            return String(item);
+          }
+
+          const detail = item as Record<string, unknown>;
+          const location = Array.isArray(detail.loc) ? detail.loc.join('.') : '';
+          const message = typeof detail.msg === 'string' ? detail.msg : 'Validation error';
+          return location ? `${location}: ${message}` : message;
+        })
+        .join('; ');
+    }
+
+    if (typeof record.message === 'string') {
+      return record.message;
+    }
+  }
+
+  return bodyText || response.statusText || 'Chat API request failed';
+}
+
+export async function requestChatCompletion(payload: ChatApiRequest): Promise<ChatApiResponse> {
+  let lastError: Error | null = null;
+
+  for (const endpoint of CHAT_ENDPOINTS) {
+    try {
+      const response = await postChatCompletion(payload, endpoint);
+
+      if (!response.ok) {
+        const errorMessage = await readErrorMessage(response);
+
+        if ((response.status === 404 || response.status === 405) && endpoint === CHAT_ENDPOINTS[0]) {
+          lastError = new Error(`Chat API endpoint not available at ${endpoint}: ${errorMessage}`);
+          continue;
+        }
+
+        throw new Error(`Chat API request failed (${response.status}) at ${endpoint}: ${errorMessage}`);
+      }
+
+      const data = await response.json();
+      return normalizeChatResponse(data, payload.language);
+    } catch (error) {
+      if (error instanceof Error) {
+        lastError = error;
+      } else {
+        lastError = new Error('Chat API request failed');
+      }
+
+      if (endpoint !== CHAT_ENDPOINTS[0]) {
+        break;
+      }
+    }
+  }
+
+  throw lastError || new Error('Chat API request failed');
 }
 
 // Comprehensive SRH Knowledge Base (Ghana-Specific)

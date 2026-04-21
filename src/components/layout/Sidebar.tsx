@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shield, MessageSquare, BookOpen, Brain, Building2, Pill, Settings, Trash2, LogOut, Globe, X, Sparkles } from "lucide-react";
+import { MessageSquare, BookOpen, Brain, Building2, Pill, Settings, Trash2, LogOut, Globe, X, Sparkles } from "lucide-react";
 import { useApp } from '@/providers/AppProvider';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,6 +14,8 @@ interface SidebarProps {
   onClearChat: () => void;
   onLogout: () => void;
 }
+
+const CHATBOT_AVATAR_SRC = "/chat2.png";
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   currentSection, 
@@ -49,13 +51,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div className="flex flex-col h-full bg-gradient-to-b from-sidebar to-sidebar-accent/30 text-sidebar-foreground border-r border-sidebar-border shadow-xl overflow-hidden">
       {/* Premium Header */}
       <div className="relative isolate p-6 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0048ff] via-[#0066ff] to-[#00d4ff]" />
+        <div className="absolute inset-0 bg-[#0048ff]" />
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
         
         <div className="relative z-10 flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
-               <Shield className="w-6 h-6 text-white" />
+            <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 overflow-hidden shadow-lg shadow-black/15">
+              <img
+                src={CHATBOT_AVATAR_SRC}
+                alt={`${botName} avatar`}
+                className="h-full w-full object-cover object-top"
+              />
             </div>
             <div>
                <h2 className="text-white font-bold text-lg leading-tight">{botName}</h2>

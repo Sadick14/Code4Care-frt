@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Card } from './ui/card';
 import { motion } from 'motion/react';
-import { BarChart3, Lock, Mail } from 'lucide-react';
+import { Lock, Mail, Shield, Sparkles, ChevronRight } from 'lucide-react';
 
 interface AdminDashboardLoginProps {
   onAdminLogin: () => void;
@@ -33,137 +32,100 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          animate={{
-            background: [
-              'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%)',
-              'radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%)',
-              'radial-gradient(circle at 40% 0%, rgba(59, 130, 246, 0.05) 0%, transparent 50%)',
-            ],
-          }}
-          transition={{ duration: 10, repeat: Infinity }}
-          className="absolute inset-0"
-        />
-      </div>
-
-      {/* Content */}
+    <div className="h-screen flex items-center justify-center p-4 overflow-hidden bg-gradient-to-b from-[#f2f7ff] via-white to-[#eef5ff]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md"
+        transition={{ duration: 0.45 }}
+        className="w-full max-w-md"
       >
-        <Card className="border-[#E8ECFF] bg-white shadow-lg">
-          <div className="p-8">
-            {/* Header */}
-            <div className="flex flex-col items-center mb-8">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4"
-              >
-                <BarChart3 className="w-8 h-8 text-white" />
-              </motion.div>
-              <h1 className="text-3xl font-bold text-gray-900 text-center">Room 1221</h1>
-              <p className="text-gray-500 text-center mt-1">Admin Dashboard</p>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Email */}
-              <div className="relative">
-                <Mail className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                <Input
-                  type="email"
-                  placeholder="Admin email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError('');
-                  }}
-                  className="pl-10 bg-gray-50 border-[#E8ECFF] text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:ring-blue-100"
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Password */}
-              <div className="relative">
-                <Lock className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setError('');
-                  }}
-                  className="pl-10 bg-gray-50 border-[#E8ECFF] text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:ring-blue-100"
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm"
-                >
-                  {error}
-                </motion.div>
-              )}
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 rounded-lg transition-all duration-200"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                    Verifying...
-                  </div>
-                ) : (
-                  'Access Dashboard'
-                )}
-              </Button>
-            </form>
-
-            {/* Footer */}
-            <div className="mt-6 pt-6 border-t border-[#E8ECFF] text-center">
-              <p className="text-gray-500 text-sm mb-2">Demo credentials accepted</p>
-              <p className="text-xs text-gray-400">
-                Enter any email and password to access the admin dashboard
-              </p>
-            </div>
-
-            {/* Security Info */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center"
-            >
-              <p className="text-xs text-blue-600">
-                🔒 This dashboard is restricted to authorized administrators only
-              </p>
-            </motion.div>
+        <div className="max-w-md w-full min-h-[680px] bg-white rounded-3xl shadow-2xl p-8 flex flex-col border border-blue-50">
+          <div className="text-center mb-6">
+            <p className="text-sm font-semibold tracking-wide uppercase text-blue-500 mb-3">Room 1221</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">Admin Dashboard Login</h1>
+            <p className="text-gray-500">Secure access for authorized administrators only.</p>
           </div>
-        </Card>
 
-        {/* Footer Text */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="text-center text-gray-500 text-sm mt-10"
-        >
-          Comprehensive system management and analytics platform
-        </motion.p>
+          <div className="mb-8 flex-1 flex items-center">
+            <div className="mx-auto w-full max-w-sm h-56 rounded-3xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 flex items-center justify-center relative overflow-visible">
+              <div className="absolute -top-6 -left-6 w-20 h-20 rounded-full bg-blue-100/70" />
+              <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-emerald-100/70" />
+              <img
+                src="/chat2.png"
+                alt="Admin login illustration"
+                className="absolute z-10 left-1/2 -translate-x-1/2 -bottom-12 w-[38rem] h-[20rem] object-contain drop-shadow-2xl"
+              />
+              <div className="absolute top-4 left-4 w-12 h-12 rounded-2xl bg-blue-600/95 flex items-center justify-center shadow-lg shadow-blue-200">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <Sparkles className="absolute top-5 right-5 w-6 h-6 text-amber-400" />
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4 mt-auto">
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+              <Input
+                type="email"
+                placeholder="Admin email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                }}
+                className="h-12 pl-10 rounded-xl border-gray-200 focus:border-blue-500"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError('');
+                }}
+                className="h-12 pl-10 rounded-xl border-gray-200 focus:border-blue-500"
+                disabled={isLoading}
+              />
+            </div>
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm"
+              >
+                {error}
+              </motion.div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-lg"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  Verifying...
+                </div>
+              ) : (
+                <>
+                  Access Dashboard
+                  <ChevronRight className="w-5 h-5 ml-1" />
+                </>
+              )}
+            </Button>
+
+            <p className="text-center text-xs text-gray-400 pt-2">
+              Demo mode: enter any email and password.
+            </p>
+          </form>
+        </div>
       </motion.div>
     </div>
   );
