@@ -5,31 +5,31 @@ import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 import { AdminPanel } from "./components/AdminPanel";
 import { AdminDashboardLogin } from "./components/AdminDashboardLogin";
+import { SupportCounselorDashboard } from "./components/ConsultantDashboard";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { StaffAccessService, StaffSession } from "./services/staffAccessService";
 
 function AdminDashboardAppContent() {
   const { i18n } = useTranslation();
-  const [adminLoggedIn, setAdminLoggedIn] = useState(false);
+  const [session, setSession] = useState<StaffSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check if admin session exists on mount
   useEffect(() => {
-    const adminSession = localStorage.getItem('admin_session_token');
-    if (adminSession) {
-      setAdminLoggedIn(true);
-    }
+    const existingSession = StaffAccessService.getSession();
+    setSession(existingSession);
     setIsLoading(false);
   }, []);
 
-  const handleAdminLogin = () => {
-    localStorage.setItem('admin_session_token', Date.now().toString());
-    setAdminLoggedIn(true);
-    toast.success('Admin access granted');
+  const handleAdminLogin = (nextSession: StaffSession) => {
+    StaffAccessService.setSession(nextSession);
+    setSession(nextSession);
+    toast.success(`${nextSession.role === 'admin' ? 'Admin' : 'Consultant'} access granted`);
   };
 
   const handleAdminLogout = () => {
-    localStorage.removeItem('admin_session_token');
-    setAdminLoggedIn(false);
+    StaffAccessService.clearSession();
+    setSession(null);
     toast.success('Admin session ended');
   };
 
@@ -41,8 +41,17 @@ function AdminDashboardAppContent() {
     );
   }
 
-  if (!adminLoggedIn) {
+  if (!session) {
     return <AdminDashboardLogin onAdminLogin={handleAdminLogin} />;
+  }
+
+  if (session.role === 'consultant') {
+    return (
+      <>
+        <Toaster position="top-center" toastOptions={{ className: 'rounded-2xl' }} />
+        <SupportCounselorDashboard session={session} onLogout={handleAdminLogout} />
+      </>
+    );
   }
 
   return (

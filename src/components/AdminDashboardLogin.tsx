@@ -3,9 +3,10 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { motion } from 'motion/react';
 import { Lock, Mail, Shield, Sparkles, ChevronRight } from 'lucide-react';
+import { StaffAccessService, StaffSession } from '@/services/staffAccessService';
 
 interface AdminDashboardLoginProps {
-  onAdminLogin: () => void;
+  onAdminLogin: (session: StaffSession) => void;
 }
 
 export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) {
@@ -22,11 +23,18 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
     // Simulate authentication delay
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    // Demo authentication - accepts any credentials
-    if (email && password) {
-      onAdminLogin();
+    if (!email || !password) {
+      setError('Please enter both email and password.');
+      setIsLoading(false);
+      return;
+    }
+
+    const session = StaffAccessService.verifyCredentials(email, password);
+
+    if (session) {
+      onAdminLogin(session);
     } else {
-      setError('Please enter both email and password');
+      setError('Invalid credentials, inactive account, or role not permitted.');
     }
     setIsLoading(false);
   };
@@ -42,8 +50,8 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
         <div className="max-w-md w-full min-h-[680px] bg-white rounded-3xl shadow-2xl p-8 flex flex-col border border-blue-50">
           <div className="text-center mb-6">
             <p className="text-sm font-semibold tracking-wide uppercase text-blue-500 mb-3">Room 1221</p>
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">Admin Dashboard Login</h1>
-            <p className="text-gray-500">Secure access for authorized administrators only.</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">Staff Dashboard Login</h1>
+            <p className="text-gray-500">Secure access for Admin and Support Consultant accounts.</p>
           </div>
 
           <div className="mb-8 flex-1 flex items-center">
@@ -67,7 +75,7 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
               <Input
                 type="email"
-                placeholder="Admin email"
+                placeholder="Work email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -82,7 +90,7 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
               <Input
                 type="password"
-                placeholder="Password"
+                placeholder="Account password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -122,7 +130,7 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
             </Button>
 
             <p className="text-center text-xs text-gray-400 pt-2">
-              Demo mode: enter any email and password.
+              Default admin: admin@room1221.org / admin123
             </p>
           </form>
         </div>
