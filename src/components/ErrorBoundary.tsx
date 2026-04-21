@@ -60,13 +60,13 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden bg-[#F4F8FF]">
-          <div className="max-w-md w-full min-h-[680px] bg-white rounded-3xl shadow-2xl p-8 flex flex-col">
+        <div className="h-[100dvh] sm:min-h-screen flex items-center justify-center p-0 sm:px-3 sm:py-4 sm:p-4 overflow-hidden sm:overflow-y-auto bg-[#F4F8FF]">
+          <div className="max-w-md w-full h-[100dvh] sm:min-h-[680px] sm:h-auto bg-white rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl p-5 sm:p-8 flex flex-col">
             <div className="text-center mb-6">
               <p className="text-sm font-semibold tracking-wide uppercase text-blue-500 mb-3">
                 Room 1221
               </p>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
                 Something went wrong
               </h1>
               <p className="text-gray-500">
@@ -74,22 +74,22 @@ export class ErrorBoundary extends Component<Props, State> {
               </p>
             </div>
 
-            <div className="mb-10 flex-1 flex items-center">
-              <div className="mx-auto w-full max-w-sm h-72 rounded-3xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 flex items-center justify-center relative overflow-visible">
-                <div className="absolute -top-6 -left-6 w-20 h-20 rounded-full bg-blue-100/70" />
-                <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-emerald-100/70" />
+            <div className="mb-8 sm:mb-10 flex-1 flex items-center">
+              <div className="mx-auto w-full max-w-sm h-64 sm:h-72 rounded-3xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 flex items-center justify-center relative overflow-visible">
+                <div className="absolute -top-4 -left-4 sm:-top-6 sm:-left-6 w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-blue-100/70" />
+                <div className="absolute -bottom-5 -right-5 sm:-bottom-8 sm:-right-8 w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-emerald-100/70" />
                 <div className="relative z-10 flex flex-col items-center text-center px-6">
-                  <div className="w-24 h-24 rounded-3xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-200 mb-4">
-                    <AlertCircle className="w-10 h-10 text-white" />
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-200 mb-4">
+                    <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                   </div>
-                  <p className="text-7xl font-bold tracking-tighter text-gray-900 leading-none">Crash</p>
+                  <p className="text-5xl sm:text-7xl font-bold tracking-tighter text-gray-900 leading-none">Crash</p>
                   <p className="mt-3 text-sm text-gray-500 max-w-xs">
                     {this.state.error
                       ? this.state.error.toString()
                       : 'Something interrupted the experience. You can reload the app to continue.'}
                   </p>
                 </div>
-                <Sparkles className="absolute top-5 right-5 w-6 h-6 text-amber-400" />
+                <Sparkles className="absolute top-4 right-4 sm:top-5 sm:right-5 w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
               </div>
             </div>
 
@@ -115,7 +115,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex gap-3">
               <Button
                 onClick={this.handleReset}
-                className="flex-1 h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-lg"
+                className="flex-1 h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Reload App

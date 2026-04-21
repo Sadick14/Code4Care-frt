@@ -95,7 +95,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   ];
 
   return (
-    <div className="h-screen flex items-center justify-center p-4 overflow-hidden">
+    <div className="h-[100dvh] sm:min-h-screen flex items-center justify-center p-0 sm:px-3 sm:py-4 sm:p-4 overflow-hidden sm:overflow-y-auto">
       <AnimatePresence mode="wait">
         {currentPage === 0 ? (
           <motion.div
@@ -103,13 +103,13 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -50 }}
-            className="max-w-md w-full min-h-[680px] bg-white rounded-3xl shadow-2xl p-8 flex flex-col"
+            className="max-w-md w-full h-[100dvh] sm:min-h-[680px] sm:h-auto bg-white rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl p-5 sm:p-8 flex flex-col"
           >
             <div className="text-center mb-6">
               <p className="text-sm font-semibold tracking-wide uppercase text-blue-500 mb-3">
                 {t("onboarding.welcome.tag", "Room 1221")}
               </p>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
                 {t("onboarding.welcome.title", "Your safe space starts here")}
               </h1>
               <p className="text-gray-500">
@@ -117,22 +117,22 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
               </p>
             </div>
 
-            <div className="mb-10 flex-1 flex items-center">
-              <div className="mx-auto w-full max-w-sm h-72 rounded-3xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 flex items-center justify-center relative overflow-visible">
-                <div className="absolute -top-6 -left-6 w-20 h-20 rounded-full bg-blue-100/70" />
-                <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-emerald-100/70" />
+            <div className="mb-8 sm:mb-10 flex-1 flex items-center">
+              <div className="mx-auto w-full max-w-sm h-64 sm:h-72 rounded-3xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 flex items-center justify-center relative overflow-visible">
+                <div className="absolute -top-4 -left-4 sm:-top-6 sm:-left-6 w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-blue-100/70" />
+                <div className="absolute -bottom-5 -right-5 sm:-bottom-8 sm:-right-8 w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-emerald-100/70" />
                 <img
                   src="/chat2.png"
                   alt={t("onboarding.welcome.imageAlt", "Welcome illustration")}
-                  className="absolute z-10 left-1/2 -translate-x-1/2 -bottom-12 w-[42rem] h-[22rem] object-contain drop-shadow-2xl"
+                  className="absolute z-10 left-1/2 -translate-x-1/2 -bottom-6 sm:-bottom-12 w-[min(85vw,24rem)] sm:w-[42rem] h-auto max-h-[14rem] sm:max-h-none object-contain drop-shadow-2xl"
                 />
-                <Sparkles className="absolute top-5 right-5 w-6 h-6 text-amber-400" />
+                <Sparkles className="absolute top-4 right-4 sm:top-5 sm:right-5 w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
               </div>
             </div>
 
-            <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-lg">
+            <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg">
               {t("onboarding.welcome.cta", "Get Started")}
-              <ChevronRight className="w-5 h-5 ml-1" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1" />
             </Button>
           </motion.div>
         ) : currentPage === 1 ? (
@@ -141,13 +141,13 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, x: -50 }}
-            className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8"
+            className="max-w-md w-full h-[100dvh] sm:h-auto bg-white rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
                 <Shield className="w-8 h-8 text-white" />
               </div>
-              <h1 className="text-3xl font-bold text-blue-600 mb-2">{t("onboarding.page1.title")}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">{t("onboarding.page1.title")}</h1>
               <p className="text-gray-500">{t("onboarding.page1.subtitle")}</p>
             </div>
 
@@ -165,9 +165,9 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
               ))}
             </div>
 
-            <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-lg">
+            <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg">
               {t("onboarding.page1.next")}
-              <ChevronRight className="w-5 h-5 ml-1" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1" />
             </Button>
           </motion.div>
         ) : currentPage === 2 ? (
@@ -176,14 +176,14 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8"
+            className="max-w-md w-full h-[100dvh] sm:h-auto bg-white rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-100 relative">
                 <Bot className="w-8 h-8 text-white" />
                 <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-yellow-400" />
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{t("onboarding.page2.title")}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t("onboarding.page2.title")}</h1>
               <p className="text-gray-500">{t("onboarding.page2.subtitle")}</p>
             </div>
 
@@ -201,7 +201,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             </div>
 
             <div className="space-y-3">
-              <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-lg">
+              <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg">
                 {t("onboarding.page2.continue")}
               </Button>
               <Button onClick={handleSkip} variant="ghost" className="w-full h-12 text-gray-500">
@@ -215,13 +215,13 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8"
+            className="max-w-md w-full h-[100dvh] sm:h-auto bg-white rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{t("onboarding.page3.title", "Help us personalize your support")}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t("onboarding.page3.title", "Help us personalize your support")}</h1>
               <p className="text-gray-500">{t("onboarding.page3.subtitle", "Your age group and gender help us tailor safer, more relevant guidance.")}</p>
             </div>
 
@@ -284,7 +284,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             <Button
               onClick={handleContinue}
               disabled={!canSubmitDemographics}
-              className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-lg disabled:opacity-60"
+              className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg disabled:opacity-60"
             >
               {t("onboarding.page3.finish", "Start Chat")}
             </Button>
