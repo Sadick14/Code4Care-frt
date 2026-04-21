@@ -6,6 +6,7 @@ import { AppProvider } from "./providers/AppProvider";
 import { LanguageProvider } from "./providers/LanguageProvider";
 import App from "./App.tsx";
 import AdminDashboardApp from "./AdminDashboardApp.tsx";
+import { NotFoundPage } from "./components/NotFoundPage";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
@@ -37,7 +38,7 @@ createRoot(document.getElementById("root")!).render(
         />
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
