@@ -17,6 +17,8 @@ interface ModernChatInterfaceProps {
   onMessagesChange: (messages: Message[]) => void;
 }
 
+const CHATBOT_AVATAR_SRC = "/chat2.png";
+
 export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: ModernChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -109,7 +111,7 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
     }, 1000 + Math.random() * 1000);
   };
 
-  const generateAIResponse = (userText: string): string => {
+  const generateAIResponse = (_userText: string): string => {
     const responses = [
       "That's an interesting question! Let me help you with that.",
       "I understand what you're asking. Here's what I think...",
@@ -152,10 +154,12 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
               >
                 <div className="flex items-start gap-2 sm:gap-3 max-w-[85%] sm:max-w-[80%]">
                   {message.sender === 'ai' && (
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1" style={{ backgroundColor: '#00C27A' }}>
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 mt-1" style={{ backgroundColor: '#00C27A' }}>
+                      <img
+                        src={CHATBOT_AVATAR_SRC}
+                        alt="Chatbot avatar"
+                        className="h-full w-full object-cover object-top"
+                      />
                     </div>
                   )}
                   
@@ -197,10 +201,12 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
               className="flex justify-start"
             >
               <div className="flex items-start gap-2 sm:gap-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#00C27A' }}>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#00C27A' }}>
+                  <img
+                    src={CHATBOT_AVATAR_SRC}
+                    alt="Chatbot avatar"
+                    className="h-full w-full object-cover object-top"
+                  />
                 </div>
                 <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm">
                   <div className="flex gap-1">

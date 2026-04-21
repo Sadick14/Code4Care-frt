@@ -100,11 +100,11 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'healthy':
-        return <Badge className="bg-green-500/30 text-green-300 border-green-500/50"><CheckCircle2 className="w-3 h-3 mr-1" /> Healthy</Badge>;
+        return <Badge className="bg-green-50 text-green-600 border-green-200"><CheckCircle2 className="w-3 h-3 mr-1" /> Healthy</Badge>;
       case 'warning':
-        return <Badge className="bg-yellow-500/30 text-yellow-300 border-yellow-500/50"><AlertTriangle className="w-3 h-3 mr-1" /> Warning</Badge>;
+        return <Badge className="bg-yellow-50 text-yellow-600 border-yellow-200"><AlertTriangle className="w-3 h-3 mr-1" /> Warning</Badge>;
       case 'critical':
-        return <Badge className="bg-red-500/30 text-red-300 border-red-500/50"><AlertTriangle className="w-3 h-3 mr-1" /> Critical</Badge>;
+        return <Badge className="bg-red-50 text-red-600 border-red-200"><AlertTriangle className="w-3 h-3 mr-1" /> Critical</Badge>;
       default:
         return null;
     }
@@ -125,7 +125,7 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
             key={range}
             variant={timeRange === range ? 'default' : 'outline'}
             onClick={() => setTimeRange(range)}
-            className={timeRange === range ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-600 hover:bg-slate-700'}
+            className={timeRange === range ? 'bg-blue-600 hover:bg-blue-700' : 'border-[#E8ECFF] hover:bg-gray-50'}
           >
             Last {range === '1h' ? '1 Hour' : range === '6h' ? '6 Hours' : '24 Hours'}
           </Button>
@@ -136,17 +136,17 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
       <div className="grid grid-cols-3 gap-4">
         {metrics.map((metric, idx) => (
           <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-            <Card className="p-4 bg-slate-800/50 border-slate-700 hover:border-slate-600 transition-colors">
+            <Card className="p-4 bg-white border-[#E8ECFF] hover:border-blue-200 transition-colors">
               <div className="flex items-start justify-between mb-2">
                 <div>{metric.icon}</div>
                 {getStatusBadge(metric.status)}
               </div>
-              <h3 className="text-sm text-slate-400 mb-1">{metric.name}</h3>
+              <h3 className="text-sm text-gray-600 mb-1">{metric.name}</h3>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-white">{metric.value}</span>
-                <span className="text-slate-400 text-sm">{metric.unit}</span>
+                <span className="text-2xl font-bold text-gray-900">{metric.value}</span>
+                <span className="text-gray-500 text-sm">{metric.unit}</span>
               </div>
-              <div className={`text-xs mt-2 flex items-center gap-1 ${metric.trend < 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <div className={`text-xs mt-2 flex items-center gap-1 ${metric.trend < 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {metric.trend !== 0 && (
                   <>
                     <TrendingUp className={`w-3 h-3 ${metric.trend < 0 ? 'rotate-180' : ''}`} />
@@ -163,17 +163,17 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
       {/* Performance Charts */}
       <div className="grid grid-cols-2 gap-4">
         {/* Response Time & Errors */}
-        <Card className="p-6 bg-slate-800/50 border-slate-700">
-          <h3 className="text-white font-semibold mb-4">Response Time & Error Rate</h3>
+        <Card className="p-6 bg-white border-[#E8ECFF]">
+          <h3 className="text-gray-900 font-semibold mb-4">Response Time & Error Rate</h3>
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
               <XAxis dataKey="time" stroke="#9CA3AF" />
               <YAxis yAxisId="left" stroke="#9CA3AF" />
               <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" />
               <Tooltip
-                contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
-                labelStyle={{ color: '#fff' }}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF', borderRadius: '8px' }}
+                labelStyle={{ color: '#111827' }}
               />
               <Legend />
               <Line yAxisId="left" type="monotone" dataKey="response" stroke="#3B82F6" name="Response (ms)" strokeWidth={2} />
@@ -183,16 +183,16 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
         </Card>
 
         {/* Uptime */}
-        <Card className="p-6 bg-slate-800/50 border-slate-700">
-          <h3 className="text-white font-semibold mb-4">System Uptime</h3>
+        <Card className="p-6 bg-white border-[#E8ECFF]">
+          <h3 className="text-gray-900 font-semibold mb-4">System Uptime</h3>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
               <XAxis dataKey="time" stroke="#9CA3AF" />
               <YAxis stroke="#9CA3AF" domain={[99.7, 100]} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
-                labelStyle={{ color: '#fff' }}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF', borderRadius: '8px' }}
+                labelStyle={{ color: '#111827' }}
               />
               <Area type="monotone" dataKey="uptime" stroke="#10B981" fill="#10B98120" name="Uptime %" />
             </AreaChart>
@@ -201,16 +201,16 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
       </div>
 
       {/* Resource Usage */}
-      <Card className="p-6 bg-slate-800/50 border-slate-700">
-        <h3 className="text-white font-semibold mb-4">Resource Utilization</h3>
+      <Card className="p-6 bg-white border-[#E8ECFF]">
+        <h3 className="text-gray-900 font-semibold mb-4">Resource Utilization</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={memoryData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
             <XAxis dataKey="time" stroke="#9CA3AF" />
             <YAxis stroke="#9CA3AF" domain={[0, 100]} />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
-              labelStyle={{ color: '#fff' }}
+              contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF', borderRadius: '8px' }}
+              labelStyle={{ color: '#111827' }}
             />
             <Legend />
             <Line type="monotone" dataKey="memory" stroke="#F59E0B" name="Memory %" strokeWidth={2} />
@@ -222,9 +222,9 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
 
       {/* Service Status */}
       <div className="grid grid-cols-2 gap-4">
-        <Card className="p-4 bg-slate-800/50 border-slate-700">
-          <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-            <Server className="w-4 h-4 text-blue-400" />
+        <Card className="p-4 bg-white border-[#E8ECFF]">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Server className="w-4 h-4 text-blue-600" />
             Service Status
           </h3>
           <div className="space-y-2">
@@ -234,17 +234,17 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
               { name: 'Cache Layer', status: 'warning' },
               { name: 'Email Service', status: 'healthy' },
             ].map((service, idx) => (
-              <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-700 last:border-0">
-                <span className="text-slate-300">{service.name}</span>
+              <div key={idx} className="flex items-center justify-between py-2 border-b border-[#E8ECFF] last:border-0">
+                <span className="text-gray-600">{service.name}</span>
                 {getStatusBadge(service.status)}
               </div>
             ))}
           </div>
         </Card>
 
-        <Card className="p-4 bg-slate-800/50 border-slate-700">
-          <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-green-400" />
+        <Card className="p-4 bg-white border-[#E8ECFF]">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-green-600" />
             Recent Events
           </h3>
           <div className="space-y-2 text-sm">
@@ -254,9 +254,9 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
               { time: '2:50 PM', event: 'Load balancer reconfigured' },
               { time: '1:30 PM', event: 'SSL certificate renewed' },
             ].map((log, idx) => (
-              <div key={idx} className="flex items-start justify-between py-2 border-b border-slate-700 last:border-0">
-                <span className="text-slate-400">{log.event}</span>
-                <span className="text-slate-500 text-xs">{log.time}</span>
+              <div key={idx} className="flex items-start justify-between py-2 border-b border-[#E8ECFF] last:border-0">
+                <span className="text-gray-600">{log.event}</span>
+                <span className="text-gray-400 text-xs">{log.time}</span>
               </div>
             ))}
           </div>

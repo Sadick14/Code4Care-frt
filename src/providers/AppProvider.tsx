@@ -7,6 +7,7 @@ interface AppState {
   botName: string;
   ageRange: string;
   genderIdentity: string;
+  region: string;
   sessionDuration: string;
   analyticsOptIn: boolean;
   sessionId: string;
@@ -19,6 +20,7 @@ interface AppContextType extends AppState {
   setBotName: (name: string) => void;
   setAgeRange: (value: string) => void;
   setGenderIdentity: (value: string) => void;
+  setRegion: (value: string) => void;
   setSessionDuration: (duration: string) => void;
   setAnalyticsOptIn: (optIn: boolean) => void;
   setSessionId: (id: string) => void;
@@ -34,6 +36,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [botName, setBotName] = useState<string>(() => safeStorage.getItem('room1221_botname') || 'Room 1221');
   const [ageRange, setAgeRange] = useState<string>(() => safeStorage.getItem('room1221_age_range') || '15-19');
   const [genderIdentity, setGenderIdentity] = useState<string>(() => safeStorage.getItem('room1221_gender_identity') || 'prefer-not-say');
+  const [region, setRegion] = useState<string>(() => safeStorage.getItem('room1221_region') || 'greater-accra');
   const [sessionDuration, setSessionDuration] = useState<string>(() => safeStorage.getItem('room1221_duration') || '24h');
   const [analyticsOptIn, setAnalyticsOptIn] = useState<boolean>(() => safeStorage.getItem('room1221_analytics') !== 'false');
   const [sessionId, setSessionId] = useState<string>(() => Date.now().toString());
@@ -59,6 +62,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [genderIdentity]);
 
   useEffect(() => {
+    safeStorage.setItem('room1221_region', region);
+  }, [region]);
+
+  useEffect(() => {
     safeStorage.setItem('room1221_duration', sessionDuration);
   }, [sessionDuration]);
 
@@ -77,6 +84,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     safeStorage.removeItem('room1221_language');
     safeStorage.removeItem('room1221_age_range');
     safeStorage.removeItem('room1221_gender_identity');
+    safeStorage.removeItem('room1221_region');
     safeStorage.removeItem('room1221_duration');
     safeStorage.removeItem('room1221_analytics');
     safeStorage.removeItem('room1221_sessions');
@@ -87,6 +95,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBotName('Room 1221');
     setAgeRange('15-19');
     setGenderIdentity('prefer-not-say');
+    setRegion('greater-accra');
     setSessionDuration('24h');
     setAnalyticsOptIn(true);
     setSessionId(Date.now().toString());
@@ -99,6 +108,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     botName, setBotName,
     ageRange, setAgeRange,
     genderIdentity, setGenderIdentity,
+    region, setRegion,
     sessionDuration, setSessionDuration,
     analyticsOptIn, setAnalyticsOptIn,
     sessionId, setSessionId,

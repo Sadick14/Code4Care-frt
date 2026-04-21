@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 
 interface PanicScreenProps {
   onExit: () => void;
@@ -9,7 +9,6 @@ interface PanicScreenProps {
 export function PanicScreen({ onExit }: PanicScreenProps) {
   const { t } = useTranslation();
   const [display, setDisplay] = useState("0");
-  const [showReturn, setShowReturn] = useState(false);
 
   const handleNumber = (num: string) => {
     setDisplay(prev => prev === "0" ? num : prev + num);
@@ -33,7 +32,7 @@ export function PanicScreen({ onExit }: PanicScreenProps) {
   const buttons = [
     { label: "C", action: handleClear, color: "bg-slate-700 text-teal-400" },
     { label: "⌫", action: handleDelete, color: "bg-slate-700 text-teal-400" },
-    { label: "%", action: () => {}, color: "bg-slate-700 text-teal-400" },
+    { label: t('common.back', 'Back'), action: onExit, color: "bg-teal-700 text-white" },
     { label: "÷", action: () => handleNumber("/"), color: "bg-slate-700 text-orange-400" },
     { label: "7", action: () => handleNumber("7"), color: "bg-slate-800 text-white" },
     { label: "8", action: () => handleNumber("8"), color: "bg-slate-800 text-white" },
@@ -57,18 +56,7 @@ export function PanicScreen({ onExit }: PanicScreenProps) {
     <div className="fixed inset-0 bg-[#0F172A] flex flex-col items-center justify-end font-sans">
       <div className="w-full max-w-md h-full flex flex-col overflow-hidden">
         {/* Calc Display */}
-        <div 
-          className="flex-1 flex flex-col justify-end items-end p-8 cursor-pointer"
-          onClick={() => {
-            const clicks = parseInt(sessionStorage.getItem('panic_clicks') || '0');
-            sessionStorage.setItem('panic_clicks', (clicks + 1).toString());
-            if (clicks >= 2) {
-              setShowReturn(true);
-              sessionStorage.setItem('panic_clicks', '0');
-            }
-            setTimeout(() => sessionStorage.setItem('panic_clicks', '0'), 500);
-          }}
-        >
+        <div className="flex-1 flex flex-col justify-end items-end p-8">
           <motion.div 
             key={display}
             initial={{ opacity: 0, y: 10 }}
@@ -85,35 +73,13 @@ export function PanicScreen({ onExit }: PanicScreenProps) {
             <button
               key={i}
               onClick={btn.action}
-              className={`h-20 w-full rounded-full text-2xl font-medium transition-transform active:scale-90 ${btn.color}`}
+              className={`h-20 w-full rounded-full text-2xl font-medium transition-transform active:scale-90 ${btn.color} ${btn.label === t('common.back', 'Back') ? 'text-base' : ''}`}
             >
               {btn.label}
             </button>
           ))}
         </div>
-
-        {/* Secret Exit */}
-        <div className="h-20 flex items-center justify-center p-4">
-           <AnimatePresence>
-            {showReturn && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                onClick={onExit}
-                className="bg-white/10 text-white px-6 py-2 rounded-full text-sm hover:bg-white/20 transition-colors"
-              >
-                {t('common.exit', 'Exit')}
-              </motion.button>
-            )}
-           </AnimatePresence>
-        </div>
       </div>
-      
-      {!showReturn && (
-        <div className="absolute top-10 w-full text-center text-slate-600 text-[10px] pointer-events-none">
-          {t('panic.hint', 'Tap result 3 times to return')}
-        </div>
-      )}
     </div>
   );
 }

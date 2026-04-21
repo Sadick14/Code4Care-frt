@@ -31,6 +31,7 @@ function AppContent() {
     botName, setBotName,
     setAgeRange,
     setGenderIdentity,
+    setRegion,
     sessionId, setSessionId,
     resetAll,
     consultantMode,
@@ -69,10 +70,11 @@ function AppContent() {
   if (!hasSeenOnboarding) {
     return (
       <OnboardingScreen
-        onComplete={({ botName: nextBotName, ageRange, genderIdentity }) => {
+        onComplete={({ botName: nextBotName, ageRange, genderIdentity, region }) => {
           setBotName(nextBotName);
           setAgeRange(ageRange);
           setGenderIdentity(genderIdentity);
+          setRegion(region);
           setHasSeenOnboarding(true);
         }}
       />

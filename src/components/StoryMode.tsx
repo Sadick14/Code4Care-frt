@@ -7,6 +7,8 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { getStoryModules, StoryModule } from "@/data/storyModules";
 
+const STORY_COVER_IMAGES = ["/chat2.png", "/chat.jpg", "/chatbot.jpg"];
+
 export function StoryMode() {
   const { t, i18n } = useTranslation();
   const activeLanguage = (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
@@ -98,7 +100,7 @@ export function StoryMode() {
 
   return (
     <div className="h-full overflow-y-auto bg-gradient-to-b from-[#f2f7ff] via-white to-[#eef5ff] p-4">
-      <div className="max-w-3xl mx-auto pb-12">
+      <div className={`${viewMode === "catalog" ? "max-w-6xl" : "max-w-3xl"} mx-auto pb-12`}>
         <div className="mb-8 rounded-3xl border border-[#CFE0FF] bg-gradient-to-r from-[#0048ff] via-[#0066ff] to-[#00a3ff] p-6 text-white shadow-xl shadow-blue-100">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -120,17 +122,26 @@ export function StoryMode() {
         </div>
 
         {viewMode === "catalog" ? (
-          <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {modules.map((module) => (
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {modules.map((module, index) => (
               <Card
                 key={module.id}
                 onClick={() => startModuleQuiz(module.id)}
-                className="cursor-pointer border-[#D5E4FF] bg-white shadow-sm hover:shadow-lg hover:shadow-blue-100/60 hover:-translate-y-0.5 transition-all rounded-2xl overflow-hidden"
+                className="cursor-pointer border-[#D5E4FF] bg-white shadow-sm hover:shadow-xl hover:shadow-blue-100/70 hover:-translate-y-1 transition-all rounded-2xl overflow-hidden"
               >
-                <div className="h-1.5 w-full bg-gradient-to-r from-[#0048ff] to-[#00a3ff]" />
+                <div className="relative h-44 overflow-hidden">
+                  <img
+                    src={STORY_COVER_IMAGES[index % STORY_COVER_IMAGES.length]}
+                    alt={module.title}
+                    className="h-full w-full object-cover object-center"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#001c52]/80 via-[#00338f]/35 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-base font-bold text-white leading-tight drop-shadow-sm">{module.title}</p>
+                  </div>
+                </div>
                 <div className="p-4">
-                  <p className="text-base font-bold text-[#1D3B79] leading-tight">{module.title}</p>
-                  <p className="text-sm mt-2 text-[#5A77B0] min-h-10">{module.description}</p>
+                  <p className="text-sm text-[#5A77B0] min-h-10">{module.description}</p>
 
                   <div className="mt-4 flex items-center justify-between">
                     <span className="inline-flex items-center rounded-full bg-[#ECF3FF] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2E58A5]">

@@ -5,19 +5,26 @@ import { Heart, Shield, MessageCircle, Sparkles, ChevronRight, Bot } from "lucid
 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface OnboardingScreenProps {
-  onComplete: (payload: { botName: string; ageRange: string; genderIdentity: string }) => void;
+  onComplete: (payload: { botName: string; ageRange: string; genderIdentity: string; region: string }) => void;
 }
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const { t } = useTranslation();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [botName, setBotName] = useState("");
   const [ageRange, setAgeRange] = useState("");
   const [genderIdentity, setGenderIdentity] = useState("");
+  const [region, setRegion] = useState("");
 
   const handleContinue = () => {
+    if (currentPage === 0) {
+      setCurrentPage(1);
+      return;
+    }
+
     if (currentPage === 1) {
       setCurrentPage(2);
       return;
@@ -28,7 +35,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       return;
     }
 
-    if (!ageRange || !genderIdentity) {
+    if (!ageRange || !genderIdentity || !region) {
       return;
     }
 
@@ -37,15 +44,13 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       botName: finalBotName,
       ageRange,
       genderIdentity,
+      region,
     });
   };
 
   const handleSkip = () => {
-    onComplete({
-      botName: t("onboarding.page2.defaultName"),
-      ageRange: "15-19",
-      genderIdentity: "prefer-not-say",
-    });
+    setBotName(t("onboarding.page2.defaultName"));
+    setCurrentPage(3);
   };
 
   const ageOptions = [
@@ -62,33 +67,26 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     { value: "prefer-not-say", label: t("onboarding.page3.gender.options.prefer-not-say", "Prefer not to say") },
   ];
 
-  const canSubmitDemographics = Boolean(ageRange && genderIdentity);
+  const regionOptions = [
+    { value: "greater-accra", label: t("onboarding.page3.region.options.greater-accra", "Greater Accra") },
+    { value: "ashanti", label: t("onboarding.page3.region.options.ashanti", "Ashanti") },
+    { value: "western", label: t("onboarding.page3.region.options.western", "Western") },
+    { value: "western-north", label: t("onboarding.page3.region.options.western-north", "Western North") },
+    { value: "central", label: t("onboarding.page3.region.options.central", "Central") },
+    { value: "eastern", label: t("onboarding.page3.region.options.eastern", "Eastern") },
+    { value: "volta", label: t("onboarding.page3.region.options.volta", "Volta") },
+    { value: "oti", label: t("onboarding.page3.region.options.oti", "Oti") },
+    { value: "northern", label: t("onboarding.page3.region.options.northern", "Northern") },
+    { value: "savannah", label: t("onboarding.page3.region.options.savannah", "Savannah") },
+    { value: "north-east", label: t("onboarding.page3.region.options.north-east", "North East") },
+    { value: "upper-east", label: t("onboarding.page3.region.options.upper-east", "Upper East") },
+    { value: "upper-west", label: t("onboarding.page3.region.options.upper-west", "Upper West") },
+    { value: "bono", label: t("onboarding.page3.region.options.bono", "Bono") },
+    { value: "bono-east", label: t("onboarding.page3.region.options.bono-east", "Bono East") },
+    { value: "ahafo", label: t("onboarding.page3.region.options.ahafo", "Ahafo") },
+  ];
 
-  const renderSelectionCard = (
-    options: Array<{ value: string; label: string }>,
-    selectedValue: string,
-    onSelect: (value: string) => void,
-  ) => (
-    <div className="grid grid-cols-2 gap-3">
-      {options.map((option) => {
-        const active = selectedValue === option.value;
-        return (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onSelect(option.value)}
-            className={`rounded-xl border px-3 py-3 text-sm font-semibold transition-colors ${
-              active
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50"
-            }`}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
-  );
+  const canSubmitDemographics = Boolean(ageRange && genderIdentity && region);
 
   const features = [
     { icon: Shield, title: t("onboarding.page1.features.anonymous.title"), desc: t("onboarding.page1.features.anonymous.desc") },
@@ -97,9 +95,47 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   ];
 
   return (
-    <div className="h-screen flex items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-[#0048ff] via-[#0066ff] to-[#00d4ff]">
+    <div className="h-screen flex items-center justify-center p-4 overflow-hidden">
       <AnimatePresence mode="wait">
-        {currentPage === 1 ? (
+        {currentPage === 0 ? (
+          <motion.div
+            key="page0"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            className="max-w-md w-full min-h-[680px] bg-white rounded-3xl shadow-2xl p-8 flex flex-col"
+          >
+            <div className="text-center mb-6">
+              <p className="text-sm font-semibold tracking-wide uppercase text-blue-500 mb-3">
+                {t("onboarding.welcome.tag", "Room 1221")}
+              </p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-3">
+                {t("onboarding.welcome.title", "Your safe space starts here")}
+              </h1>
+              <p className="text-gray-500">
+                {t("onboarding.welcome.subtitle", "Private, supportive guidance made for you.")}
+              </p>
+            </div>
+
+            <div className="mb-10 flex-1 flex items-center">
+              <div className="mx-auto w-full max-w-sm h-72 rounded-3xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 flex items-center justify-center relative overflow-visible">
+                <div className="absolute -top-6 -left-6 w-20 h-20 rounded-full bg-blue-100/70" />
+                <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-emerald-100/70" />
+                <img
+                  src="/chat2.png"
+                  alt={t("onboarding.welcome.imageAlt", "Welcome illustration")}
+                  className="absolute z-10 left-1/2 -translate-x-1/2 -bottom-12 w-[42rem] h-[22rem] object-contain drop-shadow-2xl"
+                />
+                <Sparkles className="absolute top-5 right-5 w-6 h-6 text-amber-400" />
+              </div>
+            </div>
+
+            <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-lg">
+              {t("onboarding.welcome.cta", "Get Started")}
+              <ChevronRight className="w-5 h-5 ml-1" />
+            </Button>
+          </motion.div>
+        ) : currentPage === 1 ? (
           <motion.div
             key="page1"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -194,14 +230,54 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
                 <label className="text-sm font-medium text-gray-700 block mb-2">
                   {t("onboarding.page3.age.label", "Age range")}
                 </label>
-                {renderSelectionCard(ageOptions, ageRange, setAgeRange)}
+                <Select value={ageRange} onValueChange={setAgeRange}>
+                  <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-white text-gray-700">
+                    <SelectValue placeholder={t("onboarding.page3.age.placeholder", "Select age range")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ageOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-2">
                   {t("onboarding.page3.gender.label", "Gender identity")}
                 </label>
-                {renderSelectionCard(genderOptions, genderIdentity, setGenderIdentity)}
+                <Select value={genderIdentity} onValueChange={setGenderIdentity}>
+                  <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-white text-gray-700">
+                    <SelectValue placeholder={t("onboarding.page3.gender.placeholder", "Select gender identity")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {genderOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">
+                  {t("onboarding.page3.region.label", "Region in Ghana")}
+                </label>
+                <Select value={region} onValueChange={setRegion}>
+                  <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-white text-gray-700">
+                    <SelectValue placeholder={t("onboarding.page3.region.placeholder", "Select your region")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {regionOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
