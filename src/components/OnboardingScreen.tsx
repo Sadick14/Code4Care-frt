@@ -95,7 +95,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   ];
 
   return (
-    <div className="h-[100dvh] sm:min-h-screen flex items-center justify-center p-0 sm:px-3 sm:py-4 sm:p-4 overflow-hidden sm:overflow-y-auto">
+    <div className="h-[100dvh] sm:min-h-screen flex items-center justify-center px-3 py-3 sm:px-3 sm:py-4 sm:p-4 overflow-y-auto">
       <AnimatePresence mode="wait">
         {currentPage === 0 ? (
           <motion.div
@@ -103,9 +103,9 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -50 }}
-            className="max-w-md w-full h-[100dvh] sm:min-h-[680px] sm:h-auto bg-white rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl p-5 sm:p-8 flex flex-col"
+            className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none sm:min-h-[680px] bg-white rounded-3xl shadow-2xl p-5 sm:p-8 flex flex-col overflow-y-auto"
           >
-            <div className="text-center mb-6">
+            <div className="relative z-20 text-center mb-6">
               <p className="text-sm font-semibold tracking-wide uppercase text-blue-500 mb-3">
                 {t("onboarding.welcome.tag", "Room 1221")}
               </p>
@@ -117,20 +117,20 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
               </p>
             </div>
 
-            <div className="mb-8 sm:mb-10 flex-1 flex items-center">
+            <div className="relative z-10 mb-8 sm:mb-10 flex-1 flex items-center">
               <div className="mx-auto w-full max-w-sm h-64 sm:h-72 rounded-3xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 flex items-center justify-center relative overflow-visible">
                 <div className="absolute -top-4 -left-4 sm:-top-6 sm:-left-6 w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-blue-100/70" />
                 <div className="absolute -bottom-5 -right-5 sm:-bottom-8 sm:-right-8 w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-emerald-100/70" />
                 <img
                   src="/chat2.png"
                   alt={t("onboarding.welcome.imageAlt", "Welcome illustration")}
-                  className="absolute z-10 left-1/2 -translate-x-1/2 -bottom-6 sm:-bottom-12 w-[min(85vw,24rem)] sm:w-[42rem] h-auto max-h-[14rem] sm:max-h-none object-contain drop-shadow-2xl"
+                  className="absolute z-0 left-1/2 -translate-x-1/2 -bottom-6 sm:-bottom-10 w-[min(85vw,24rem)] sm:w-[30rem] h-auto max-h-[14rem] sm:max-h-[19rem] object-contain drop-shadow-2xl"
                 />
                 <Sparkles className="absolute top-4 right-4 sm:top-5 sm:right-5 w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
               </div>
             </div>
 
-            <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg">
+            <Button onClick={handleContinue} className="relative z-20 w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg">
               {t("onboarding.welcome.cta", "Get Started")}
               <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1" />
             </Button>
@@ -141,7 +141,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, x: -50 }}
-            className="max-w-md w-full h-[100dvh] sm:h-auto bg-white rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl p-5 sm:p-8 overflow-y-auto"
+            className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none bg-white rounded-3xl shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
@@ -176,7 +176,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="max-w-md w-full h-[100dvh] sm:h-auto bg-white rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl p-5 sm:p-8 overflow-y-auto"
+            className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none bg-white rounded-3xl shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-100 relative">
@@ -215,7 +215,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="max-w-md w-full h-[100dvh] sm:h-auto bg-white rounded-none sm:rounded-3xl shadow-none sm:shadow-2xl p-5 sm:p-8 overflow-y-auto"
+            className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none bg-white rounded-3xl shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
