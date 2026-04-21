@@ -6,7 +6,7 @@ import { AdminUserManagement } from './AdminUserManagement';
 import { AdminContentManagement } from './AdminContentManagement';
 import { AdminSafetyManagement } from './AdminSafetyManagement';
 import { AdminSystemHealth } from './AdminSystemHealth';
-import { BarChart3, FileText } from 'lucide-react';
+import { AdminReports } from './AdminReports';
 
 type AdminSection = 'dashboard' | 'users' | 'content' | 'safety' | 'reports' | 'settings' | 'health';
 
@@ -31,41 +31,15 @@ export function AdminPanel({ selectedLanguage, onLogout }: AdminPanelProps) {
       case 'health':
         return <AdminSystemHealth selectedLanguage={selectedLanguage} />;
       case 'reports':
-        return (
-          <div className="space-y-6 p-6">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-white">Reports</h1>
-              <p className="text-slate-400">Generate and view comprehensive reports</p>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                { title: 'Monthly Activity Report', icon: <BarChart3 className="w-8 h-8" /> },
-                { title: 'User Demographics Report', icon: <BarChart3 className="w-8 h-8" /> },
-                { title: 'Safety Incidents Report', icon: <BarChart3 className="w-8 h-8" /> },
-              ].map((report, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="p-6 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg cursor-pointer hover:shadow-lg hover:shadow-blue-500/20 transition-all"
-                >
-                  <div className="text-white mb-3">{report.icon}</div>
-                  <h3 className="font-semibold text-white mb-2">{report.title}</h3>
-                  <p className="text-blue-100 text-sm">Click to generate</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        );
+        return <AdminReports selectedLanguage={selectedLanguage} />;
       case 'settings':
         return (
           <div className="space-y-6 p-6">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-white">Configuration</h1>
-              <p className="text-slate-400">System settings and preferences</p>
+              <h1 className="text-3xl font-bold text-gray-900">Configuration</h1>
+              <p className="text-gray-500">System settings and preferences</p>
             </div>
-            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 text-slate-400">
+            <div className="bg-white border border-[#E8ECFF] rounded-lg p-6 text-gray-500">
               <p>Configuration panel coming soon...</p>
             </div>
           </div>

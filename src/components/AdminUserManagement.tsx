@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, FileDown, Filter, ChevronDown, Shield, Ban, CheckCircle2, Trash2, Eye, Plus, Check, X, Edit2, Phone, Clock } from 'lucide-react';
+import { Search, FileDown, Trash2, Eye, Plus, Check, X, Edit2, Users, UserCheck, UserMinus, UserX, Clock3, ClipboardList, Activity, Briefcase } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
@@ -79,6 +79,7 @@ interface AdminUserManagementProps {
 }
 
 export function AdminUserManagement({ selectedLanguage }: AdminUserManagementProps) {
+  void selectedLanguage;
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
   const [sortBy, setSortBy] = useState<'nickname' | 'joinDate' | 'activity'>('activity');
@@ -237,6 +238,26 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
     }
   };
 
+  const userStats = [
+    { label: 'Total Users', value: stats.total, icon: Users, iconClass: 'text-blue-600' },
+    { label: 'Active', value: stats.active, icon: UserCheck, iconClass: 'text-green-600' },
+    { label: 'Inactive', value: stats.inactive, icon: UserMinus, iconClass: 'text-yellow-600' },
+    { label: 'Suspended', value: stats.suspended, icon: UserX, iconClass: 'text-red-600' },
+  ];
+
+  const supportStats = [
+    { label: 'Waiting', value: supportRequests.filter(r => r.status === 'waiting').length, icon: Clock3, iconClass: 'text-yellow-600' },
+    { label: 'Assigned', value: supportRequests.filter(r => r.status === 'assigned').length, icon: ClipboardList, iconClass: 'text-blue-600' },
+    { label: 'Active', value: supportRequests.filter(r => r.status === 'active').length, icon: Activity, iconClass: 'text-green-600' },
+    { label: 'Resolved', value: supportRequests.filter(r => r.status === 'resolved').length, icon: Check, iconClass: 'text-slate-600' },
+  ];
+
+  const staffStats = [
+    { label: 'Total Staff', value: stats.staffTotal, icon: Briefcase, iconClass: 'text-blue-600' },
+    { label: 'Active', value: stats.staffActive, icon: UserCheck, iconClass: 'text-green-600' },
+    { label: 'Inactive', value: staff.filter(s => s.status === 'inactive').length, icon: UserMinus, iconClass: 'text-slate-600' },
+  ];
+
   return (
     <div className="space-y-6 p-6 bg-white min-h-screen">
       {/* Header */}
@@ -248,26 +269,25 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
       {/* Tabs */}
       <Tabs defaultValue="users" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3 bg-gray-100 border border-[#E8ECFF]">
-          <TabsTrigger value="users">👥 Users ({stats.total})</TabsTrigger>
-          <TabsTrigger value="support">📱 Support Requests ({supportRequests.length})</TabsTrigger>
-          <TabsTrigger value="staff">👨‍💼 Staff ({stats.staffTotal})</TabsTrigger>
+          <TabsTrigger value="users">Users ({stats.total})</TabsTrigger>
+          <TabsTrigger value="support">Support Requests ({supportRequests.length})</TabsTrigger>
+          <TabsTrigger value="staff">Staff ({stats.staffTotal})</TabsTrigger>
         </TabsList>
 
         {/* USERS TAB */}
         <TabsContent value="users" className="space-y-6">
           {/* Users Stats */}
           <div className="grid grid-cols-4 gap-4">
-            {[
-              { label: 'Total Users', value: stats.total, color: 'bg-blue-50 border-blue-200', icon: '👥', textColor: 'text-blue-900' },
-              { label: 'Active', value: stats.active, color: 'bg-green-50 border-green-200', icon: '✅', textColor: 'text-green-900' },
-              { label: 'Inactive', value: stats.inactive, color: 'bg-yellow-50 border-yellow-200', icon: '⏸️', textColor: 'text-yellow-900' },
-              { label: 'Suspended', value: stats.suspended, color: 'bg-red-50 border-red-200', icon: '🚫', textColor: 'text-red-900' },
-            ].map((stat, idx) => (
+            {userStats.map((stat, idx) => (
               <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-                <Card className={`p-4 ${stat.color} border`}>
-                  <div className="text-3xl mb-2">{stat.icon}</div>
-                  <div className={`text-sm font-medium ${stat.textColor}`}>{stat.label}</div>
-                  <div className={`text-2xl font-bold ${stat.textColor}`}>{stat.value}</div>
+                <Card className="p-4 bg-white border-[#E8ECFF]">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-600 mb-1">{stat.label}</div>
+                      <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                    </div>
+                    <stat.icon className={`w-6 h-6 ${stat.iconClass}`} />
+                  </div>
                 </Card>
               </motion.div>
             ))}
@@ -388,17 +408,16 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
         <TabsContent value="support" className="space-y-6">
           {/* Support Stats */}
           <div className="grid grid-cols-4 gap-4">
-            {[
-              { label: 'Waiting', value: supportRequests.filter(r => r.status === 'waiting').length, color: 'bg-yellow-50 border-yellow-200', icon: '⏳' },
-              { label: 'Assigned', value: supportRequests.filter(r => r.status === 'assigned').length, color: 'bg-blue-50 border-blue-200', icon: '📋' },
-              { label: 'Active', value: supportRequests.filter(r => r.status === 'active').length, color: 'bg-green-50 border-green-200', icon: '🟢' },
-              { label: 'Resolved', value: supportRequests.filter(r => r.status === 'resolved').length, color: 'bg-gray-50 border-gray-200', icon: '✅' },
-            ].map((stat, idx) => (
+            {supportStats.map((stat, idx) => (
               <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-                <Card className={`p-4 ${stat.color} border`}>
-                  <div className="text-3xl mb-2">{stat.icon}</div>
-                  <div className={`text-sm font-medium ${'text-' + stat.color.split('-')[1] + '-900'}`}>{stat.label}</div>
-                  <div className={`text-2xl font-bold ${'text-' + stat.color.split('-')[1] + '-900'}`}>{stat.value}</div>
+                <Card className="p-4 bg-white border-[#E8ECFF]">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-600 mb-1">{stat.label}</div>
+                      <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                    </div>
+                    <stat.icon className={`w-6 h-6 ${stat.iconClass}`} />
+                  </div>
                 </Card>
               </motion.div>
             ))}
@@ -421,7 +440,6 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
                 </TableHeader>
                 <TableBody>
                   {supportRequests.map((request) => {
-                    const user = users.find(u => u.id === request.userId);
                     const staffMember = staff.find(s => s.id === request.assignedStaffId);
                     return (
                       <motion.tr
@@ -522,16 +540,16 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
         <TabsContent value="staff" className="space-y-6">
           {/* Staff Stats */}
           <div className="grid grid-cols-3 gap-4">
-            {[
-              { label: 'Total Staff', value: stats.staffTotal, color: 'bg-blue-50 border-blue-200', icon: '👨‍💼' },
-              { label: 'Active', value: stats.staffActive, color: 'bg-green-50 border-green-200', icon: '✅' },
-              { label: 'Inactive', value: staff.filter(s => s.status === 'inactive').length, color: 'bg-gray-50 border-gray-200', icon: '⏸️' },
-            ].map((stat, idx) => (
+            {staffStats.map((stat, idx) => (
               <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-                <Card className={`p-4 ${stat.color} border`}>
-                  <div className="text-3xl mb-2">{stat.icon}</div>
-                  <div className={`text-sm font-medium ${'text-' + stat.color.split('-')[1] + '-900'}`}>{stat.label}</div>
-                  <div className={`text-2xl font-bold ${'text-' + stat.color.split('-')[1] + '-900'}`}>{stat.value}</div>
+                <Card className="p-4 bg-white border-[#E8ECFF]">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-600 mb-1">{stat.label}</div>
+                      <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                    </div>
+                    <stat.icon className={`w-6 h-6 ${stat.iconClass}`} />
+                  </div>
                 </Card>
               </motion.div>
             ))}
@@ -591,7 +609,7 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
                                   : 'bg-gray-50 text-gray-600 border-gray-200 cursor-pointer hover:bg-gray-100'
                               }
                             >
-                              {member.status === 'active' ? '🟢 Active' : '⚪ Inactive'}
+                              {member.status === 'active' ? 'Active' : 'Inactive'}
                             </Badge>
                           </Button>
                         </TableCell>
@@ -605,7 +623,7 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
                                 : 'bg-gray-50 text-gray-600 border-gray-200'
                             }
                           >
-                            {member.availability === 'available' ? '🟢 Available' : member.availability === 'busy' ? '🟡 Busy' : '⚫ Offline'}
+                            {member.availability === 'available' ? 'Available' : member.availability === 'busy' ? 'Busy' : 'Offline'}
                           </Badge>
                         </TableCell>
                         <TableCell>
