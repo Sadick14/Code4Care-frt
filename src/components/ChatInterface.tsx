@@ -1,13 +1,12 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send, Mic, Clock, User, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useApp } from "@/providers/AppProvider";
-import { ChatbotSession, ChatCitation, SafetyFlag, requestChatCompletion } from "@/services/chatbotService";
+import { ChatCitation, requestChatCompletion } from "@/services/chatbotService";
 import { logger } from "@/utils/logger";
 
 interface Message {
@@ -18,10 +17,8 @@ interface Message {
   options?: string[];
   mode?: 'chatbot' | 'consultant';
   citations?: ChatCitation[];
-  safetyFlags?: SafetyFlag[];
   languageDetected?: string;
   responseTimeMs?: number;
-  source?: 'api' | 'fallback';
 }
 
 interface ChatInterfaceProps {
@@ -29,14 +26,14 @@ interface ChatInterfaceProps {
   clearTrigger?: number;
 }
 
-const CHATBOT_AVATAR_SRC = "/chat2.png";
+const CHATBOT_AVATAR_SRC = "/chatbot.jpg";
 
 export function ChatInterface({ 
   onRequestFollowUpId, 
   clearTrigger = 0 
 }: ChatInterfaceProps) {
   const { t, i18n } = useTranslation();
-  const { nickname, botName, sessionId, consultantMode, sessionDuration, ageRange, genderIdentity, region } = useApp();
+  const { nickname, botName, sessionId, consultantMode, sessionDuration } = useApp();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -47,11 +44,6 @@ export function ChatInterface({
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
-  
-  const chatSession = useMemo(
-    () => new ChatbotSession(i18n.language, { ageRange, genderIdentity, region }),
-    [sessionId, i18n.language, ageRange, genderIdentity, region],
-  );
   const STORAGE_KEY = `room1221_chat_${sessionId}`;
 
   const formatMetadataValue = (value: unknown) => {
@@ -98,16 +90,9 @@ export function ChatInterface({
   };
 
   const rebuildMessagesForLanguage = (existingMessages: Message[]) => {
-    const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
-    const rebuiltSession = new ChatbotSession(languageCode, { ageRange, genderIdentity, region });
-
     return existingMessages.map((message, index) => {
-      if (message.sender === 'user') {
-        return message;
-      }
-
       // Keep the first bot greeting localized with localized quick replies.
-      if (index === 0 || message.options?.length) {
+      if (message.sender === 'bot' && (index === 0 || message.options?.length)) {
         return {
           ...message,
           ...getInitialMessage(),
@@ -117,17 +102,7 @@ export function ChatInterface({
         };
       }
 
-      // Rebuild historical bot responses against prior user prompt in selected language.
-      const previousUser = [...existingMessages.slice(0, index)].reverse().find((msg) => msg.sender === 'user');
-      if (!previousUser) {
-        return message;
-      }
-
-      return {
-        ...message,
-        text: rebuiltSession.getResponse(previousUser.text, message.mode === 'consultant'),
-        options: undefined,
-      };
+      return message;
     });
   };
 
@@ -199,23 +174,6 @@ export function ChatInterface({
     setInputValue("");
     setIsTyping(true);
 
-    const localFallbackText = chatSession.getResponse(outgoingMessage, consultantMode);
-    const fallbackBotId = (Date.now() + 1).toString();
-
-    setMessages(prev => [
-      ...prev,
-      {
-        id: fallbackBotId,
-        text: localFallbackText,
-        sender: 'bot',
-        timestamp: new Date(),
-        mode: consultantMode ? 'consultant' : 'chatbot',
-        citations: [],
-        safetyFlags: [],
-        source: 'fallback',
-      },
-    ]);
-
     try {
       const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
       const response = await requestChatCompletion({
@@ -227,26 +185,23 @@ export function ChatInterface({
       const answerText = response.answer.trim();
 
       if (answerText) {
-        setMessages(prev => prev.map((message) => {
-          if (message.id !== fallbackBotId) {
-            return message;
-          }
+        const botMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          text: answerText,
+          sender: 'bot',
+          timestamp: new Date(),
+          mode: consultantMode ? 'consultant' : 'chatbot',
+          citations: response.citations,
+          languageDetected: response.language_detected,
+          responseTimeMs: response.response_time_ms,
+        };
 
-          return {
-            ...message,
-            text: answerText,
-            citations: response.citations,
-            safetyFlags: response.safety_flags,
-            languageDetected: response.language_detected,
-            responseTimeMs: response.response_time_ms,
-            source: 'api',
-          };
-        }));
+        setMessages(prev => [...prev, botMsg]);
       } else {
-        logger.warn('Chat API returned an empty answer, using local fallback.', response);
+        logger.warn('Chat API returned an empty answer.', response);
       }
     } catch (error) {
-      logger.error('Chat API failed, keeping local fallback response:', error);
+      logger.error('Chat API failed:', error);
     } finally {
       setIsTyping(false);
     }
@@ -307,21 +262,6 @@ export function ChatInterface({
 
                   {message.sender === 'bot' && (
                     <div className="mt-3 w-full space-y-2">
-                      {message.safetyFlags && message.safetyFlags.length > 0 && (
-                        <Alert variant="destructive" className="rounded-2xl border-red-200 bg-red-50/80 text-red-950 shadow-sm">
-                          <AlertTitle className="text-xs font-semibold uppercase tracking-[0.18em] text-red-700">
-                            Safety flag
-                          </AlertTitle>
-                          <AlertDescription className="text-xs text-red-900/90">
-                            {message.safetyFlags.map((flag, index) => (
-                              <div key={`${message.id}-flag-${index}`} className="mt-1 first:mt-0">
-                                {formatMetadataValue(flag)}
-                              </div>
-                            ))}
-                          </AlertDescription>
-                        </Alert>
-                      )}
-
                       {message.citations && message.citations.length > 0 && (
                         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
                           <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
@@ -340,12 +280,11 @@ export function ChatInterface({
                         </div>
                       )}
 
-                      {(message.responseTimeMs !== undefined || message.languageDetected || message.source) && (
+                      {(message.responseTimeMs !== undefined || message.languageDetected) && (
                         <p className="px-1 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400">
                           {message.responseTimeMs !== undefined && `Answered in ${message.responseTimeMs} ms`}
                           {message.responseTimeMs !== undefined && message.languageDetected ? ' • ' : ''}
                           {message.languageDetected ? `Language: ${message.languageDetected}` : ''}
-                          {message.source === 'fallback' ? `${message.responseTimeMs !== undefined || message.languageDetected ? ' • ' : ''}Fallback used` : ''}
                         </p>
                       )}
                     </div>

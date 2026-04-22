@@ -86,7 +86,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
+    <div className="flex h-[100dvh] lg:h-screen overflow-hidden bg-white">
       <Toaster position="top-center" toastOptions={{ className: 'rounded-2xl' }} />
       
       {/* Desktop Sidebar */}
@@ -113,7 +113,7 @@ function AppContent() {
       </Sheet>
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 h-screen overflow-hidden">
+      <div className="flex flex-col flex-1 h-[100dvh] lg:h-screen overflow-hidden">
         <Header 
           onMenuClick={() => setSidebarOpen(true)}
           onPanicClick={() => setShowPanicScreen(true)}
