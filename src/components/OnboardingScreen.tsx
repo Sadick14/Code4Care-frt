@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
-import { Heart, Shield, MessageCircle, Sparkles, ChevronRight, Bot } from "lucide-react";
+import { Heart, Shield, MessageCircle, Sparkles, ChevronRight, ChevronLeft, Bot } from "lucide-react";
 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -13,18 +13,14 @@ interface OnboardingScreenProps {
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const { t } = useTranslation();
-  const [currentPage, setCurrentPage] = useState(0);
+  // Welcome screen is intentionally disabled for now.
+  const [currentPage, setCurrentPage] = useState(1);
   const [botName, setBotName] = useState("");
   const [ageRange, setAgeRange] = useState("");
   const [genderIdentity, setGenderIdentity] = useState("");
   const [region, setRegion] = useState("");
 
   const handleContinue = () => {
-    if (currentPage === 0) {
-      setCurrentPage(1);
-      return;
-    }
-
     if (currentPage === 1) {
       setCurrentPage(2);
       return;
@@ -51,6 +47,12 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   const handleSkip = () => {
     setBotName(t("onboarding.page2.defaultName"));
     setCurrentPage(3);
+  };
+
+  const handleBack = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
   };
 
   const ageOptions = [
@@ -122,7 +124,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
                 <div className="absolute -top-4 -left-4 sm:-top-6 sm:-left-6 w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-blue-100/70" />
                 <div className="absolute -bottom-5 -right-5 sm:-bottom-8 sm:-right-8 w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-emerald-100/70" />
                 <img
-                  src="/chat2.png"
+                  src="/chatbot.jpg"
                   alt={t("onboarding.welcome.imageAlt", "Welcome illustration")}
                   className="absolute z-0 left-1/2 -translate-x-1/2 -bottom-6 sm:-bottom-10 w-[min(85vw,24rem)] sm:w-[30rem] h-auto max-h-[14rem] sm:max-h-[19rem] object-contain drop-shadow-2xl"
                 />
@@ -143,6 +145,11 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             exit={{ opacity: 0, x: -50 }}
             className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none bg-white rounded-3xl shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
+            {/* <Button onClick={handleBack} variant="ghost" className="mb-4 h-10 rounded-xl text-gray-600 hover:text-gray-900 w-fit px-3">
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              {t("common.back", "Back")}
+            </Button> */}
+
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
                 <Shield className="w-8 h-8 text-white" />
@@ -178,6 +185,11 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             exit={{ opacity: 0, scale: 0.9 }}
             className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none bg-white rounded-3xl shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
+            <Button onClick={handleBack} variant="ghost" className="mb-4 h-10 rounded-xl text-gray-600 hover:text-gray-900 w-fit px-3">
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              {t("common.back", "Back")}
+            </Button>
+
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-100 relative">
                 <Bot className="w-8 h-8 text-white" />
@@ -217,6 +229,11 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             exit={{ opacity: 0, scale: 0.9 }}
             className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none bg-white rounded-3xl shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
+            <Button onClick={handleBack} variant="ghost" className="mb-4 h-10 rounded-xl text-gray-600 hover:text-gray-900 w-fit px-3">
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              {t("common.back", "Back")}
+            </Button>
+
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
                 <Sparkles className="w-8 h-8 text-white" />

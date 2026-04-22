@@ -15,7 +15,7 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
-const CHATBOT_AVATAR_SRC = "/chat2.png";
+const CHATBOT_AVATAR_SRC = "/chatbot.jpg";
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   currentSection, 

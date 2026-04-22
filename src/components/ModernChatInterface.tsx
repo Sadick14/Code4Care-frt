@@ -17,7 +17,7 @@ interface ModernChatInterfaceProps {
   onMessagesChange: (messages: Message[]) => void;
 }
 
-const CHATBOT_AVATAR_SRC = "/chat2.png";
+const CHATBOT_AVATAR_SRC = "/chatbot.jpg";
 
 export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: ModernChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
