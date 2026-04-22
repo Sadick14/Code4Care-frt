@@ -1,3 +1,9 @@
 {
-  "outputDirectory": "build"
+  "outputDirectory": "build",
+  "rewrites": [
+    {
+      "source": "/api/chat",
+      "destination": "https://code4care-backend-production.up.railway.app/v1/chat"
+    }
+  ]
 }

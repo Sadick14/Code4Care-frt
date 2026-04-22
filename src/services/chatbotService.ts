@@ -20,7 +20,7 @@ export interface ChatApiRequest {
   session_id: string;
 }
 
-export interface ChatCitation {
+export type ChatCitation = string | {
   title?: string;
   source?: string;
   excerpt?: string;
@@ -28,15 +28,15 @@ export interface ChatCitation {
   url?: string;
   page?: string | number;
   [key: string]: unknown;
-}
+};
 
-export interface SafetyFlag {
+export type SafetyFlag = string | {
   label?: string;
   reason?: string;
   severity?: string;
   message?: string;
   [key: string]: unknown;
-}
+};
 
 export interface ChatApiResponse {
   answer: string;
@@ -46,14 +46,20 @@ export interface ChatApiResponse {
   response_time_ms: number;
 }
 
-const CHAT_API_BASE_URL =
+const CHAT_API_BASE_URL = (
   import.meta.env.VITE_CHAT_API_BASE_URL ||
   import.meta.env.VITE_API_BASE_URL ||
-  'https://code4care-backend-production.up.railway.app';
+  ''
+).trim();
 
-const CHAT_ENDPOINTS = ['/v1/chat'];
+const DEFAULT_CHAT_ENDPOINT = CHAT_API_BASE_URL ? '/v1/chat' : '/api/chat';
+const CHAT_ENDPOINTS = [import.meta.env.VITE_CHAT_API_ENDPOINT || DEFAULT_CHAT_ENDPOINT];
 
 function buildChatUrl(path: string) {
+  if (!CHAT_API_BASE_URL) {
+    return path;
+  }
+
   return new URL(path, CHAT_API_BASE_URL).toString();
 }
 

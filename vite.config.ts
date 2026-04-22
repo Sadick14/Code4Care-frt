@@ -21,6 +21,14 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    proxy: {
+      '/api/chat': {
+        target: 'https://code4care-backend-production.up.railway.app',
+        changeOrigin: true,
+        secure: true,
+        rewrite: () => '/v1/chat',
+      },
+    },
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'motion/react'],
