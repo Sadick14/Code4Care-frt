@@ -3,6 +3,8 @@ import { Send, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { motion, AnimatePresence } from "motion/react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   id: string;
@@ -175,7 +177,9 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
                       boxShadow: message.sender === 'ai' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
                     }}
                   >
-                    <p className="text-sm sm:text-base whitespace-pre-wrap break-words">{message.text}</p>
+                    <div className="text-sm sm:text-base whitespace-pre-wrap break-words chat-markdown">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+                    </div>
                     <p className={`text-xs mt-1.5 ${message.sender === 'user' ? 'text-green-100' : 'text-gray-400'}`}>
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>

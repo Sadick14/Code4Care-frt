@@ -225,3 +225,72 @@ html {
 .overflow-y-auto {
   scroll-padding-bottom: 20px;
 }
+
+/* Markdown styling for chat messages */
+.chat-markdown {
+  color: inherit;
+}
+.chat-markdown p {
+  margin: 0 0 0.5rem;
+}
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3,
+.chat-markdown h4 {
+  margin: 0.5rem 0;
+  font-weight: 600;
+}
+.chat-markdown strong,
+.chat-markdown b {
+  font-weight: 700;
+}
+.chat-markdown em,
+.chat-markdown i {
+  font-style: italic;
+}
+.chat-markdown ul,
+.chat-markdown ol {
+  margin: 0.25rem 0 0.5rem 1rem;
+  padding-left: 1rem;
+}
+.chat-markdown li {
+  margin: 0.25rem 0;
+}
+.chat-markdown a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+.chat-markdown code {
+  background: rgba(15,23,42,0.06);
+  padding: 0.08rem 0.28rem;
+  border-radius: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', monospace;
+  font-size: .875rem;
+}
+.chat-markdown pre {
+  background: #0b1220;
+  color: #e6edf3;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', monospace;
+  font-size: .875rem;
+  margin: 0.5rem 0;
+}
+.chat-markdown blockquote {
+  border-left: 4px solid rgba(14,165,233,0.16);
+  padding: 0.5rem 0.75rem;
+  margin: 0.25rem 0;
+  background: rgba(14,165,233,0.03);
+  border-radius: 0.25rem;
+  color: #475569;
+}
+
+/* Dark mode adjustments */
+.dark .chat-markdown pre {
+  background: #0f1724;
+  color: #e6eef8;
+}
+.dark .chat-markdown code {
+  background: rgba(255,255,255,0.04);
+}

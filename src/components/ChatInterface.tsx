@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Mic, Clock, User, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -257,7 +259,9 @@ export function ChatInterface({
                         ? 'bg-blue-600 text-white rounded-tr-none' 
                         : (message.mode === 'consultant' ? 'bg-emerald-50 text-emerald-900 border border-emerald-100 rounded-tl-none' : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none')
                   }`}>
-                    <p className="text-sm leading-relaxed">{message.text}</p>
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap chat-markdown">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+                    </div>
                   </div>
 
                   {message.sender === 'bot' && (
