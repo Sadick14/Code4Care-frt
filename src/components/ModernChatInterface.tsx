@@ -5,6 +5,7 @@ import { Textarea } from "./ui/textarea";
 import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import fetchSpeechAudio from '@/services/ttsService';
 
 interface Message {
   id: string;
@@ -78,6 +79,40 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
 
   const saveMessages = () => {
     localStorage.setItem(`chat_${sessionId}`, JSON.stringify(messages));
+  };
+
+  const langMap: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
+
+  const speakText = (text: string, langCode?: string) => {
+    const useRemote = import.meta.env.VITE_USE_REMOTE_TTS === 'true';
+    if (useRemote) {
+      fetchSpeechAudio(text, import.meta.env.VITE_TTS_VOICE || 'alloy')
+        .then((url) => {
+          const audio = new Audio(url);
+          audio.play().catch(() => {});
+        })
+        .catch(() => {
+          try {
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = langMap[langCode] || 'en-US';
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utter);
+          } catch (e) {
+            // ignore
+          }
+        });
+      return;
+    }
+
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = langMap[langCode] || langMap['en'] || 'en-US';
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    } catch (err) {
+      // noop for now
+    }
   };
 
   const handleSend = async () => {
@@ -180,9 +215,23 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
                     <div className="text-sm sm:text-base whitespace-pre-wrap break-words chat-markdown">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
                     </div>
-                    <p className={`text-xs mt-1.5 ${message.sender === 'user' ? 'text-green-100' : 'text-gray-400'}`}>
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className={`text-xs mt-1.5 ${message.sender === 'user' ? 'text-green-100' : 'text-gray-400'}`}>
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      {message.sender === 'ai' && (
+                        <button
+                          onClick={() => speakText(message.text)}
+                          className="ml-2 p-1 rounded-md hover:bg-slate-100 transition-colors"
+                          aria-label="Play response audio"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                            <path d="M19 5a4 4 0 010 14" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {message.sender === 'user' && (
@@ -238,7 +287,7 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
                 onChange={handleTextareaChange}
                 onKeyPress={handleKeyPress}
                 placeholder="Type your message..."
-                className="resize-none min-h-[44px] max-h-[150px] pr-4 text-sm sm:text-base"
+                className="resize-none min-h-[44px] max-h-[150px] pr-4 text-sm sm:text-base rounded-full shadow-sm border border-slate-100 px-3"
                 rows={1}
               />
             </div>

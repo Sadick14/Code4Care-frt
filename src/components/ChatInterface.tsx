@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import fetchSpeechAudio from '@/services/ttsService';
 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -75,6 +76,43 @@ export function ChatInterface({
     }
 
     return 'Additional details available';
+  };
+
+  const langMap: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
+
+  const speakText = (text: string, langCode?: string) => {
+    // If remote TTS proxy is enabled, fetch audio and play it (better quality)
+    const useRemote = import.meta.env.VITE_USE_REMOTE_TTS === 'true';
+    if (useRemote) {
+      fetchSpeechAudio(text, import.meta.env.VITE_TTS_VOICE || 'alloy')
+        .then((url) => {
+          const audio = new Audio(url);
+          audio.play().catch((e) => logger.error('Audio play failed', e));
+        })
+        .catch((err) => {
+          logger.error('Remote TTS failed, falling back to SpeechSynthesis', err);
+          // fallback
+          try {
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = langMap[langCode || chatLanguage] || 'en-US';
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utter);
+          } catch (e) {
+            logger.error('Speech synthesis failed', e);
+          }
+        });
+      return;
+    }
+
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = langMap[langCode || chatLanguage] || (langCode || chatLanguage) || 'en-US';
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    } catch (err) {
+      logger.error('Speech synthesis failed', err);
+    }
   };
 
   const getInitialMessage = () => {
@@ -266,24 +304,6 @@ export function ChatInterface({
 
                   {message.sender === 'bot' && (
                     <div className="mt-3 w-full space-y-2">
-                      {message.citations && message.citations.length > 0 && (
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
-                          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
-                            Citations
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {message.citations.map((citation, index) => (
-                              <span
-                                key={`${message.id}-citation-${index}`}
-                                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600"
-                              >
-                                {formatMetadataValue(citation)}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
                       {(message.responseTimeMs !== undefined || message.languageDetected) && (
                         <p className="px-1 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400">
                           {message.responseTimeMs !== undefined && `Answered in ${message.responseTimeMs} ms`}
@@ -302,6 +322,16 @@ export function ChatInterface({
                       <span className="text-[10px] text-slate-400 font-medium">
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
+                      <button
+                        onClick={() => speakText(message.text, message.languageDetected || chatLanguage)}
+                        className="ml-2 p-1 rounded-md hover:bg-slate-100 transition-colors"
+                        aria-label="Play response audio"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                          <path d="M19 5a4 4 0 010 14" />
+                        </svg>
+                      </button>
                   </div>
 
                   {message.options && (
@@ -352,11 +382,11 @@ export function ChatInterface({
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder={t('chat.placeholder')}
-              className="h-14 rounded-2xl pl-6 pr-14 bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-400 transition-all text-sm font-medium"
+              className="h-12 rounded-full pl-5 pr-14 bg-white border border-slate-100 shadow-sm focus:bg-white focus:border-blue-400 transition-all text-sm font-medium"
             />
             <button
               onClick={() => { if(!recognitionRef.current) return; isListening ? recognitionRef.current.stop() : (recognitionRef.current.start(), setIsListening(true)); }}
-              className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-colors ${isListening ? 'bg-red-100 text-red-600' : 'text-slate-400 hover:text-blue-600'}`}
+              className={`absolute right-16 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600' : 'text-slate-400 hover:text-blue-600'}`}
             >
               <Mic className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
             </button>
@@ -364,9 +394,9 @@ export function ChatInterface({
           <Button
             onClick={() => { handleSend(); }}
             disabled={!inputValue.trim()}
-            className="h-14 w-14 rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-90 disabled:opacity-50"
+            className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center"
           >
-            <Send className="w-6 h-6 text-white" />
+            <Send className="w-5 h-5 text-white" />
           </Button>
         </div>
         
