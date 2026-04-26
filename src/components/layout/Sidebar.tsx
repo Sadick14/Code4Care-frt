@@ -48,9 +48,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-sidebar to-sidebar-accent/30 text-sidebar-foreground border-r border-sidebar-border shadow-xl overflow-hidden">
-      {/* Premium Header */}
-      <div className="relative isolate p-6 overflow-hidden">
+    <div className="flex flex-col h-full bg-gradient-to-b from-sidebar to-sidebar-accent/30 text-sidebar-foreground border-r border-sidebar-border shadow-xl overflow-y-auto">
+      {/* Premium Header (fixed height) */}
+      <div className="relative isolate py-4 px-6 overflow-hidden flex-none h-28">
         <div className="absolute inset-0 bg-[#0048ff]" />
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
         
