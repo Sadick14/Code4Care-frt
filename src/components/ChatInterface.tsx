@@ -11,6 +11,7 @@ import { Input } from "./ui/input";
 import { useApp } from "@/providers/AppProvider";
 import { ChatCitation, requestChatCompletion } from "@/services/chatbotService";
 import { logger } from "@/utils/logger";
+import { TypewriterMessage } from "./TypewriterMessage";
 
 interface Message {
   id: string;
@@ -44,39 +45,11 @@ export function ChatInterface({
   const [isTyping, setIsTyping] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [chatLanguage, setChatLanguage] = useState(i18n.resolvedLanguage?.split('-')[0] || i18n.language || 'en');
+  const [completedBotMessages, setCompletedBotMessages] = useState<Set<string>>(new Set());
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const STORAGE_KEY = `room1221_chat_${sessionId}`;
-
-  const formatMetadataValue = (value: unknown) => {
-    if (typeof value === 'string') {
-      return value;
-    }
-
-    if (typeof value === 'number' || typeof value === 'boolean') {
-      return String(value);
-    }
-
-    if (value && typeof value === 'object') {
-      const record = value as Record<string, unknown>;
-      const parts = [record.title, record.source, record.label, record.reason, record.message, record.excerpt, record.text, record.url, record.page]
-        .filter((part) => typeof part === 'string' && part.trim().length > 0)
-        .map((part) => String(part).trim());
-
-      if (parts.length > 0) {
-        return parts.join(' • ');
-      }
-
-      try {
-        return JSON.stringify(value);
-      } catch {
-        return 'Additional details available';
-      }
-    }
-
-    return 'Additional details available';
-  };
 
   const langMap: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
 
@@ -297,9 +270,20 @@ export function ChatInterface({
                         ? 'bg-blue-600 text-white rounded-tr-none' 
                         : (message.mode === 'consultant' ? 'bg-emerald-50 text-emerald-900 border border-emerald-100 rounded-tl-none' : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none')
                   }`}>
-                    <div className="text-sm leading-relaxed whitespace-pre-wrap chat-markdown">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
-                    </div>
+                    {message.sender === 'bot' ? (
+                      <TypewriterMessage
+                        text={message.text}
+                        speed={15}
+                        isCompleted={completedBotMessages.has(message.id)}
+                        onComplete={() => {
+                          setCompletedBotMessages(prev => new Set([...prev, message.id]));
+                        }}
+                      />
+                    ) : (
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap chat-markdown">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+                      </div>
+                    )}
                   </div>
 
                   {message.sender === 'bot' && (
