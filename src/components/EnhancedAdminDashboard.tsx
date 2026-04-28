@@ -67,12 +67,13 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
       performance: 'Performance',
       metrics: 'Key Metrics',
       activeUsers: 'Active Users',
-      sessions: 'Sessions',
+      engagements: 'Engagements',
       avgTime: 'Avg Engagement Time',
       satisfaction: 'Satisfaction',
       growth: 'User Growth',
       retention: 'Day-7 Retention',
       demographicsTitle: 'Demographics by Age',
+      demographicsRegionTitle: 'Demographics by Region',
       trendsTitle: 'Engagement Trends',
       funnelTitle: 'User Journey Funnel',
       topicsTitle: 'Topic Engagement',
@@ -95,17 +96,11 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
   const latestTrend = analyticsData.trends?.[analyticsData.trends.length - 1];
   const kpis = [
     { label: lang.activeUsers, value: analyticsData.demographics.totalActiveUsers, icon: Users, color: 'from-blue-500 to-blue-600' },
-    { label: lang.sessions, value: latestTrend?.sessions || 0, icon: BarChart3, color: 'from-purple-500 to-purple-600' },
-    { label: lang.growth, value: analyticsData.demographics.newUsersToday, icon: TrendingUp, color: 'from-green-500 to-green-600' },
+    { label: lang.engagements, value: latestTrend?.engagements || 0, icon: BarChart3, color: 'from-purple-500 to-purple-600' },
     { label: lang.satisfaction, value: latestTrend?.satisfactionAverage.toFixed(1) || '0', icon: Heart, color: 'from-red-500 to-red-600' },
   ];
 
-  // Engagement data
-  const engagementByTopic = analyticsData.topics.map(t => ({
-    name: t.topic,
-    inquiries: t.inquiries,
-    satisfaction: t.satisfactionScore,
-  }));
+  // (engagement details removed for simplicity)
 
   // Safety metrics
   const safetyMetrics = [
@@ -156,7 +151,7 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
         </motion.div>
 
         {/* KPI Cards */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-4 gap-4 mb-8">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-3 gap-4 mb-8">
           {kpis.map((kpi, idx) => {
             const Icon = kpi.icon;
             return (
@@ -179,37 +174,51 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-100 border border-[#E8ECFF]">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-100 border border-[#E8ECFF]">
             <TabsTrigger value="overview">{lang.overview}</TabsTrigger>
-            <TabsTrigger value="engagement">{lang.engagement}</TabsTrigger>
             <TabsTrigger value="safety">{lang.safety}</TabsTrigger>
             <TabsTrigger value="performance">{lang.performance}</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Demographics */}
-              <Card className="p-6 bg-white border-[#E8ECFF]">
-                <h3 className="font-semibold text-gray-900 mb-4">{lang.demographicsTitle}</h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={Object.entries(analyticsData.demographics.ageRange).map(([k, v]) => ({ age: k, value: v }))}
-                      dataKey="value"
-                      nameKey="age"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                    >
-                      {Object.entries(analyticsData.demographics.ageRange).map((_, idx) => (
-                        <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
+            <div className="grid grid-cols-1 gap-6">
+              {/* Demographics - Age & Region */}
+              <div className="grid grid-cols-2 gap-6">
+                <Card className="p-6 bg-white border-[#E8ECFF]">
+                  <h3 className="font-semibold text-gray-900 mb-4">{lang.demographicsTitle}</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={Object.entries(analyticsData.demographics.ageRange).map(([k, v]) => ({ age: k, value: v }))}
+                        dataKey="value"
+                        nameKey="age"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                      >
+                        {Object.entries(analyticsData.demographics.ageRange).map((_, idx) => (
+                          <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Card>
+
+                <Card className="p-6 bg-white border-[#E8ECFF]">
+                  <h3 className="font-semibold text-gray-900 mb-4">{lang.demographicsRegionTitle}</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={Object.entries(analyticsData.demographics.regions).map(([region, value]) => ({ region, value }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
+                      <XAxis dataKey="region" stroke="#9CA3AF" style={{ fontSize: 11 }} angle={-45} textAnchor="end" height={70} />
+                      <YAxis stroke="#9CA3AF" style={{ fontSize: 12 }} />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#06B6D4" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Card>
+              </div>
 
               {/* Trends */}
               <Card className="p-6 bg-white border-[#E8ECFF]">
@@ -220,7 +229,7 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
                     <XAxis dataKey="timestamp" stroke="#9CA3AF" style={{ fontSize: 12 }} />
                     <YAxis stroke="#9CA3AF" style={{ fontSize: 12 }} />
                     <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-                    <Line type="monotone" dataKey="value" stroke="#0048ff" strokeWidth={2} name="Sessions" />
+                    <Line type="monotone" dataKey="value" stroke="#0048ff" strokeWidth={2} name="Engagements" />
                   </LineChart>
                 </ResponsiveContainer>
               </Card>
@@ -241,54 +250,7 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
             </Card>
           </TabsContent>
 
-          {/* Engagement Tab */}
-          <TabsContent value="engagement" className="space-y-6">
-            <Card className="p-6 bg-white border-[#E8ECFF]">
-              <h3 className="font-semibold text-gray-900 mb-4">{lang.topicsTitle}</h3>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={engagementByTopic}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-                  <XAxis dataKey="name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} />
-                  <YAxis stroke="#9CA3AF" />
-                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-                  <Legend />
-                  <Bar dataKey="inquiries" fill="#0048ff" name="Inquiries" />
-                  <Bar dataKey="satisfaction" fill="#3b82f6" name="Satisfaction" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-
-            {/* Content Performance Table */}
-            <Card className="p-6 bg-white border-[#E8ECFF]">
-              <h3 className="font-semibold text-gray-900 mb-4">{lang.contentTitle}</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#E8ECFF]">
-                      <th className="text-left py-2 px-4 text-gray-600 font-semibold">{lang.moduleName}</th>
-                      <th className="text-left py-2 px-4 text-gray-600 font-semibold">{lang.timesStarted}</th>
-                      <th className="text-left py-2 px-4 text-gray-600 font-semibold">{lang.completed}</th>
-                      <th className="text-left py-2 px-4 text-gray-600 font-semibold">{lang.completionRate}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {analyticsData.storyModules.map((module, idx) => (
-                      <tr key={idx} className="border-b border-[#E8ECFF] hover:bg-gray-50">
-                        <td className="py-3 px-4 text-gray-900">{module.moduleName || 'Module'}</td>
-                        <td className="py-3 px-4 text-gray-600">{module.timesStarted}</td>
-                        <td className="py-3 px-4 text-gray-600">{module.timesCompleted}</td>
-                        <td className="py-3 px-4">
-                          <Badge className="bg-blue-50 text-blue-600 border-blue-200">
-                            {Math.round((module.timesCompleted / module.timesStarted) * 100)}%
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </TabsContent>
+          {/* Engagement removed to simplify dashboard. */}
 
           {/* Safety Tab */}
           <TabsContent value="safety" className="space-y-6">

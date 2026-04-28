@@ -26,6 +26,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  ComposedChart,
 } from 'recharts';
 
 import { Button } from './ui/button';
@@ -37,8 +38,7 @@ interface AdminReportsProps {
   selectedLanguage: string;
 }
 
-type ReportType = 'activity' | 'demographics' | 'safety';
-type PeriodType = 'today' | 'week' | 'month';
+type ReportType = 'overview' | 'activity' | 'demographics' | 'safety' | 'performance' | 'full';
 
 const CHART_COLORS = ['#0048ff', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'];
 
@@ -78,19 +78,36 @@ function toCsv(rows: Record<string, string | number>[]): string {
 
 export function AdminReports({ selectedLanguage }: AdminReportsProps) {
   void selectedLanguage;
-  const [period, setPeriod] = useState<PeriodType>('week');
-  const [reportType, setReportType] = useState<ReportType>('activity');
+  const currentYear = new Date().getFullYear();
+  const [startYear, setStartYear] = useState(currentYear - 2);
+  const [endYear, setEndYear] = useState(currentYear);
+  const [reportType, setReportType] = useState<ReportType>('overview');
 
-  const analyticsData = useMemo(
-    () => AnalyticsService.generateAnalyticsSummary(period),
-    [period]
-  );
+  const analyticsData = useMemo(() => AnalyticsService.generateAnalyticsSummary('month'), []);
+  const reportRangeLabel = `${startYear} - ${endYear}`;
+  const includedSections = useMemo(() => {
+    if (reportType === 'full') {
+      return ['Overview', 'Activity', 'Demographics', 'Safety', 'Performance', 'Insights'];
+    }
+
+    if (reportType === 'overview') {
+      return ['Overview', 'Activity', 'Demographics', 'Safety', 'Performance'];
+    }
+
+    return [reportType.charAt(0).toUpperCase() + reportType.slice(1)];
+  }, [reportType]);
 
   const reportCards = [
     {
+      id: 'overview' as const,
+      title: 'Overview Report',
+      description: 'High-level snapshot of the full admin system.',
+      icon: BarChart3,
+    },
+    {
       id: 'activity' as const,
       title: 'Activity Report',
-      description: 'Sessions, messages, growth, and engagement quality.',
+      description: 'Engagements, messages, growth, and engagement quality.',
       icon: Activity,
     },
     {
@@ -105,21 +122,42 @@ export function AdminReports({ selectedLanguage }: AdminReportsProps) {
       description: 'Risk alerts, panic exits, and interventions overview.',
       icon: ShieldAlert,
     },
+    {
+      id: 'performance' as const,
+      title: 'Performance Report',
+      description: 'Response time, uptime, and backend stability.',
+      icon: TrendingUp,
+    },
+    {
+      id: 'full' as const,
+      title: 'Full Data Report',
+      description: 'Complete export package for the selected year range.',
+      icon: FileText,
+    },
   ];
 
   const kpis = useMemo(() => {
-    if (reportType === 'activity') {
-      const totalSessions = analyticsData.trends.reduce((sum, item) => sum + item.sessions, 0);
-      const totalMessages = analyticsData.trends.reduce((sum, item) => sum + item.totalMessages, 0);
-      const avgSatisfaction = analyticsData.trends.length
-        ? (
-            analyticsData.trends.reduce((sum, item) => sum + item.satisfactionAverage, 0) /
-            analyticsData.trends.length
-          ).toFixed(1)
-        : '0.0';
+    const totalEngagements = analyticsData.trends.reduce((sum, item) => sum + item.engagements, 0);
+    const totalMessages = analyticsData.trends.reduce((sum, item) => sum + item.totalMessages, 0);
+    const avgSatisfaction = analyticsData.trends.length
+      ? (
+          analyticsData.trends.reduce((sum, item) => sum + item.satisfactionAverage, 0) /
+          analyticsData.trends.length
+        ).toFixed(1)
+      : '0.0';
 
+    if (reportType === 'overview' || reportType === 'full') {
       return [
-        { label: 'Total Sessions', value: totalSessions, icon: Activity, color: 'text-blue-600' },
+        { label: 'Active Users', value: analyticsData.demographics.totalActiveUsers, icon: Users, color: 'text-blue-600' },
+        { label: 'Total Engagements', value: totalEngagements, icon: Activity, color: 'text-purple-600' },
+        { label: 'System Uptime', value: `${analyticsData.performance.systemUptime}%`, icon: TrendingUp, color: 'text-green-600' },
+        { label: 'Safety Alerts', value: analyticsData.safety.panicExitsTotal + analyticsData.safety.crisisInterventionsTriggered, icon: ShieldAlert, color: 'text-red-600' },
+      ];
+    }
+
+    if (reportType === 'activity') {
+      return [
+        { label: 'Total Engagements', value: totalEngagements, icon: Activity, color: 'text-blue-600' },
         { label: 'Total Messages', value: totalMessages, icon: MessageSquare, color: 'text-purple-600' },
         { label: 'New Users Today', value: analyticsData.demographics.newUsersToday, icon: TrendingUp, color: 'text-green-600' },
         { label: 'Avg Satisfaction', value: `${avgSatisfaction}/5`, icon: HeartPulse, color: 'text-pink-600' },
@@ -135,6 +173,15 @@ export function AdminReports({ selectedLanguage }: AdminReportsProps) {
       ];
     }
 
+    if (reportType === 'performance') {
+      return [
+        { label: 'Response Time', value: `${analyticsData.performance.avgResponseTime} ms`, icon: TrendingUp, color: 'text-blue-600' },
+        { label: 'System Uptime', value: `${analyticsData.performance.systemUptime}%`, icon: Activity, color: 'text-green-600' },
+        { label: 'Success Rate', value: `${analyticsData.performance.messageProcessingSuccess}%`, icon: MessageSquare, color: 'text-purple-600' },
+        { label: 'Errors', value: analyticsData.performance.crashesOrErrors, icon: TriangleAlert, color: 'text-red-600' },
+      ];
+    }
+
     return [
       { label: 'Panic Exits', value: analyticsData.safety.panicExitsTotal, icon: TriangleAlert, color: 'text-yellow-600' },
       { label: 'Crisis Interventions', value: analyticsData.safety.crisisInterventionsTriggered, icon: ShieldAlert, color: 'text-red-600' },
@@ -144,10 +191,19 @@ export function AdminReports({ selectedLanguage }: AdminReportsProps) {
   }, [analyticsData, reportType]);
 
   const tableRows = useMemo(() => {
+    const totalEngagements = analyticsData.trends.reduce((sum, item) => sum + item.engagements, 0);
+    const totalMessages = analyticsData.trends.reduce((sum, item) => sum + item.totalMessages, 0);
+    const avgSatisfaction = analyticsData.trends.length
+      ? (
+          analyticsData.trends.reduce((sum, item) => sum + item.satisfactionAverage, 0) /
+          analyticsData.trends.length
+        ).toFixed(1)
+      : '0.0';
+
     if (reportType === 'activity') {
       return analyticsData.trends.map((item) => ({
         Date: item.date,
-        Sessions: item.sessions,
+        Engagements: item.engagements,
         Users: item.uniqueUsers,
         Messages: item.totalMessages,
         Satisfaction: item.satisfactionAverage,
@@ -155,11 +211,40 @@ export function AdminReports({ selectedLanguage }: AdminReportsProps) {
     }
 
     if (reportType === 'demographics') {
-      return Object.entries(analyticsData.demographics.ageRange).map(([ageRange, total]) => ({
-        Segment: ageRange,
+      const ageData = Object.entries(analyticsData.demographics.ageRange).map(([ageRange, total]) => ({
+        'Type': 'Age',
+        'Category': ageRange,
         Users: total,
         Percentage: `${Math.round((total / analyticsData.demographics.totalActiveUsers) * 100)}%`,
       }));
+      const regionData = Object.entries(analyticsData.demographics.regions).map(([region, total]) => ({
+        'Type': 'Region',
+        'Category': region,
+        Users: total,
+        Percentage: `${Math.round((total / analyticsData.demographics.totalActiveUsers) * 100)}%`,
+      }));
+      return [...ageData, ...regionData];
+    }
+
+    if (reportType === 'performance') {
+      return [
+        { Metric: 'Response Time', Value: `${analyticsData.performance.avgResponseTime} ms` },
+        { Metric: 'System Uptime', Value: `${analyticsData.performance.systemUptime}%` },
+        { Metric: 'Message Processing Success', Value: `${analyticsData.performance.messageProcessingSuccess}%` },
+        { Metric: 'Consecutive Hours Stable', Value: analyticsData.performance.consecutiveHours },
+        { Metric: 'Errors or Crashes', Value: analyticsData.performance.crashesOrErrors },
+      ];
+    }
+
+    if (reportType === 'full' || reportType === 'overview') {
+      return [
+        { Section: 'Overview', Metric: 'Active Users', Value: analyticsData.demographics.totalActiveUsers, Details: 'Summary user base' },
+        { Section: 'Activity', Metric: 'Total Engagements', Value: totalEngagements, Details: `${totalMessages} messages, avg satisfaction ${avgSatisfaction}/5` },
+        { Section: 'Demographics', Metric: 'Returning Users', Value: analyticsData.demographics.returningUsers, Details: 'Selected user retention snapshot' },
+        { Section: 'Safety', Metric: 'Panic Exits', Value: analyticsData.safety.panicExitsTotal, Details: 'Escalations and follow-ups included in JSON export' },
+        { Section: 'Performance', Metric: 'System Uptime', Value: `${analyticsData.performance.systemUptime}%`, Details: `Response time ${analyticsData.performance.avgResponseTime} ms` },
+        { Section: 'Insights', Metric: 'Top Insight', Value: analyticsData.adminInsights[0]?.title ?? 'No insight available', Details: analyticsData.adminInsights[0]?.description ?? 'No insight available' },
+      ];
     }
 
     return [
@@ -172,41 +257,83 @@ export function AdminReports({ selectedLanguage }: AdminReportsProps) {
     ];
   }, [analyticsData, reportType]);
 
-  const handleExportJson = () => {
-    const payload = {
-      generatedAt: analyticsData.generatedAt,
-      period,
-      reportType,
-      rows: tableRows,
-      summary: analyticsData,
-    };
+  const buildExportPayload = () => ({
+    generatedAt: analyticsData.generatedAt,
+    reportType,
+    reportWindow: {
+      startYear,
+      endYear,
+      label: reportRangeLabel,
+    },
+    includedSections,
+    summary: analyticsData,
+    rows: tableRows,
+  });
 
+  const handleExportJson = () => {
     downloadFile(
-      `room1221-${reportType}-report-${period}.json`,
-      JSON.stringify(payload, null, 2),
+      `room1221-${reportType}-report-${reportRangeLabel.replace(/\s+/g, '').replace(/-/g, 'to')}.json`,
+      JSON.stringify(buildExportPayload(), null, 2),
       'application/json;charset=utf-8'
     );
   };
 
   const handleExportCsv = () => {
     downloadFile(
-      `room1221-${reportType}-report-${period}.csv`,
+      `room1221-${reportType}-report-${reportRangeLabel.replace(/\s+/g, '').replace(/-/g, 'to')}.csv`,
       toCsv(tableRows),
       'text/csv;charset=utf-8'
     );
   };
 
-  const demographicsChartData = Object.entries(analyticsData.demographics.ageRange).map(([name, value]) => ({
+  const ageChartData = Object.entries(analyticsData.demographics.ageRange).map(([name, value]) => ({
     name,
     value,
   }));
+  const regionChartData = Object.entries(analyticsData.demographics.regions).map(([name, value]) => ({
+    name,
+    value,
+  }));
+
+  const overviewChartData = [
+    { name: 'Engagements', value: analyticsData.trends.reduce((sum, item) => sum + item.engagements, 0) },
+    { name: 'Active Users', value: analyticsData.demographics.totalActiveUsers },
+    { name: 'Safety Events', value: analyticsData.safety.panicExitsTotal + analyticsData.safety.crisisInterventionsTriggered },
+    { name: 'Uptime', value: Math.round(analyticsData.performance.systemUptime) },
+  ];
+
+  const safetyChartData = [
+    { name: 'Panic Exits', value: analyticsData.safety.panicExitsTotal },
+    { name: 'Crisis Interventions', value: analyticsData.safety.crisisInterventionsTriggered },
+    { name: 'Escalated Risks', value: analyticsData.safety.risksEscalatedToHuman },
+    { name: 'Follow-ups', value: analyticsData.safety.concernedUsersFollowedUp },
+  ];
+
+  const performanceChartData = [
+    { name: 'Response', value: analyticsData.performance.avgResponseTime },
+    { name: 'Uptime', value: Math.round(analyticsData.performance.systemUptime) },
+    { name: 'Success', value: analyticsData.performance.messageProcessingSuccess },
+    { name: 'Errors', value: analyticsData.performance.crashesOrErrors },
+  ];
+
+  const previewChartTitle = reportType === 'demographics'
+    ? 'Demographic Distribution'
+    : reportType === 'safety'
+      ? 'Safety Snapshot'
+      : reportType === 'performance'
+        ? 'Performance Snapshot'
+        : reportType === 'full'
+          ? 'Full Report Overview'
+          : 'Trend Preview';
+
+  const previewBadgeLabel = `${reportType.toUpperCase()} · ${reportRangeLabel}`;
 
   return (
     <div className="space-y-6 p-6 bg-white min-h-screen">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">Reports</h1>
-          <p className="text-gray-500">Generate, preview, and export operational and safety reports.</p>
+          <p className="text-gray-500">Build overview reports, choose a data focus, and export a full year-range package.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-2" onClick={handleExportCsv}>
@@ -220,46 +347,101 @@ export function AdminReports({ selectedLanguage }: AdminReportsProps) {
         </div>
       </div>
 
-      <div className="flex gap-2">
-        {(['today', 'week', 'month'] as const).map((value) => (
-          <Button
-            key={value}
-            variant={period === value ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setPeriod(value)}
-            className={period === value ? 'bg-blue-600 text-white' : 'border-[#E8ECFF]'}
-          >
-            {value === 'today' ? 'Today' : value === 'week' ? 'This Week' : 'This Month'}
-          </Button>
-        ))}
-      </div>
+      <Card className="p-5 bg-white border-[#E8ECFF]">
+        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Report Builder</h2>
+                <p className="text-sm text-gray-500">Choose the data focus and the year range to export.</p>
+              </div>
+              <Badge className="bg-blue-50 text-blue-600 border-blue-200">{includedSections.length} sections</Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {reportCards.map((card, idx) => {
+                const Icon = card.icon;
+                const isActive = reportType === card.id;
+                return (
+                  <motion.button
+                    key={card.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.06 }}
+                    onClick={() => setReportType(card.id)}
+                    className={`rounded-xl border p-4 text-left transition-all ${
+                      isActive
+                        ? 'border-blue-300 bg-blue-50 shadow-sm'
+                        : 'border-[#E8ECFF] bg-white hover:border-blue-200 hover:shadow-sm'
+                    }`}
+                  >
+                    <Icon className={`w-5 h-5 mb-3 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
+                    <p className="font-semibold text-gray-900">{card.title}</p>
+                    <p className="text-sm text-gray-500 mt-1">{card.description}</p>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        {reportCards.map((card, idx) => {
-          const Icon = card.icon;
-          const isActive = reportType === card.id;
-          return (
-            <motion.button
-              key={card.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.08 }}
-              onClick={() => setReportType(card.id)}
-              className={`rounded-xl border p-5 text-left transition-all ${
-                isActive
-                  ? 'border-blue-300 bg-blue-50 shadow-sm'
-                  : 'border-[#E8ECFF] bg-white hover:border-blue-200 hover:shadow-sm'
-              }`}
-            >
-              <Icon className={`w-6 h-6 mb-3 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
-              <p className="font-semibold text-gray-900">{card.title}</p>
-              <p className="text-sm text-gray-500 mt-1">{card.description}</p>
-            </motion.button>
-          );
-        })}
-      </div>
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm font-semibold text-gray-700 mb-2">Report window</div>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="space-y-1">
+                  <span className="text-xs font-medium text-gray-500">From year</span>
+                  <select
+                    value={startYear}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      setStartYear(value);
+                      if (value > endYear) {
+                        setEndYear(value);
+                      }
+                    }}
+                    className="w-full rounded-lg border border-[#E8ECFF] bg-white px-3 py-2 text-gray-900"
+                  >
+                    {Array.from({ length: currentYear - 2019 }, (_, idx) => 2020 + idx).map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-medium text-gray-500">To year</span>
+                  <select
+                    value={endYear}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      setEndYear(value);
+                      if (value < startYear) {
+                        setStartYear(value);
+                      }
+                    }}
+                    className="w-full rounded-lg border border-[#E8ECFF] bg-white px-3 py-2 text-gray-900"
+                  >
+                    {Array.from({ length: currentYear - 2019 }, (_, idx) => 2020 + idx).map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">The export will include the requested year range as metadata for the full report package.</p>
+            </div>
 
-      <div className="grid grid-cols-4 gap-4">
+            <div className="rounded-xl border border-[#E8ECFF] bg-gray-50 p-4">
+              <div className="text-sm font-semibold text-gray-700 mb-2">Included sections</div>
+              <div className="flex flex-wrap gap-2">
+                {includedSections.map((section) => (
+                  <Badge key={section} className="bg-white text-gray-700 border-[#E8ECFF]">
+                    {section}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {kpis.map((kpi, idx) => {
           const Icon = kpi.icon;
           return (
@@ -278,53 +460,100 @@ export function AdminReports({ selectedLanguage }: AdminReportsProps) {
         })}
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <Card className="p-6 bg-white border-[#E8ECFF]">
-          <h3 className="font-semibold text-gray-900 mb-4">Trend Preview</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={analyticsData.trends}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-              <XAxis dataKey="date" stroke="#9CA3AF" />
-              <YAxis stroke="#9CA3AF" />
-              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-              <Legend />
-              <Line type="monotone" dataKey="sessions" stroke="#0048ff" strokeWidth={2} name="Sessions" />
-              <Line type="monotone" dataKey="totalMessages" stroke="#3b82f6" strokeWidth={2} name="Messages" />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
+      <div className="grid grid-cols-1 gap-6">
+        {reportType === 'demographics' && (
+          <div className="grid grid-cols-2 gap-6">
+            <Card className="p-6 bg-white border-[#E8ECFF]">
+              <h3 className="font-semibold text-gray-900 mb-4">Demographics by Age</h3>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie data={ageChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={95}>
+                    {ageChartData.map((_, idx) => (
+                      <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <Card className="p-6 bg-white border-[#E8ECFF]">
+              <h3 className="font-semibold text-gray-900 mb-4">Demographics by Region</h3>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={regionChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
+                  <XAxis dataKey="name" stroke="#9CA3AF" style={{ fontSize: 11 }} angle={-45} textAnchor="end" height={60} />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
+                  <Bar dataKey="value" fill="#06B6D4" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <Card className="p-6 bg-white border-[#E8ECFF]">
+            <h3 className="font-semibold text-gray-900 mb-4">{previewChartTitle}</h3>
+            <ResponsiveContainer width="100%" height={280}>
+              {reportType === 'demographics' ? (
+                <LineChart data={analyticsData.trends}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
+                  <XAxis dataKey="date" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
+                  <Legend />
+                  <Line type="monotone" dataKey="engagements" stroke="#0048ff" strokeWidth={2} name="Engagements" />
+                </LineChart>
+              ) : reportType === 'performance' ? (
+                <ComposedChart data={performanceChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
+                  <XAxis dataKey="name" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
+                  <Bar dataKey="value" fill="#0048ff" radius={[6, 6, 0, 0]} />
+                </ComposedChart>
+              ) : reportType === 'safety' ? (
+                <BarChart data={safetyChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
+                  <XAxis dataKey="name" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
+                  <Bar dataKey="value" fill="#ef4444" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              ) : (
+                <LineChart data={reportType === 'full' || reportType === 'overview' ? analyticsData.trends : analyticsData.trends}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
+                  <XAxis dataKey="date" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
+                  <Legend />
+                  <Line type="monotone" dataKey="engagements" stroke="#0048ff" strokeWidth={2} name="Engagements" />
+                  <Line type="monotone" dataKey="totalMessages" stroke="#3b82f6" strokeWidth={2} name="Messages" />
+                </LineChart>
+              )}
+            </ResponsiveContainer>
+          </Card>
+        </div>
 
         <Card className="p-6 bg-white border-[#E8ECFF]">
-          <h3 className="font-semibold text-gray-900 mb-4">Distribution Preview</h3>
-          {reportType === 'demographics' ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie data={demographicsChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}>
-                  {demographicsChartData.map((_, idx) => (
-                    <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={tableRows.slice(0, 7)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-                <XAxis dataKey={reportType === 'activity' ? 'Date' : 'Metric'} stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-                <Bar dataKey={reportType === 'activity' ? 'Sessions' : 'Value'} fill="#0048ff" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          <h3 className="font-semibold text-gray-900 mb-4">Section Preview</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={reportType === 'full' || reportType === 'overview' ? overviewChartData : tableRows.slice(0, 7)}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
+              <XAxis dataKey={reportType === 'activity' ? 'Date' : 'name' in (overviewChartData[0] || {}) ? 'name' : 'Metric'} stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" />
+              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
+              <Bar dataKey={reportType === 'activity' ? 'Engagements' : 'value' in (overviewChartData[0] || {}) ? 'value' : 'Value'} fill="#0048ff" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </Card>
       </div>
 
       <Card className="p-6 bg-white border-[#E8ECFF]">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-900">Report Data Preview</h3>
-          <Badge className="bg-blue-50 text-blue-600 border-blue-200">{reportType.toUpperCase()}</Badge>
+          <Badge className="bg-blue-50 text-blue-600 border-blue-200">{previewBadgeLabel}</Badge>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

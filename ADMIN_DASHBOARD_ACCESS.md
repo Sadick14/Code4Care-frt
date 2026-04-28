@@ -1,5 +1,7 @@
 # Admin Dashboard - Separate Route Access
 
+For the formal requirements specification, see [ADMIN_SYSTEM_SRS.md](ADMIN_SYSTEM_SRS.md).
+
 ## Overview
 The admin dashboard is now completely separated from the user application with its own independent route and login system.
 
@@ -17,7 +19,7 @@ The admin dashboard is now completely separated from the user application with i
 ### Admin Dashboard
 - **URL**: `/dashboard`
 - **Access**: Only direct URL navigation or saved bookmark
-- **Features**: Analytics, User Management, Content Library, Safety Monitoring, System Health, Reports, Configuration
+- **Features**: Analytics, User Management, Safety Monitoring, System Health, Reports
 - **Admin Visibility**: ✅ Separate dedicated login page
 - **Authentication**: Demo login (any email/password accepted)
 
@@ -44,26 +46,25 @@ http://localhost:5173/dashboard
 
 Once logged in at `/dashboard`, you have access to:
 
-1. **Analytics Dashboard** (Default)
+3. **Analytics Dashboard** (Default)
    - KPI metrics
    - User demographics
    - Topic engagement
    - Safety metrics
-   - Content performance
    - AI-generated insights
 
 2. **User Management**
-   - Search and filter users
-   - View activity scores
-   - Track sessions
-   - Export data
+   - Search and filter users by nickname or age
+   - View user status (Active, Inactive, Suspended)
+   - **Engagement Metric**: Combined view showing interaction count + activity level
+   - Track engagement patterns with visual indicators
+   - Export user data
 
-3. **Content Library**
-   - Manage stories, FAQs, modules
-   - Track performance metrics
-   - Monitor engagement
-
-4. **Safety & Crisis**
+3. **Safety & Crisis**
+   - Incident tracking
+   - Weekly trends
+   - Severity classification
+   - Follow-up management
    - Incident tracking
    - Weekly trends
    - Severity classification
@@ -71,18 +72,16 @@ Once logged in at `/dashboard`, you have access to:
 
 5. **System Health**
    - Performance metrics
-   - Resource monitoring
-   - Service status
-   - System uptime
+   - Simplified resource monitoring
+   - Service health snapshots
+   - System logs for user-to-system activity
 
 6. **Reports**
-   - Generate monthly reports
+   - Choose report type: overview, activity, demographics, safety, performance, or full data
+   - Select a year range for the export window
+   - Export JSON or CSV report packages
    - User demographics
    - Safety incident reports
-
-7. **Configuration**
-   - System settings
-   - Future expansion point
 
 ---
 
@@ -122,13 +121,11 @@ APPLICATION ROUTES
     ├── AdminDashboardLogin (Gate)
     │   └── [Session Check]
     └── AdminPanel (Full System)
-        ├── Analytics Dashboard
-        ├── User Management
-        ├── Content Library
-        ├── Safety & Crisis
-        ├── System Health
-        ├── Reports
-        └── Configuration
+      ├── Analytics Dashboard
+      ├── User Management
+      ├── Safety & Crisis
+      ├── System Health
+      └── Reports
 ```
 
 ---
@@ -148,7 +145,6 @@ APPLICATION ROUTES
 - `src/components/AdminPanel.tsx`
 - `src/components/AdminSidebar.tsx`
 - `src/components/AdminUserManagement.tsx`
-- `src/components/AdminContentManagement.tsx`
 - `src/components/AdminSafetyManagement.tsx`
 - `src/components/AdminSystemHealth.tsx`
 - `src/components/EnhancedAdminDashboard.tsx`
@@ -200,7 +196,7 @@ APPLICATION ROUTES
 1. **Real Authentication**
    - Replace demo login with OAuth/JWT
    - Implement role-based access control
-   - Add audit logging
+   - Add system logging
 
 2. **Session Persistence**
    - Extend session timeouts
@@ -214,7 +210,6 @@ APPLICATION ROUTES
 
 4. **Admin Features**
    - Complete Reports generation
-   - Configuration management panel
    - User impersonation for debugging
    - Bulk operations (user management)
 

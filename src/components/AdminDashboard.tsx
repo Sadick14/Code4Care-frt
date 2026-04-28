@@ -12,16 +12,16 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
     en: {
       title: "Admin Dashboard",
       subtitle: "Room 1221 Analytics & Monitoring",
-      totalSessions: "Total Sessions",
+      totalEngagements: "Total Engagements",
       activeChats: "Active Chats",
       avgResponseTime: "Avg Response Time",
       panicExits: "Panic Exits (Today)",
       topTopics: "Top Topics",
       languageDistribution: "Language Distribution",
-      sessionsOverTime: "Sessions Over Time",
+      engagementsOverTime: "Engagements Over Time",
       userSatisfaction: "User Satisfaction",
       moderationAlerts: "Moderation Alerts",
-      sessionsLabel: "sessions",
+      engagementsLabel: "engagements",
       chatsLabel: "chats",
       secondsLabel: "seconds",
       exitsLabel: "exits"
@@ -29,16 +29,16 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
     twi: {
       title: "Adwumayɛfo Beae",
       subtitle: "Room 1221 Nsɛm ne Hwɛsoɔ",
-      totalSessions: "Nkɔmmɔbɔ Nyinaa",
+      totalEngagements: "Nkɔmmɔbɔ Nyinaa",
       activeChats: "Nkɔmmɔbɔ a ɛrekɔ so",
       avgResponseTime: "Mmuae Bere",
       panicExits: "Ntɛm So Fidie (Nnɛ)",
       topTopics: "Nsɛm Atitire",
       languageDistribution: "Kasa Kyekyɛmu",
-      sessionsOverTime: "Nkɔmmɔbɔ Wɔ Bere So",
+      engagementsOverTime: "Nkɔmmɔbɔ Wɔ Bere So",
       userSatisfaction: "Nnipa Anigyeɛ",
       moderationAlerts: "Hwɛsoɔ Kɔkɔbɔ",
-      sessionsLabel: "nkɔmmɔbɔ",
+      engagementsLabel: "nkɔmmɔbɔ",
       chatsLabel: "nkɔmmɔbɔ",
       secondsLabel: "simma",
       exitsLabel: "fidie"
@@ -46,16 +46,16 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
     ewe: {
       title: "Dɔdzikpɔla ƒe Nɔƒe",
       subtitle: "Room 1221 Nyatakakawo & Kpɔkplɔ",
-      totalSessions: "Takpekpewo Katã",
+      totalEngagements: "Takpekpewo Katã",
       activeChats: "Nuƒoƒo siwo le edzi yim",
       avgResponseTime: "Ŋuɖoɖo ƒe Ɣeyiɣi",
       panicExits: "Dodo kaba Go (Egbe)",
       topTopics: "Nya Vevitɔwo",
       languageDistribution: "Gbegbɔgblɔ Mama",
-      sessionsOverTime: "Takpekpewo Le Ɣeyiɣi Me",
+      engagementsOverTime: "Takpekpewo Le Ɣeyiɣi Me",
       userSatisfaction: "Ezãlawo Ƒe Dzidzɔkpɔkpɔ",
       moderationAlerts: "Kpɔkplɔ Nyawo",
-      sessionsLabel: "takpekpewo",
+      engagementsLabel: "takpekpewo",
       chatsLabel: "nuƒoƒowo",
       secondsLabel: "sekendwo",
       exitsLabel: "dodo go"
@@ -79,14 +79,14 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
     { name: "Ewe", value: 155 }
   ];
 
-  const sessionsData = [
-    { date: "Mon", sessions: 85 },
-    { date: "Tue", sessions: 92 },
-    { date: "Wed", sessions: 78 },
-    { date: "Thu", sessions: 105 },
-    { date: "Fri", sessions: 98 },
-    { date: "Sat", sessions: 72 },
-    { date: "Sun", sessions: 67 }
+  const engagementsData = [
+    { date: "Mon", engagements: 85 },
+    { date: "Tue", engagements: 92 },
+    { date: "Wed", engagements: 78 },
+    { date: "Thu", engagements: 105 },
+    { date: "Fri", engagements: 98 },
+    { date: "Sat", engagements: 72 },
+    { date: "Sun", engagements: 67 }
   ];
 
   const COLORS = ['#006d77', '#ff7b6e', '#83c5be', '#ffddd2', '#e29578'];
@@ -111,9 +111,9 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
                 +12%
               </Badge>
             </div>
-            <h2 className="text-gray-600 mb-1">{lang.totalSessions}</h2>
+            <h2 className="text-gray-600 mb-1">{lang.totalEngagements}</h2>
             <p style={{ color: '#006d77' }}>2,847</p>
-            <p className="text-xs text-gray-500 mt-1">{lang.sessionsLabel}</p>
+            <p className="text-xs text-gray-500 mt-1">{lang.engagementsLabel}</p>
           </Card>
 
           <Card className="p-6">
@@ -161,16 +161,16 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Sessions Over Time */}
+          {/* Engagements Over Time */}
           <Card className="p-6">
-            <h2 className="mb-4" style={{ color: '#006d77' }}>{lang.sessionsOverTime}</h2>
+            <h2 className="mb-4" style={{ color: '#006d77' }}>{lang.engagementsOverTime}</h2>
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={sessionsData}>
+              <LineChart data={engagementsData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="date" stroke="#6b7280" />
                 <YAxis stroke="#6b7280" />
                 <Tooltip />
-                <Line type="monotone" dataKey="sessions" stroke="#006d77" strokeWidth={2} />
+                <Line type="monotone" dataKey="engagements" stroke="#006d77" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </Card>

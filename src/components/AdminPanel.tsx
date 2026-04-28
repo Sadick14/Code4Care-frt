@@ -3,12 +3,11 @@ import { motion } from 'motion/react';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminDashboard } from './EnhancedAdminDashboard';
 import { AdminUserManagement } from './AdminUserManagement';
-import { AdminContentManagement } from './AdminContentManagement';
 import { AdminSafetyManagement } from './AdminSafetyManagement';
 import { AdminSystemHealth } from './AdminSystemHealth';
 import { AdminReports } from './AdminReports';
 
-type AdminSection = 'dashboard' | 'users' | 'content' | 'safety' | 'reports' | 'settings' | 'health';
+type AdminSection = 'dashboard' | 'users' | 'safety' | 'reports' | 'health';
 
 interface AdminPanelProps {
   selectedLanguage: string;
@@ -24,26 +23,12 @@ export function AdminPanel({ selectedLanguage, onLogout }: AdminPanelProps) {
         return <AdminDashboard selectedLanguage={selectedLanguage} />;
       case 'users':
         return <AdminUserManagement selectedLanguage={selectedLanguage} />;
-      case 'content':
-        return <AdminContentManagement selectedLanguage={selectedLanguage} />;
       case 'safety':
         return <AdminSafetyManagement selectedLanguage={selectedLanguage} />;
       case 'health':
         return <AdminSystemHealth selectedLanguage={selectedLanguage} />;
       case 'reports':
         return <AdminReports selectedLanguage={selectedLanguage} />;
-      case 'settings':
-        return (
-          <div className="space-y-6 p-6">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-gray-900">Configuration</h1>
-              <p className="text-gray-500">System settings and preferences</p>
-            </div>
-            <div className="bg-white border border-[#E8ECFF] rounded-lg p-6 text-gray-500">
-              <p>Configuration panel coming soon...</p>
-            </div>
-          </div>
-        );
       default:
         return <AdminDashboard selectedLanguage={selectedLanguage} />;
     }
