@@ -12,6 +12,7 @@ export interface DemographicMetrics {
   ageRange: Record<AgeRange, number>;
   gender: Record<GenderIdentity, number>;
   languagePreference: Record<Language, number>;
+  regions: Record<string, number>;
   totalActiveUsers: number;
   newUsersToday: number;
   returningUsers: number;

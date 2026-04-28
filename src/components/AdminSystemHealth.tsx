@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import { Activity, Server, Zap, AlertTriangle, CheckCircle2, TrendingUp, Database } from 'lucide-react';
+import React, { useState } from 'react';
+import { Activity, Server, Zap, AlertTriangle, CheckCircle2, TrendingUp, Database, ShieldAlert, FileText, Clock3 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { motion } from 'motion/react';
 import {
-  LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
 } from 'recharts';
 
 const performanceData = [
@@ -19,15 +19,11 @@ const performanceData = [
   { time: '3:30', response: 158, errors: 1, uptime: 99.9 },
 ];
 
-const memoryData = [
-  { time: '12:00', memory: 65, cpu: 42, database: 55 },
-  { time: '12:30', memory: 68, cpu: 45, database: 58 },
-  { time: '1:00', memory: 62, cpu: 40, database: 52 },
-  { time: '1:30', memory: 72, cpu: 48, database: 62 },
-  { time: '2:00', memory: 66, cpu: 43, database: 56 },
-  { time: '2:30', memory: 70, cpu: 46, database: 60 },
-  { time: '3:00', memory: 64, cpu: 41, database: 54 },
-  { time: '3:30', memory: 68, cpu: 44, database: 58 },
+const auditLogs = [
+  { time: '3:42 PM', action: 'Database backup completed', actor: 'System', status: 'success' },
+  { time: '3:15 PM', action: 'Cache cleared and rebuilt', actor: 'Admin System', status: 'success' },
+  { time: '2:50 PM', action: 'Load balancer reconfigured', actor: 'Ops Team', status: 'warning' },
+  { time: '1:30 PM', action: 'SSL certificate renewed', actor: 'System', status: 'success' },
 ];
 
 interface SystemMetric {
@@ -72,7 +68,7 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
       icon: <AlertTriangle className="w-5 h-5 text-yellow-400" />,
     },
     {
-      name: 'Active Sessions',
+      name: 'Active Engagements',
       value: 847,
       unit: 'users',
       status: 'healthy',
@@ -115,7 +111,7 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-gray-900">System Health</h1>
-        <p className="text-gray-500">Monitor technical performance, infrastructure health, and user activity metrics</p>
+        <p className="text-gray-500">Monitor core service health and review system audit activity.</p>
       </div>
 
       {/* Time Range Selector */}
@@ -160,11 +156,13 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
         ))}
       </div>
 
-      {/* Performance Charts */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Response Time & Errors */}
+      {/* Service Health and System Logs */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Card className="p-6 bg-white border-[#E8ECFF]">
-          <h3 className="text-gray-900 font-semibold mb-4">Response Time & Error Rate</h3>
+          <h3 className="text-gray-900 font-semibold mb-4 flex items-center gap-2">
+            <Server className="w-4 h-4 text-blue-600" />
+            Response Time & Error Rate
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={performanceData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
@@ -182,81 +180,28 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
           </ResponsiveContainer>
         </Card>
 
-        {/* Uptime */}
         <Card className="p-6 bg-white border-[#E8ECFF]">
-          <h3 className="text-gray-900 font-semibold mb-4">System Uptime</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-              <XAxis dataKey="time" stroke="#9CA3AF" />
-              <YAxis stroke="#9CA3AF" domain={[99.7, 100]} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF', borderRadius: '8px' }}
-                labelStyle={{ color: '#111827' }}
-              />
-              <Area type="monotone" dataKey="uptime" stroke="#10B981" fill="#10B98120" name="Uptime %" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-
-      {/* Resource Usage */}
-      <Card className="p-6 bg-white border-[#E8ECFF]">
-        <h3 className="text-gray-900 font-semibold mb-4">Resource Utilization</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={memoryData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-            <XAxis dataKey="time" stroke="#9CA3AF" />
-            <YAxis stroke="#9CA3AF" domain={[0, 100]} />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF', borderRadius: '8px' }}
-              labelStyle={{ color: '#111827' }}
-            />
-            <Legend />
-            <Line type="monotone" dataKey="memory" stroke="#F59E0B" name="Memory %" strokeWidth={2} />
-            <Line type="monotone" dataKey="cpu" stroke="#06B6D4" name="CPU %" strokeWidth={2} />
-            <Line type="monotone" dataKey="database" stroke="#8B5CF6" name="Database %" strokeWidth={2} />
-          </LineChart>
-        </ResponsiveContainer>
-      </Card>
-
-      {/* Service Status */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="p-4 bg-white border-[#E8ECFF]">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <Server className="w-4 h-4 text-blue-600" />
-            Service Status
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-green-600" />
+            System Logs
           </h3>
-          <div className="space-y-2">
-            {[
-              { name: 'Chat API', status: 'healthy' },
-              { name: 'Database Server', status: 'healthy' },
-              { name: 'Cache Layer', status: 'warning' },
-              { name: 'Email Service', status: 'healthy' },
-            ].map((service, idx) => (
-              <div key={idx} className="flex items-center justify-between py-2 border-b border-[#E8ECFF] last:border-0">
-                <span className="text-gray-600">{service.name}</span>
-                {getStatusBadge(service.status)}
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card className="p-4 bg-white border-[#E8ECFF]">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-green-600" />
-            Recent Events
-          </h3>
-          <div className="space-y-2 text-sm">
-            {[
-              { time: '3:42 PM', event: 'Database backup completed' },
-              { time: '3:15 PM', event: 'Cache cleared and rebuilt' },
-              { time: '2:50 PM', event: 'Load balancer reconfigured' },
-              { time: '1:30 PM', event: 'SSL certificate renewed' },
-            ].map((log, idx) => (
-              <div key={idx} className="flex items-start justify-between py-2 border-b border-[#E8ECFF] last:border-0">
-                <span className="text-gray-600">{log.event}</span>
-                <span className="text-gray-400 text-xs">{log.time}</span>
+          <p className="mb-3 text-xs text-gray-500">User and system events captured across the platform.</p>
+          <div className="space-y-3">
+            {auditLogs.map((log, idx) => (
+              <div key={idx} className="flex items-start justify-between gap-4 rounded-lg border border-[#E8ECFF] bg-gray-50 p-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-900">{log.action}</span>
+                    <Badge className={log.status === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}>
+                      {log.status}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-gray-500">{log.actor}</div>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-gray-500 shrink-0">
+                  <Clock3 className="w-3 h-3" />
+                  {log.time}
+                </div>
               </div>
             ))}
           </div>

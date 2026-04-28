@@ -1,7 +1,7 @@
 # Room 1221 Admin System - Complete Documentation
 
 ## Overview
-A comprehensive fullstack admin management system with sidebar navigation and 7 integrated management sections.
+A comprehensive fullstack admin management system with sidebar navigation and 6 integrated management sections.
 
 ## Architecture
 
@@ -9,8 +9,8 @@ A comprehensive fullstack admin management system with sidebar navigation and 7 
 
 #### 1. **AdminSidebar.tsx** (Navigation Hub)
 - Responsive sidebar with gradient design (slate-900 theme)
-- 7 navigation items with icons, descriptions, and active state indicators
-- Footer stats showing Users, Sessions, and System Status
+- 6 navigation items with icons, descriptions, and active state indicators
+- Footer stats showing Users, Engagements, and System Status
 - Quick-access exit button
 - Mobile-responsive with collapse support
 - Smooth Framer Motion animations
@@ -21,7 +21,6 @@ A comprehensive fullstack admin management system with sidebar navigation and 7 
 - 📚 Content Library - Stories, FAQs, modules
 - 🚨 Safety & Crisis - Monitor incidents
 - 📄 Reports - Generate reports
-- ⚙️ Configuration - System settings
 - 🔧 System Health - Technical metrics
 
 ---
@@ -47,12 +46,12 @@ A comprehensive fullstack admin management system with sidebar navigation and 7 
 - Complete user account management system
 - Real-time search by name/email
 - Filter by status (Active, Inactive, Suspended)
-- Sort options (Activity, Name, Join Date)
-- Comprehensive user table with 8 columns:
-  - Name, Email, Age, Status, Sessions, Activity Score, Last Active, Actions
-- Activity score visualization (progress bars)
-- Export functionality
-- Pagination controls
+- Comprehensive user table with 5 columns:
+  - Nickname, Age, Status, Engagement, Actions
+- Combined engagement metric showing:
+  - **Engagement Count**: Number of times user visited/accessed the platform
+  - **Engagement Intensity**: Quality of participation during interactions (0-100% - how actively they engaged)
+- Compact, meaningful representation of user engagement patterns
 
 **Stats Displayed:**
 - Total Users (4-column stat cards)
@@ -60,30 +59,17 @@ A comprehensive fullstack admin management system with sidebar navigation and 7 
 - Inactive Users count
 - Suspended Users count
 
----
-
-#### 4. **AdminContentManagement.tsx** (📚 Content Library)
-- Manage all educational content (Modules, FAQs, Stories)
-- Full-text search capability
-- Filter by content type (Module, FAQ, Story)
-- Filter by status (Published, Draft, Archived)
-- Comprehensive content table with 9 columns:
-  - Title, Type, Language, Status, Views, Engagement, Last Modified, Author, Actions
-- Engagement visualization (progress bars for published content only)
-- Two insight panels:
-  - **Top Performing Content** - Ranked by views
-  - **Status Overview** - Published vs Draft distribution
-- Admin controls (View, Edit, Delete)
-
-**Stats Displayed:**
-- Total Content items
-- Published content count
-- Draft content count
-- Total Views (across all content)
+**Engagement Column Breakdown:**
+- Shows interaction frequency (session count) with visual clarity
+- Activity level badge provides quick at-a-glance status
+- Progress bar indicates sustained engagement level
+- Helps identify highly engaged, moderately engaged, or inactive users
 
 ---
 
-#### 5. **AdminSafetyManagement.tsx** (🚨 Safety & Crisis)
+<!-- Content Library removed: AdminContentManagement.tsx has been removed from the codebase. -->
+
+#### 4. **AdminSafetyManagement.tsx** (🚨 Safety & Crisis)
 - Monitor and manage user safety incidents
 - Incident types: Self-harm, Suicidal, Abuse, Panic
 - Severity levels: Low, Medium, High, Critical
@@ -116,7 +102,7 @@ A comprehensive fullstack admin management system with sidebar navigation and 7 
   1. API Response Time (ms)
   2. System Uptime (%)
   3. Error Rate (/minute)
-  4. Active Sessions (users)
+  4. Active Engagements (users)
   5. Memory Usage (%)
   6. Database Queries (/min)
 
@@ -125,13 +111,20 @@ A comprehensive fullstack admin management system with sidebar navigation and 7 
 - System Uptime (AreaChart)
 - Resource Utilization (LineChart) - Memory, CPU, Database
 - Service Status panel (4 services)
-- Recent Events log (4 recent activities)
+- System log feed for user-to-system events (4 recent activities)
 
 **Features:**
 - Time range selector (1h, 6h, 24h)
 - Trend indicators (up/down %)
 - Health status badges (Healthy, Warning, Critical)
 - Real-time metrics display
+
+### 7. **AdminReports.tsx** (📄 Reports)
+- Report builder with overview, activity, demographics, safety, performance, and full-data modes
+- Year-range controls for selecting export windows across multiple years
+- JSON and CSV exports that package the selected range and included sections
+- Full report mode that bundles all sections into a single export
+- Preview cards, charts, and data table for export validation
 
 ---
 
@@ -223,17 +216,11 @@ AnalyticsService class with static methods for:
 - Recent events log
 - Time-range selection (1h, 6h, 24h)
 
-### 6. Reports (Placeholder)
-- Monthly Activity Report
-- User Demographics Report
-- Safety Incidents Report
-- Ready for custom report generation
-
-### 7. Configuration (Placeholder)
-- System settings structure
-- Future expansion point
-
----
+### 6. Reports
+- Report builder with overview, activity, demographics, safety, performance, and full-data modes
+- Year-range export window selection
+- JSON and CSV exports
+- Preview-ready report data tables
 
 ## Design System
 
@@ -295,7 +282,7 @@ AnalyticsService class with static methods for:
 2. **Authentication**
    - Replace demo login with real authentication
    - Role-based access control (RBAC)
-   - Audit logging for admin actions
+   - Logging for user-to-system and admin actions
 
 3. **Advanced Features**
    - Custom date range selection
@@ -311,7 +298,6 @@ AnalyticsService class with static methods for:
 
 5. **Additional Pages**
    - Complete Reports section with generation
-   - Configuration with system settings management
    - User activity timeline view
    - Content approval workflow
 
@@ -326,6 +312,10 @@ AnalyticsService class with static methods for:
 - `/src/components/AdminContentManagement.tsx`
 - `/src/components/AdminSafetyManagement.tsx`
 - `/src/components/AdminSystemHealth.tsx`
+ - `/src/components/AdminPanel.tsx`
+ - `/src/components/AdminUserManagement.tsx`
+ - `/src/components/AdminSafetyManagement.tsx`
+ - `/src/components/AdminSystemHealth.tsx`
 
 **Modified Files:**
 - `/src/App.tsx` - Integrated AdminPanel component

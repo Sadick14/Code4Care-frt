@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AlertCircle, TrendingUp, Heart, Shield, PhoneCall, CheckCircle2, Clock, BarChart3, AlertTriangle, Siren, BadgeCheck, Activity } from 'lucide-react';
+import { useState } from 'react';
+import { AlertCircle, TrendingUp, Heart, Shield, PhoneCall, BarChart3, AlertTriangle, Siren, BadgeCheck } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 interface IncidentReport {
   id: string;
@@ -135,11 +135,10 @@ export function AdminSafetyManagement({ selectedLanguage }: AdminSafetyManagemen
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         {[
           { label: 'Total Reports', value: stats.total, icon: BarChart3, iconClass: 'text-slate-600' },
           { label: 'Open Cases', value: stats.open, icon: AlertTriangle, iconClass: 'text-red-600' },
-          { label: 'In Review', value: mockIncidents.filter(i => i.status === 'in-review').length, icon: Clock, iconClass: 'text-yellow-600' },
           { label: 'Escalated', value: stats.escalated, icon: Siren, iconClass: 'text-purple-600' },
           { label: 'Follow-ups', value: stats.followUpNeeded, icon: BadgeCheck, iconClass: 'text-blue-600' },
         ].map((stat, idx) => (
@@ -157,30 +156,25 @@ export function AdminSafetyManagement({ selectedLanguage }: AdminSafetyManagemen
         ))}
       </div>
 
-      {/* Trends */}
+      {/* Trending Chart */}
       <Card className="p-6 bg-white border-[#E8ECFF]">
         <h3 className="text-gray-900 font-semibold mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-blue-600" />
-          Weekly Safety Reports Trend
+          Weekly Trend
         </h3>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={250}>
           <BarChart data={trendData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-            <XAxis dataKey="day" stroke="#9CA3AF" />
-            <YAxis stroke="#9CA3AF" />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF', borderRadius: '8px' }}
-              labelStyle={{ color: '#111827' }}
-            />
-            <Legend />
-            <Bar dataKey="reports" fill="#3B82F6" name="Safety Reports" />
-            <Bar dataKey="escalations" fill="#EF4444" name="Escalations" />
+            <XAxis dataKey="day" stroke="#9CA3AF" style={{ fontSize: 12 }} />
+            <YAxis stroke="#9CA3AF" style={{ fontSize: 12 }} />
+            <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
+            <Bar dataKey="reports" fill="#3B82F6" name="Reports" />
           </BarChart>
         </ResponsiveContainer>
       </Card>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex gap-3">
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as any)}
@@ -188,7 +182,6 @@ export function AdminSafetyManagement({ selectedLanguage }: AdminSafetyManagemen
         >
           <option value="all">All Status</option>
           <option value="open">Open</option>
-          <option value="in-review">In Review</option>
           <option value="escalated">Escalated</option>
           <option value="resolved">Resolved</option>
         </select>
@@ -217,31 +210,28 @@ export function AdminSafetyManagement({ selectedLanguage }: AdminSafetyManagemen
           <Table>
             <TableHeader>
               <TableRow className="border-[#E8ECFF] hover:bg-transparent">
-                <TableHead className="text-gray-600">Type</TableHead>
                 <TableHead className="text-gray-600">User</TableHead>
+                <TableHead className="text-gray-600">Type</TableHead>
                 <TableHead className="text-gray-600">Severity</TableHead>
                 <TableHead className="text-gray-600">Status</TableHead>
-                <TableHead className="text-gray-600">Reported</TableHead>
-                <TableHead className="text-gray-600">Follow-Up</TableHead>
-                <TableHead className="text-gray-600">Notes</TableHead>
                 <TableHead className="text-gray-600">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredIncidents.map((incident) => (
+              {filteredIncidents.slice(0, 8).map((incident) => (
                 <motion.tr
                   key={incident.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="border-[#E8ECFF] hover:bg-gray-50 transition-colors"
                 >
+                  <TableCell className="text-gray-900 font-medium">{incident.userName}</TableCell>
                   <TableCell className="text-gray-900 font-medium">
                     <div className="flex items-center gap-2">
                       {getTypeIcon(incident.type)}
-                      <span>{getTypeLabel(incident.type)}</span>
+                      <span className="text-sm">{getTypeLabel(incident.type)}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-gray-600">{incident.userName}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={`capitalize ${getSeverityColor(incident.severity)}`}>
                       {incident.severity}
@@ -252,30 +242,14 @@ export function AdminSafetyManagement({ selectedLanguage }: AdminSafetyManagemen
                       {incident.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-gray-600 text-sm">{incident.reportedAt}</TableCell>
                   <TableCell>
-                    {incident.followUp ? (
-                      <Badge className="bg-blue-50 text-blue-600 border-blue-200">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Needed
-                      </Badge>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-gray-600 text-sm max-w-xs truncate">{incident.notes}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                        <Heart className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50">
-                        <AlertCircle className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50">
-                        <CheckCircle2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      Review
+                    </Button>
                   </TableCell>
                 </motion.tr>
               ))}

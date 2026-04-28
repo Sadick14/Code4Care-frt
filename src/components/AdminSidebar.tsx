@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { BarChart3, Users, BookOpen, Shield, Settings, LogOut, Menu, X, TrendingUp, AlertCircle, FileText, Database } from 'lucide-react';
+import { BarChart3, Users, BookOpen, Shield, LogOut, Menu, X, TrendingUp, AlertCircle, FileText, Database } from 'lucide-react';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
 import { motion } from 'motion/react';
 
-type AdminSection = 'dashboard' | 'users' | 'content' | 'safety' | 'reports' | 'settings' | 'health';
+type AdminSection = 'dashboard' | 'users' | 'safety' | 'reports' | 'health';
 
 interface AdminSidebarProps {
   currentSection: AdminSection;
@@ -25,11 +25,9 @@ export function AdminSidebar({
   const navigationItems = [
     { id: 'dashboard' as AdminSection, label: 'Analytics Dashboard', icon: BarChart3, desc: 'View metrics & insights' },
     { id: 'users' as AdminSection, label: 'User Management', icon: Users, desc: 'Manage user accounts' },
-    { id: 'content' as AdminSection, label: 'Content Library', icon: BookOpen, desc: 'Stories, FAQs, modules' },
     { id: 'safety' as AdminSection, label: 'Safety & Crisis', icon: AlertCircle, desc: 'Monitor incidents' },
     { id: 'reports' as AdminSection, label: 'Reports', icon: FileText, desc: 'Generate reports' },
     { id: 'health' as AdminSection, label: 'System Health', icon: Database, desc: 'Technical metrics' },
-    { id: 'settings' as AdminSection, label: 'Configuration', icon: Settings, desc: 'System settings' },
   ];
 
   return (
@@ -105,30 +103,13 @@ export function AdminSidebar({
       <Separator className="bg-[#E8ECFF]" />
 
       {/* Footer */}
-      <div className="p-4 space-y-2">
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <div className="p-2 rounded-lg bg-gray-50 border border-[#E8ECFF] text-center">
-            <div className="text-xs text-gray-500">Users</div>
-            <div className="text-lg font-bold text-gray-900">1.7K</div>
-          </div>
-          <div className="p-2 rounded-lg bg-gray-50 border border-[#E8ECFF] text-center">
-            <div className="text-xs text-gray-500">Sessions</div>
-            <div className="text-lg font-bold text-gray-900">847</div>
-          </div>
-          <div className="p-2 rounded-lg bg-green-50 border border-green-200 text-center">
-            <div className="text-xs text-green-600">Status</div>
-            <div className="text-sm font-bold text-green-600">Online</div>
-          </div>
-        </div>
-
-        <Separator className="bg-[#E8ECFF]" />
-
+      <div className="p-4">
         <Button
           onClick={onLogout}
           className="w-full rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 gap-2 font-semibold"
         >
           <LogOut className="w-4 h-4" />
-          Exit Admin
+          Logout
         </Button>
       </div>
     </div>
