@@ -1,5 +1,7 @@
 # Admin Dashboard - Separate Route Access
 
+For the formal requirements specification, see [ADMIN_SYSTEM_SRS.md](ADMIN_SYSTEM_SRS.md).
+
 ## Overview
 The admin dashboard is now completely separated from the user application with its own independent route and login system.
 

@@ -1,5 +1,7 @@
 # Room 1221 Admin System - Complete Documentation
 
+For the formal requirements specification, see [ADMIN_SYSTEM_SRS.md](ADMIN_SYSTEM_SRS.md).
+
 ## Overview
 A comprehensive fullstack admin management system with sidebar navigation and 6 integrated management sections.
 
