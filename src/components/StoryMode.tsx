@@ -77,6 +77,7 @@ export function StoryMode() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
   const [answers, setAnswers] = useState<Array<number | undefined>>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   useEffect(() => {
     if (!modules.length) return;
@@ -94,7 +95,7 @@ export function StoryMode() {
   const story = stories[currentIdx];
 
   const answeredCount = answers.filter((answer) => typeof answer === "number").length;
-  const score = answers.reduce((total, selected, idx) => {
+  const score = answers.reduce((total: number, selected, idx) => {
     if (typeof selected !== "number") return total;
     const item = stories[idx];
     if (!item) return total;
@@ -108,6 +109,7 @@ export function StoryMode() {
     setCurrentIdx(0);
     setSelectedChoice(null);
     setAnswers([]);
+    setShowCelebration(false);
   }, [selectedModuleId]);
 
   useEffect(() => {
@@ -123,6 +125,13 @@ export function StoryMode() {
       next[currentIdx] = idx;
       return next;
     });
+
+    // Show celebration if correct answer
+    if (idx === story?.correct) {
+      setShowCelebration(true);
+      // Auto-hide celebration after 1.5 seconds
+      setTimeout(() => setShowCelebration(false), 1500);
+    }
   };
 
   const nextStory = () => {
@@ -139,6 +148,7 @@ export function StoryMode() {
     setCurrentIdx(0);
     setSelectedChoice(null);
     setAnswers([]);
+    setShowCelebration(false);
   };
 
   const startModuleQuiz = (moduleId: string) => {
@@ -146,6 +156,7 @@ export function StoryMode() {
     setCurrentIdx(0);
     setSelectedChoice(null);
     setAnswers([]);
+    setShowCelebration(false);
     setViewMode("quiz");
   };
 
@@ -154,6 +165,7 @@ export function StoryMode() {
     setCurrentIdx(0);
     setSelectedChoice(null);
     setAnswers([]);
+    setShowCelebration(false);
   };
 
   return (
@@ -314,6 +326,7 @@ export function StoryMode() {
                     const isSelected = selectedChoice === idx;
                     const isCorrect = idx === story.correct;
                     const showFeedback = selectedChoice !== null;
+                    const isCorrectAnswerDisplay = !isSelected && showFeedback && isCorrect;
 
                     return (
                       <button
@@ -325,9 +338,11 @@ export function StoryMode() {
                             ? isCorrect
                               ? "border-emerald-500 bg-emerald-50"
                               : "border-red-500 bg-red-50"
-                            : showFeedback
-                              ? "opacity-45 border-gray-100"
-                              : "border-[#D6E6FF] hover:border-[#4A82FF] hover:bg-[#F7FAFF]"
+                            : isCorrectAnswerDisplay
+                              ? "border-emerald-500 bg-emerald-50"
+                              : showFeedback
+                                ? "opacity-45 border-gray-100"
+                                : "border-[#D6E6FF] hover:border-[#4A82FF] hover:bg-[#F7FAFF]"
                         }`}
                       >
                         <div className="flex gap-4 items-center">
@@ -337,15 +352,17 @@ export function StoryMode() {
                                 ? isCorrect
                                   ? "bg-emerald-500 text-white"
                                   : "bg-red-500 text-white"
-                                : "bg-[#E8F0FF] text-[#4A66A8] group-hover:bg-[#0048ff] group-hover:text-white"
+                                : isCorrectAnswerDisplay
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-[#E8F0FF] text-[#4A66A8] group-hover:bg-[#0048ff] group-hover:text-white"
                             }`}
                           >
                             {String.fromCharCode(65 + idx)}
                           </div>
-                          <span className={`font-medium ${isSelected ? "text-gray-900" : "text-[#314F89]"}`}>{choice}</span>
+                          <span className={`font-medium ${isSelected || isCorrectAnswerDisplay ? "text-gray-900" : "text-[#314F89]"}`}>{choice}</span>
                         </div>
 
-                        {isSelected && (
+                        {(isSelected || isCorrectAnswerDisplay) && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
@@ -357,7 +374,9 @@ export function StoryMode() {
                               ) : (
                                 <AlertCircle className="w-4 h-4 text-red-600" />
                               )}
-                              <p className={isCorrect ? "text-emerald-700" : "text-red-700"}>{story.feedback[idx]}</p>
+                              <p className={isCorrect ? "text-emerald-700" : "text-red-700"}>
+                                {isCorrectAnswerDisplay ? `Correct answer! ${story.feedback[idx]}` : story.feedback[idx]}
+                              </p>
                             </div>
                           </motion.div>
                         )}
@@ -373,6 +392,55 @@ export function StoryMode() {
                       <ChevronRight className="w-5 h-5 ml-2" />
                     </Button>
                   </motion.div>
+                )}
+
+                {showCelebration && (
+                  <AnimatePresence>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, y: -20 }}
+                      className="fixed inset-0 flex items-center justify-center pointer-events-none z-[999]"
+                    >
+                      <div className="text-center">
+                        <motion.div
+                          animate={{ scale: [1, 1.1, 0.95, 1] }}
+                          transition={{ duration: 0.6 }}
+                          className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-200 to-yellow-100 shadow-2xl flex items-center justify-center mx-auto mb-4"
+                        >
+                          <Trophy className="w-12 h-12 text-yellow-600" />
+                        </motion.div>
+                        <h3 className="text-3xl font-bold text-[#0F2A6B] drop-shadow-lg">
+                          {t("common.excellent", "Excellent!")}
+                        </h3>
+                        <p className="text-lg text-[#4A66A8] mt-2 drop-shadow">
+                          {t("common.correctAnswer", "You got it right!")}
+                        </p>
+                      </div>
+
+                      {/* Confetti particles */}
+                      {[...Array(12)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 1, x: 0, y: 0 }}
+                          animate={{
+                            opacity: 0,
+                            x: (Math.random() - 0.5) * 400,
+                            y: (Math.random() - 0.5) * 400,
+                          }}
+                          transition={{ duration: 1.5, ease: "easeOut" }}
+                          className="fixed w-3 h-3 rounded-full pointer-events-none"
+                          style={{
+                            left: "50%",
+                            top: "50%",
+                            backgroundColor: ["#FFD700", "#FFA500", "#FF69B4", "#87CEEB"][
+                              Math.floor(Math.random() * 4)
+                            ],
+                          }}
+                        />
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
                 )}
               </Card>
             </motion.div>
