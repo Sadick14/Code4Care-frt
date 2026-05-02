@@ -1,13 +1,71 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
-import { AlertCircle, ArrowLeft, Check, ChevronLeft, ChevronRight, RotateCcw, Trophy } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Baby,
+  Brain,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Droplets,
+  HeartHandshake,
+  HeartPulse,
+  Pill,
+  RotateCcw,
+  ShieldCheck,
+  TestTube2,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { getStoryModules, StoryModule } from "@/data/storyModules";
 
-const STORY_COVER_IMAGES = ["/chat2.png", "/chat.jpg", "/chatbot.jpg"];
+const STORY_MODULE_ICONS: Record<string, { icon: LucideIcon; accent: string; background: string }> = {
+  "puberty-body-changes": {
+    icon: Baby,
+    accent: "text-[#0F4CC9]",
+    background: "from-[#EAF2FF] to-[#D9E9FF]",
+  },
+  "menstrual-health": {
+    icon: Droplets,
+    accent: "text-[#C42772]",
+    background: "from-[#FFEAF4] to-[#FAD1E8]",
+  },
+  "consent-boundaries": {
+    icon: ShieldCheck,
+    accent: "text-[#16794D]",
+    background: "from-[#E7FFF3] to-[#CFF6E1]",
+  },
+  "contraception-family-planning": {
+    icon: Pill,
+    accent: "text-[#7B3FE4]",
+    background: "from-[#F0E9FF] to-[#D7C7FF]",
+  },
+  "sti-prevention-testing": {
+    icon: TestTube2,
+    accent: "text-[#C14D11]",
+    background: "from-[#FFF1E7] to-[#FFD8BF]",
+  },
+  "pregnancy-options-care": {
+    icon: HeartPulse,
+    accent: "text-[#BE2D4E]",
+    background: "from-[#FFE7EE] to-[#F9C2D0]",
+  },
+  "healthy-relationships": {
+    icon: HeartHandshake,
+    accent: "text-[#2563EB]",
+    background: "from-[#E9F3FF] to-[#CFE1FF]",
+  },
+  "mental-health-help-seeking": {
+    icon: Brain,
+    accent: "text-[#6D28D9]",
+    background: "from-[#F1EAFF] to-[#DCCEFF]",
+  },
+};
 
 export function StoryMode() {
   const { t, i18n } = useTranslation();
@@ -123,37 +181,46 @@ export function StoryMode() {
 
         {viewMode === "catalog" ? (
           <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {modules.map((module, index) => (
-              <Card
-                key={module.id}
-                onClick={() => startModuleQuiz(module.id)}
-                className="cursor-pointer border-[#D5E4FF] bg-white shadow-sm hover:shadow-xl hover:shadow-blue-100/70 hover:-translate-y-1 transition-all rounded-2xl overflow-hidden"
-              >
-                <div className="relative h-44 overflow-hidden">
-                  <img
-                    src={STORY_COVER_IMAGES[index % STORY_COVER_IMAGES.length]}
-                    alt={module.title}
-                    className="h-full w-full object-cover object-center"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#001c52]/80 via-[#00338f]/35 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <p className="text-base font-bold text-white leading-tight drop-shadow-sm">{module.title}</p>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <p className="text-sm text-[#5A77B0] min-h-10">{module.description}</p>
+            {modules.map((module) => {
+              const moduleIcon = STORY_MODULE_ICONS[module.id] ?? {
+                icon: Baby,
+                accent: "text-[#0F4CC9]",
+                background: "from-[#EAF2FF] to-[#D9E9FF]",
+              };
+              const ModuleIcon = moduleIcon.icon;
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="inline-flex items-center rounded-full bg-[#ECF3FF] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2E58A5]">
-                      {module.stories.length} {t("stories.scenarios", "scenarios")}
-                    </span>
-                    <span className="text-xs font-semibold text-[#0048ff]">
-                      {t("stories.startModule", "Start Module")}
-                    </span>
+              return (
+                <Card
+                  key={module.id}
+                  onClick={() => startModuleQuiz(module.id)}
+                  className="cursor-pointer border-[#D5E4FF] bg-white shadow-sm hover:shadow-xl hover:shadow-blue-100/70 hover:-translate-y-1 transition-all rounded-2xl overflow-hidden"
+                >
+                  <div className={`relative h-44 overflow-hidden bg-gradient-to-br ${moduleIcon.background}`}>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.75),transparent_48%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.45),transparent_38%)]" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/80 shadow-lg backdrop-blur-sm">
+                        <ModuleIcon className={`h-10 w-10 ${moduleIcon.accent}`} />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <p className="text-base font-bold text-[#0B225A] leading-tight drop-shadow-sm">{module.title}</p>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                  <div className="p-4">
+                    <p className="text-sm text-[#5A77B0] min-h-10">{module.description}</p>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="inline-flex items-center rounded-full bg-[#ECF3FF] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2E58A5]">
+                        {module.stories.length} {t("stories.scenarios", "scenarios")}
+                      </span>
+                      <span className="text-xs font-semibold text-[#0048ff]">
+                        {t("stories.startModule", "Start Module")}
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         ) : !stories.length ? (
           <Card className="p-8 border-[#CFE0FF] shadow-sm rounded-3xl bg-white text-center">
