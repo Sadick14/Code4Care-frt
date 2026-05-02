@@ -1,13 +1,71 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
-import { AlertCircle, ArrowLeft, Check, ChevronLeft, ChevronRight, RotateCcw, Trophy } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Baby,
+  Brain,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Droplets,
+  HeartHandshake,
+  HeartPulse,
+  Pill,
+  RotateCcw,
+  ShieldCheck,
+  TestTube2,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { getStoryModules, StoryModule } from "@/data/storyModules";
 
-const STORY_COVER_IMAGES = ["/chat2.png", "/chat.jpg", "/chatbot.jpg"];
+const STORY_MODULE_ICONS: Record<string, { icon: LucideIcon; accent: string; background: string }> = {
+  "puberty-body-changes": {
+    icon: Baby,
+    accent: "text-[#0F4CC9]",
+    background: "from-[#EAF2FF] to-[#D9E9FF]",
+  },
+  "menstrual-health": {
+    icon: Droplets,
+    accent: "text-[#C42772]",
+    background: "from-[#FFEAF4] to-[#FAD1E8]",
+  },
+  "consent-boundaries": {
+    icon: ShieldCheck,
+    accent: "text-[#16794D]",
+    background: "from-[#E7FFF3] to-[#CFF6E1]",
+  },
+  "contraception-family-planning": {
+    icon: Pill,
+    accent: "text-[#7B3FE4]",
+    background: "from-[#F0E9FF] to-[#D7C7FF]",
+  },
+  "sti-prevention-testing": {
+    icon: TestTube2,
+    accent: "text-[#C14D11]",
+    background: "from-[#FFF1E7] to-[#FFD8BF]",
+  },
+  "pregnancy-options-care": {
+    icon: HeartPulse,
+    accent: "text-[#BE2D4E]",
+    background: "from-[#FFE7EE] to-[#F9C2D0]",
+  },
+  "healthy-relationships": {
+    icon: HeartHandshake,
+    accent: "text-[#2563EB]",
+    background: "from-[#E9F3FF] to-[#CFE1FF]",
+  },
+  "mental-health-help-seeking": {
+    icon: Brain,
+    accent: "text-[#6D28D9]",
+    background: "from-[#F1EAFF] to-[#DCCEFF]",
+  },
+};
 
 export function StoryMode() {
   const { t, i18n } = useTranslation();
@@ -19,6 +77,7 @@ export function StoryMode() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
   const [answers, setAnswers] = useState<Array<number | undefined>>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   useEffect(() => {
     if (!modules.length) return;
@@ -36,7 +95,7 @@ export function StoryMode() {
   const story = stories[currentIdx];
 
   const answeredCount = answers.filter((answer) => typeof answer === "number").length;
-  const score = answers.reduce((total, selected, idx) => {
+  const score = answers.reduce((total: number, selected, idx) => {
     if (typeof selected !== "number") return total;
     const item = stories[idx];
     if (!item) return total;
@@ -50,6 +109,7 @@ export function StoryMode() {
     setCurrentIdx(0);
     setSelectedChoice(null);
     setAnswers([]);
+    setShowCelebration(false);
   }, [selectedModuleId]);
 
   useEffect(() => {
@@ -65,6 +125,13 @@ export function StoryMode() {
       next[currentIdx] = idx;
       return next;
     });
+
+    // Show celebration if correct answer
+    if (idx === story?.correct) {
+      setShowCelebration(true);
+      // Auto-hide celebration after 1.5 seconds
+      setTimeout(() => setShowCelebration(false), 1500);
+    }
   };
 
   const nextStory = () => {
@@ -81,6 +148,7 @@ export function StoryMode() {
     setCurrentIdx(0);
     setSelectedChoice(null);
     setAnswers([]);
+    setShowCelebration(false);
   };
 
   const startModuleQuiz = (moduleId: string) => {
@@ -88,6 +156,7 @@ export function StoryMode() {
     setCurrentIdx(0);
     setSelectedChoice(null);
     setAnswers([]);
+    setShowCelebration(false);
     setViewMode("quiz");
   };
 
@@ -96,6 +165,7 @@ export function StoryMode() {
     setCurrentIdx(0);
     setSelectedChoice(null);
     setAnswers([]);
+    setShowCelebration(false);
   };
 
   return (
@@ -123,37 +193,46 @@ export function StoryMode() {
 
         {viewMode === "catalog" ? (
           <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {modules.map((module, index) => (
-              <Card
-                key={module.id}
-                onClick={() => startModuleQuiz(module.id)}
-                className="cursor-pointer border-[#D5E4FF] bg-white shadow-sm hover:shadow-xl hover:shadow-blue-100/70 hover:-translate-y-1 transition-all rounded-2xl overflow-hidden"
-              >
-                <div className="relative h-44 overflow-hidden">
-                  <img
-                    src={STORY_COVER_IMAGES[index % STORY_COVER_IMAGES.length]}
-                    alt={module.title}
-                    className="h-full w-full object-cover object-center"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#001c52]/80 via-[#00338f]/35 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <p className="text-base font-bold text-white leading-tight drop-shadow-sm">{module.title}</p>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <p className="text-sm text-[#5A77B0] min-h-10">{module.description}</p>
+            {modules.map((module) => {
+              const moduleIcon = STORY_MODULE_ICONS[module.id] ?? {
+                icon: Baby,
+                accent: "text-[#0F4CC9]",
+                background: "from-[#EAF2FF] to-[#D9E9FF]",
+              };
+              const ModuleIcon = moduleIcon.icon;
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="inline-flex items-center rounded-full bg-[#ECF3FF] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2E58A5]">
-                      {module.stories.length} {t("stories.scenarios", "scenarios")}
-                    </span>
-                    <span className="text-xs font-semibold text-[#0048ff]">
-                      {t("stories.startModule", "Start Module")}
-                    </span>
+              return (
+                <Card
+                  key={module.id}
+                  onClick={() => startModuleQuiz(module.id)}
+                  className="cursor-pointer border-[#D5E4FF] bg-white shadow-sm hover:shadow-xl hover:shadow-blue-100/70 hover:-translate-y-1 transition-all rounded-2xl overflow-hidden"
+                >
+                  <div className={`relative h-44 overflow-hidden bg-gradient-to-br ${moduleIcon.background}`}>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.75),transparent_48%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.45),transparent_38%)]" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/80 shadow-lg backdrop-blur-sm">
+                        <ModuleIcon className={`h-10 w-10 ${moduleIcon.accent}`} />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <p className="text-base font-bold text-[#0B225A] leading-tight drop-shadow-sm">{module.title}</p>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                  <div className="p-4">
+                    <p className="text-sm text-[#5A77B0] min-h-10">{module.description}</p>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="inline-flex items-center rounded-full bg-[#ECF3FF] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2E58A5]">
+                        {module.stories.length} {t("stories.scenarios", "scenarios")}
+                      </span>
+                      <span className="text-xs font-semibold text-[#0048ff]">
+                        {t("stories.startModule", "Start Module")}
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         ) : !stories.length ? (
           <Card className="p-8 border-[#CFE0FF] shadow-sm rounded-3xl bg-white text-center">
@@ -247,6 +326,7 @@ export function StoryMode() {
                     const isSelected = selectedChoice === idx;
                     const isCorrect = idx === story.correct;
                     const showFeedback = selectedChoice !== null;
+                    const isCorrectAnswerDisplay = !isSelected && showFeedback && isCorrect;
 
                     return (
                       <button
@@ -258,9 +338,11 @@ export function StoryMode() {
                             ? isCorrect
                               ? "border-emerald-500 bg-emerald-50"
                               : "border-red-500 bg-red-50"
-                            : showFeedback
-                              ? "opacity-45 border-gray-100"
-                              : "border-[#D6E6FF] hover:border-[#4A82FF] hover:bg-[#F7FAFF]"
+                            : isCorrectAnswerDisplay
+                              ? "border-emerald-500 bg-emerald-50"
+                              : showFeedback
+                                ? "opacity-45 border-gray-100"
+                                : "border-[#D6E6FF] hover:border-[#4A82FF] hover:bg-[#F7FAFF]"
                         }`}
                       >
                         <div className="flex gap-4 items-center">
@@ -270,15 +352,17 @@ export function StoryMode() {
                                 ? isCorrect
                                   ? "bg-emerald-500 text-white"
                                   : "bg-red-500 text-white"
-                                : "bg-[#E8F0FF] text-[#4A66A8] group-hover:bg-[#0048ff] group-hover:text-white"
+                                : isCorrectAnswerDisplay
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-[#E8F0FF] text-[#4A66A8] group-hover:bg-[#0048ff] group-hover:text-white"
                             }`}
                           >
                             {String.fromCharCode(65 + idx)}
                           </div>
-                          <span className={`font-medium ${isSelected ? "text-gray-900" : "text-[#314F89]"}`}>{choice}</span>
+                          <span className={`font-medium ${isSelected || isCorrectAnswerDisplay ? "text-gray-900" : "text-[#314F89]"}`}>{choice}</span>
                         </div>
 
-                        {isSelected && (
+                        {(isSelected || isCorrectAnswerDisplay) && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
@@ -290,7 +374,9 @@ export function StoryMode() {
                               ) : (
                                 <AlertCircle className="w-4 h-4 text-red-600" />
                               )}
-                              <p className={isCorrect ? "text-emerald-700" : "text-red-700"}>{story.feedback[idx]}</p>
+                              <p className={isCorrect ? "text-emerald-700" : "text-red-700"}>
+                                {isCorrectAnswerDisplay ? `Correct answer! ${story.feedback[idx]}` : story.feedback[idx]}
+                              </p>
                             </div>
                           </motion.div>
                         )}
@@ -306,6 +392,55 @@ export function StoryMode() {
                       <ChevronRight className="w-5 h-5 ml-2" />
                     </Button>
                   </motion.div>
+                )}
+
+                {showCelebration && (
+                  <AnimatePresence>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, y: -20 }}
+                      className="fixed inset-0 flex items-center justify-center pointer-events-none z-[999]"
+                    >
+                      <div className="text-center">
+                        <motion.div
+                          animate={{ scale: [1, 1.1, 0.95, 1] }}
+                          transition={{ duration: 0.6 }}
+                          className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-200 to-yellow-100 shadow-2xl flex items-center justify-center mx-auto mb-4"
+                        >
+                          <Trophy className="w-12 h-12 text-yellow-600" />
+                        </motion.div>
+                        <h3 className="text-3xl font-bold text-[#0F2A6B] drop-shadow-lg">
+                          {t("common.excellent", "Excellent!")}
+                        </h3>
+                        <p className="text-lg text-[#4A66A8] mt-2 drop-shadow">
+                          {t("common.correctAnswer", "You got it right!")}
+                        </p>
+                      </div>
+
+                      {/* Confetti particles */}
+                      {[...Array(12)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 1, x: 0, y: 0 }}
+                          animate={{
+                            opacity: 0,
+                            x: (Math.random() - 0.5) * 400,
+                            y: (Math.random() - 0.5) * 400,
+                          }}
+                          transition={{ duration: 1.5, ease: "easeOut" }}
+                          className="fixed w-3 h-3 rounded-full pointer-events-none"
+                          style={{
+                            left: "50%",
+                            top: "50%",
+                            backgroundColor: ["#FFD700", "#FFA500", "#FF69B4", "#87CEEB"][
+                              Math.floor(Math.random() * 4)
+                            ],
+                          }}
+                        />
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
                 )}
               </Card>
             </motion.div>

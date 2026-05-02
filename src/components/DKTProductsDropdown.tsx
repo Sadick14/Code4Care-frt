@@ -1,0 +1,254 @@
+import { useState, useMemo } from "react";
+import {
+  ChevronDown,
+  Droplets,
+  HeartPulse,
+  MapPin,
+  Pill,
+  Search,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  TestTube2,
+  type LucideIcon,
+} from "lucide-react";
+import { Card } from "./ui/card";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+import { Input } from "./ui/input";
+import { motion, AnimatePresence } from "motion/react";
+import { dktProducts, getDKTCategories } from "@/data/dktProducts";
+
+const CATEGORY_META: Record<string, { label: string; icon: LucideIcon }> = {
+  condoms: { label: "Condoms", icon: ShieldCheck },
+  emergencyContraception: { label: "Emergency Contraception", icon: Pill },
+  contraceptives: { label: "Contraceptives", icon: HeartPulse },
+  lubricants: { label: "Lubricants", icon: Droplets },
+  testKits: { label: "Test Kits", icon: TestTube2 },
+  supplements: { label: "Supplements", icon: Sparkles },
+  intimateCare: { label: "Intimate Care", icon: Droplets },
+  painRelief: { label: "Pain Relief", icon: HeartPulse }
+};
+
+export function DKTProducts() {
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const categories = useMemo(() => {
+    return ["all", ...getDKTCategories()];
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return dktProducts.filter(product => {
+      const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+      const matchesQuery = !query || 
+        product.name.toLowerCase().includes(query) ||
+        product.description.toLowerCase().includes(query) ||
+        product.uses.some(use => use.toLowerCase().includes(query));
+      return matchesCategory && matchesQuery;
+    });
+  }, [selectedCategory, searchQuery]);
+
+  const toggleProduct = (productId: string) => {
+    setExpandedProductId(expandedProductId === productId ? null : productId);
+  };
+
+  return (
+    <div className="w-full space-y-6">
+    
+
+      {/* Search and Filter */}
+      <Card className="p-4 md:p-5 border-[#D8E7FF] rounded-2xl bg-white shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mb-4">
+          <div className="relative">
+            <Search className="w-4 h-4 text-[#6C88BE] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products, uses, or benefits..."
+              className="h-11 rounded-xl border-[#CFE0FF] pl-9"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {categories.map((category) => {
+            const active = selectedCategory === category;
+            const meta = category === "all" ? null : CATEGORY_META[category];
+            const CategoryIcon = meta?.icon ?? ShoppingBag;
+
+            return (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
+                  active
+                    ? "border-[#0048ff] bg-[#0048ff] text-white"
+                    : "border-[#D1E3FF] bg-[#F7FAFF] text-[#45639E] hover:border-[#90B3FF]"
+                }`}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <CategoryIcon className="h-4 w-4" />
+                  {category === "all" ? "All Products" : meta?.label || category}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Products List */}
+      <div className="space-y-3">
+        {filteredProducts.length > 0 ? (
+          filteredProducts.map((product, idx) => {
+            const isExpanded = expandedProductId === product.id;
+
+            return (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <Card
+                  onClick={() => toggleProduct(product.id)}
+                  className="cursor-pointer border-[#D8E7FF] hover:border-[#0048ff] transition-all rounded-2xl overflow-hidden group"
+                >
+                  <div className="p-4 md:p-5">
+                    {/* Product Header */}
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Badge className="inline-flex items-center gap-1.5 bg-blue-100 text-blue-700 border-blue-200">
+                            {(() => {
+                              const BadgeIcon = CATEGORY_META[product.category]?.icon ?? ShoppingBag;
+                              return <BadgeIcon className="h-3.5 w-3.5" />;
+                            })()}
+                            {CATEGORY_META[product.category]?.label || product.category}
+                          </Badge>
+                          <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+                            {product.availability}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-bold text-[#0F2A6B] group-hover:text-[#0048ff] transition-colors">
+                          {product.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">{product.description}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">Price Range</p>
+                          <p className="text-sm font-bold text-emerald-600">{product.priceRange}</p>
+                        </div>
+                        <ChevronDown
+                          className={`w-5 h-5 text-gray-400 transition-transform ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Expanded Content */}
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="mt-4 pt-4 border-t border-[#E1ECFF] space-y-4"
+                        >
+                          {/* Uses */}
+                          <div>
+                            <h4 className="font-semibold text-[#0F2A6B] mb-2 text-sm">Uses & Benefits:</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {product.uses.map((use, idx) => (
+                                <span
+                                  key={idx}
+                                  className="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100"
+                                >
+                                  ✓ {use}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Where to Get */}
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <MapPin className="w-4 h-4 text-orange-500" />
+                              <h4 className="font-semibold text-[#0F2A6B] text-sm">Where to Get:</h4>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {product.whereToGet.map((location, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-center gap-2 text-sm text-gray-700 bg-orange-50 px-3 py-2 rounded-lg border border-orange-100"
+                                >
+                                  <MapPin className="h-4 w-4 text-orange-600" />
+                                  {location}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 pt-2">
+                            <Button className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                              <ShoppingBag className="w-4 h-4 mr-2" />
+                              Order Now
+                            </Button>
+                            <Button
+                              asChild
+                              variant="outline"
+                              className="flex-1 h-10 rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50"
+                            >
+                              <a href="tel:+233302761210">
+                                Call to Order
+                              </a>
+                            </Button>
+                          </div>
+
+                          {/* Info Box */}
+                          <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-800">
+                            <p>
+                              <strong>Tip:</strong> Availability varies by location. Call ahead or visit your nearest pharmacy to confirm stock.
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </Card>
+              </motion.div>
+            );
+          })
+        ) : (
+          <Card className="p-10 rounded-3xl border-[#D8E7FF] text-center bg-gradient-to-br from-blue-50 to-indigo-50">
+            <ShoppingBag className="w-10 h-10 text-blue-400 mx-auto mb-3" />
+            <h3 className="font-semibold text-[#1D3D79]">No products found</h3>
+            <p className="text-sm text-[#5F7CB3] mt-1">Try a different search term or filter.</p>
+          </Card>
+        )}
+      </div>
+
+      {/* Product Count */}
+      <div className="text-center py-4">
+        <p className="text-sm text-gray-600">
+          Showing {filteredProducts.length} of {dktProducts.length} products
+        </p>
+      </div>
+
+      {/* Info Banner */}
+      <Card className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 rounded-2xl">
+        <p className="text-sm text-blue-900">
+          <strong>About DKT International:</strong> DKT International is a leading non-profit organization providing
+          high-quality, affordable family planning and reproductive health products across Ghana and Africa.
+          All products are sourced through verified channels and meet international quality standards.
+        </p>
+      </Card>
+    </div>
+  );
+}
