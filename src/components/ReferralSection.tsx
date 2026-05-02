@@ -16,7 +16,8 @@ export function ReferralSection() {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [expandedClinics, setExpandedClinics] = useState<number[]>([]);
 
-  const clinics = t('clinics.list', { returnObjects: true }) as any[];
+  const clinicsData = t('clinics.list', { returnObjects: true });
+  const clinics = Array.isArray(clinicsData) ? clinicsData : [];
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371;

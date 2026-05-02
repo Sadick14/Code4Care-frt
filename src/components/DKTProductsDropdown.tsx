@@ -17,7 +17,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { motion, AnimatePresence } from "motion/react";
-import { dktProducts, getDKTCategories } from "@/data/dktProducts";
+import { dktProducts, dktSupportLines, getDKTCategories } from "@/data/dktProducts";
 
 const CATEGORY_META: Record<string, { label: string; icon: LucideIcon }> = {
   condoms: { label: "Condoms", icon: ShieldCheck },
@@ -38,6 +38,10 @@ export function DKTProducts() {
   const categories = useMemo(() => {
     return ["all", ...getDKTCategories()];
   }, []);
+
+  const primarySupportLine = dktSupportLines[0];
+  const supportTel = primarySupportLine ? `+${primarySupportLine.phone.replace(/\D/g, "")}` : "+233302772799";
+  const regionalSupportLines = dktSupportLines.slice(1);
 
   const filteredProducts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -205,7 +209,7 @@ export function DKTProducts() {
                               variant="outline"
                               className="flex-1 h-10 rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50"
                             >
-                              <a href="tel:+233302761210">
+                              <a href={`tel:${supportTel}`}>
                                 Call to Order
                               </a>
                             </Button>
@@ -248,6 +252,26 @@ export function DKTProducts() {
           high-quality, affordable family planning and reproductive health products across Ghana and Africa.
           All products are sourced through verified channels and meet international quality standards.
         </p>
+        <p className="text-sm text-blue-900 mt-2">
+          <strong>Support line:</strong> {primarySupportLine?.region || "Head Office"} - {primarySupportLine?.phone || "0302772799"}
+        </p>
+        <p className="text-sm text-blue-900 mt-1">
+          <strong>Location:</strong> {primarySupportLine?.location || "Dzorwulu, Accra"}
+        </p>
+        <p className="text-sm text-blue-900 mt-1">
+          <strong>Email:</strong> {primarySupportLine?.email || "info@dktghana.org"}
+        </p>
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+          {regionalSupportLines.map((line) => (
+            <a
+              key={`${line.region}-${line.phone}`}
+              href={`tel:${line.phone}`}
+              className="text-xs text-blue-900 bg-white/70 border border-blue-200 rounded-lg px-3 py-2 hover:bg-white"
+            >
+              <strong>{line.region}:</strong> {line.phone}
+            </a>
+          ))}
+        </div>
       </Card>
     </div>
   );

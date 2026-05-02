@@ -10,7 +10,8 @@ import { motion } from "motion/react";
 export function SupportAndClinics() {
   const { t } = useTranslation();
 
-  const hotlines = t('support.hotlines', { returnObjects: true }) as any[];
+  const hotlinesData = t('support.hotlines', { returnObjects: true });
+  const hotlines = Array.isArray(hotlinesData) ? hotlinesData : [];
 
   return (
     <div className="h-full overflow-y-auto bg-gradient-to-b from-white to-[#F8FAFE]">

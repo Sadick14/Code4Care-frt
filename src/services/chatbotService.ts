@@ -211,7 +211,7 @@ const ghanaResources = {
   en: {
     ppag: "PPAG: 0302-219-038",
     marieStopes: "Marie Stopes Ghana: 0302-234-040",
-    dkt: "DKT Ghana: +233 30 276 5432",
+    dkt: "DKT Ghana: +233 30 277 2799",
     dovvsu: "DOVVSU (Domestic Violence & Victim Support): 055-1000-900",
     mentalHealth: "Mental Health Authority: 050-911-4396",
     emergency: "Emergency: 191 or 112",
@@ -220,7 +220,7 @@ const ghanaResources = {
   twi: {
     ppag: "PPAG: 0302-219-038",
     marieStopes: "Marie Stopes Ghana: 0302-234-040",
-    dkt: "DKT Ghana: +233 30 276 5432",
+    dkt: "DKT Ghana: +233 30 277 2799",
     dovvsu: "DOVVSU: 055-1000-900",
     mentalHealth: "Adwene Akwahosan: 050-911-4396",
     emergency: "Ntɛmpɛ Mmoa: 191 anaa 112",
@@ -229,7 +229,7 @@ const ghanaResources = {
   ewe: {
     ppag: "PPAG: 0302-219-038",
     marieStopes: "Marie Stopes Ghana: 0302-234-040",
-    dkt: "DKT Ghana: +233 30 276 5432",
+    dkt: "DKT Ghana: +233 30 277 2799",
     dovvsu: "DOVVSU: 055-1000-900",
     mentalHealth: "Susuŋudɔwɔha: 050-911-4396",
     emergency: "Kpakplikpakpli: 191 alo 112",

@@ -10,6 +10,82 @@ export interface DKTProduct {
   image?: string;
 }
 
+export interface DKTSupportLine {
+  region: string;
+  location?: string;
+  phone: string;
+  email?: string;
+}
+
+export const dktSupportLines: DKTSupportLine[] = [
+  {
+    region: "Head Office",
+    location: "Dzorwulu, Accra",
+    phone: "0302772799",
+    email: "info@dktghana.org"
+  },
+  {
+    region: "Volta Region",
+    phone: "0501516799"
+  },
+  {
+    region: "Upper West Region",
+    phone: "0501516867"
+  },
+  {
+    region: "Western North Region",
+    phone: "0501516913"
+  },
+  {
+    region: "Bono Region",
+    phone: "0501516883"
+  },
+  {
+    region: "Northern Sector",
+    phone: "0501336328"
+  },
+  {
+    region: "Bono East Region",
+    phone: "0505156874"
+  },
+  {
+    region: "Eastern Region",
+    phone: "0501336311"
+  },
+  {
+    region: "Accra West / Central",
+    phone: "0501336326"
+  },
+  {
+    region: "Western Region",
+    phone: "0501336327"
+  },
+  {
+    region: "Ashanti Region",
+    phone: "0501336329"
+  },
+  {
+    region: "Northern / Upper West / Upper East",
+    phone: "0501336308"
+  },
+  {
+    region: "Accra West",
+    phone: "0501336304"
+  },
+  {
+    region: "Eastern / Volta",
+    phone: "0501336306"
+  },
+  {
+    region: "Accra East",
+    phone: "0501336327"
+  },
+  {
+    region: "Central / Western",
+    phone: "0501336310"
+  }
+];
+
 export const dktProducts: DKTProduct[] = [
   // Condoms
   {
@@ -365,6 +441,218 @@ export const dktProducts: DKTProduct[] = [
     ],
     priceRange: "GH₵ 0.30-1.50 per tablet",
     availability: "Always available"
+  },
+
+  // Ghana MD Booklet-mapped DKT products
+  {
+    id: "dkt-postpil",
+    name: "Postpil",
+    category: "emergencyContraception",
+    description: "Emergency contraceptive pill listed in DKT Ghana booklet line-up.",
+    uses: ["Emergency pregnancy prevention", "Post-unprotected intercourse"],
+    whereToGet: ["DKT partner pharmacies", "Family planning clinics", "DKT support referral"],
+    priceRange: "GH₵ 10-20",
+    availability: "Available in major urban pharmacies"
+  },
+  {
+    id: "dkt-sayana-press",
+    name: "Sayana Press",
+    category: "contraceptives",
+    description: "Injectable contraceptive option listed in DKT Ghana booklet.",
+    uses: ["Long-acting contraception", "Quarterly pregnancy prevention"],
+    whereToGet: ["Family planning clinics", "DKT partner facilities", "Referral clinics"],
+    priceRange: "GH₵ 20-40 per dose",
+    availability: "Available through trained providers"
+  },
+  {
+    id: "dkt-norigynon",
+    name: "Norigynon",
+    category: "contraceptives",
+    description: "Injectable hormonal contraceptive listed in DKT Ghana booklet.",
+    uses: ["Pregnancy prevention", "Routine injectable contraception"],
+    whereToGet: ["Clinics", "Hospitals", "DKT partner providers"],
+    priceRange: "GH₵ 15-35 per dose",
+    availability: "Provider-dependent availability"
+  },
+  {
+    id: "dkt-daphne",
+    name: "Daphne",
+    category: "contraceptives",
+    description: "Oral contraceptive brand listed in DKT Ghana booklet.",
+    uses: ["Daily pregnancy prevention", "Cycle control"],
+    whereToGet: ["Pharmacies", "Family planning outlets", "DKT support referral"],
+    priceRange: "GH₵ 8-20 per cycle",
+    availability: "Widely available"
+  },
+  {
+    id: "dkt-ocp",
+    name: "OCP",
+    category: "contraceptives",
+    description: "Oral contraceptive pills listed in DKT Ghana booklet portfolio.",
+    uses: ["Pregnancy prevention", "Hormonal regulation"],
+    whereToGet: ["Pharmacies", "Clinics", "DKT partner outlets"],
+    priceRange: "GH₵ 8-18 per month",
+    availability: "Available nationwide"
+  },
+  {
+    id: "dkt-implanon",
+    name: "Implanon",
+    category: "contraceptives",
+    description: "Single-rod implant contraceptive listed in DKT Ghana booklet.",
+    uses: ["Long-term contraception", "Reversible implant method"],
+    whereToGet: ["Implant-trained clinics", "Hospitals", "DKT referral points"],
+    priceRange: "GH₵ 120-300",
+    availability: "Available at trained service points"
+  },
+  {
+    id: "dkt-levoplant",
+    name: "Levoplant",
+    category: "contraceptives",
+    description: "Two-rod contraceptive implant listed in DKT Ghana booklet.",
+    uses: ["Long-term contraception", "Reversible implant method"],
+    whereToGet: ["Implant-trained providers", "DKT partner clinics"],
+    priceRange: "GH₵ 120-300",
+    availability: "Available in partner clinics"
+  },
+  {
+    id: "dkt-kiss-classic",
+    name: "Kiss Classic Condoms",
+    category: "condoms",
+    description: "Classic Kiss condom variant listed in DKT Ghana booklet.",
+    uses: ["STI prevention", "Pregnancy prevention"],
+    whereToGet: ["Pharmacies", "Retail outlets", "DKT partner outlets"],
+    priceRange: "GH₵ 2-6 per pack",
+    availability: "Widely available"
+  },
+  {
+    id: "dkt-prudence-all-night",
+    name: "Prudence All Night",
+    category: "condoms",
+    description: "All Night condom variant listed in DKT Ghana booklet.",
+    uses: ["STI prevention", "Pregnancy prevention", "Extended comfort"],
+    whereToGet: ["Pharmacies", "Retail outlets", "DKT partner outlets"],
+    priceRange: "GH₵ 3-7 per pack",
+    availability: "Available in major cities"
+  },
+  {
+    id: "dkt-prudence-classic",
+    name: "Prudence Classic",
+    category: "condoms",
+    description: "Classic condom variant listed in DKT Ghana booklet.",
+    uses: ["STI prevention", "Pregnancy prevention"],
+    whereToGet: ["Pharmacies", "Retail outlets", "DKT partner outlets"],
+    priceRange: "GH₵ 2-6 per pack",
+    availability: "Widely available"
+  },
+  {
+    id: "dkt-prudence-dotted",
+    name: "Prudence Dotted",
+    category: "condoms",
+    description: "Dotted condom variant listed in DKT Ghana booklet.",
+    uses: ["STI prevention", "Pregnancy prevention", "Textured experience"],
+    whereToGet: ["Pharmacies", "Retail outlets", "DKT partner outlets"],
+    priceRange: "GH₵ 3-7 per pack",
+    availability: "Available in urban outlets"
+  },
+  {
+    id: "dkt-prudence-extra-thin",
+    name: "Prudence Extra Thin",
+    category: "condoms",
+    description: "Extra Thin condom variant listed in DKT Ghana booklet.",
+    uses: ["STI prevention", "Pregnancy prevention", "Increased sensitivity"],
+    whereToGet: ["Pharmacies", "Retail outlets", "DKT partner outlets"],
+    priceRange: "GH₵ 3-7 per pack",
+    availability: "Available in select and major outlets"
+  },
+  {
+    id: "dkt-prudence-fruity",
+    name: "Prudence Fruity",
+    category: "condoms",
+    description: "Flavored condom variant listed in DKT Ghana booklet.",
+    uses: ["STI prevention", "Pregnancy prevention", "Flavor-enhanced use"],
+    whereToGet: ["Pharmacies", "Supermarkets", "DKT partner outlets"],
+    priceRange: "GH₵ 3-7 per pack",
+    availability: "Available in urban and peri-urban outlets"
+  },
+  {
+    id: "dkt-prudence-strawberry",
+    name: "Prudence Strawberry",
+    category: "condoms",
+    description: "Strawberry condom variant listed in DKT Ghana booklet.",
+    uses: ["STI prevention", "Pregnancy prevention", "Flavor-enhanced use"],
+    whereToGet: ["Pharmacies", "Supermarkets", "DKT partner outlets"],
+    priceRange: "GH₵ 3-7 per pack",
+    availability: "Available in urban and peri-urban outlets"
+  },
+  {
+    id: "dkt-prudence-sleek",
+    name: "Prudence Sleek",
+    category: "condoms",
+    description: "Sleek condom variant listed in DKT Ghana booklet.",
+    uses: ["STI prevention", "Pregnancy prevention", "Comfort-enhanced use"],
+    whereToGet: ["Pharmacies", "Retail outlets", "DKT partner outlets"],
+    priceRange: "GH₵ 3-7 per pack",
+    availability: "Available in major urban outlets"
+  },
+  {
+    id: "dkt-kiss-strawberry",
+    name: "Kiss Strawberry Condoms",
+    category: "condoms",
+    description: "Flavored Kiss condom variant listed in DKT Ghana booklet.",
+    uses: ["STI prevention", "Pregnancy prevention", "Flavor-enhanced use"],
+    whereToGet: ["Pharmacies", "Supermarkets", "DKT partner outlets"],
+    priceRange: "GH₵ 3-7 per pack",
+    availability: "Available in urban and peri-urban outlets"
+  },
+  {
+    id: "dkt-kiss-gel",
+    name: "Kiss Gel",
+    category: "lubricants",
+    description: "Lubricant line listed in DKT Ghana booklet.",
+    uses: ["Comfort enhancement", "Reduced friction", "Condom-compatible use"],
+    whereToGet: ["Pharmacies", "Health shops", "DKT partner outlets"],
+    priceRange: "GH₵ 8-20",
+    availability: "Available in selected pharmacies"
+  },
+  {
+    id: "dkt-lydia-safeload",
+    name: "Lydia Safeload",
+    category: "condoms",
+    description: "Female condom line listed in DKT Ghana booklet.",
+    uses: ["Female-controlled contraception", "STI prevention", "Pregnancy prevention"],
+    whereToGet: ["Family planning clinics", "Selected pharmacies", "DKT support referral"],
+    priceRange: "GH₵ 15-30 per unit",
+    availability: "Available in select service points"
+  },
+  {
+    id: "dkt-mafem",
+    name: "MaFem",
+    category: "intimateCare",
+    description: "Women-focused product line listed in DKT Ghana booklet.",
+    uses: ["Women's health support", "Personal care"],
+    whereToGet: ["Pharmacies", "Women's health outlets", "DKT partner outlets"],
+    priceRange: "GH₵ 10-35",
+    availability: "Availability varies by outlet"
+  },
+  {
+    id: "dkt-mva-kit",
+    name: "MVA Kit",
+    category: "clinicalKits",
+    description: "Manual vacuum aspiration kit listed in DKT Ghana booklet for clinical use.",
+    uses: ["Clinical uterine evacuation procedures", "Facility-based reproductive care"],
+    whereToGet: ["Hospitals", "Licensed clinics", "Provider procurement channels"],
+    priceRange: "Facility procurement pricing",
+    availability: "For trained providers and facilities"
+  },
+  {
+    id: "dkt-mm-combit-kit",
+    name: "MM Combit Kit",
+    category: "clinicalKits",
+    description: "Clinical reproductive health kit listed in DKT Ghana booklet.",
+    uses: ["Facility reproductive care", "Provider-managed protocols"],
+    whereToGet: ["Licensed health facilities", "Clinical procurement channels"],
+    priceRange: "Facility procurement pricing",
+    availability: "For trained providers and facilities"
   }
 ];
 

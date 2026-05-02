@@ -189,6 +189,27 @@
         "contact": "Mental Health Authority",
         "phone": "050-911-4396",
         "description": "Counseling and crisis support."
+      },
+      {
+        "id": 3,
+        "type": "SRH Information",
+        "contact": "PPAG Youth Line",
+        "phone": "0302-219-038",
+        "description": "Youth-friendly SRH counseling, referrals, and service information."
+      },
+      {
+        "id": 4,
+        "type": "Family Planning",
+        "contact": "MSI Reproductive Choices Ghana",
+        "phone": "0302-234-040",
+        "description": "Contraception and reproductive health service guidance."
+      },
+      {
+        "id": 5,
+        "type": "Product Access / Family Planning",
+        "contact": "DKT Ghana Support Desk",
+        "phone": "0302-772-799",
+        "description": "Support for contraceptive product access, referrals, and partner outlets."
       }
     ]
   },
@@ -206,7 +227,7 @@
         "id": 1,
         "name": "PPAG Youth Clinics",
         "type": "Clinic",
-        "services": ["Contraceptive counseling", "STI testing"],
+        "services": ["Contraceptive counseling", "STI testing", "HIV testing", "Youth counseling"],
         "centers": [
           {
             "id": "ppag-accra",
@@ -214,6 +235,129 @@
             "phone": "0302-219-038",
             "hours": "Mon-Fri: 8am-5pm",
             "coordinates": { "lat": 5.5717, "lng": -0.2057 }
+          },
+          {
+            "id": "ppag-kumasi",
+            "address": "Adum, Kumasi",
+            "phone": "0302-219-038",
+            "hours": "Mon-Fri: 8am-5pm",
+            "coordinates": { "lat": 6.6885, "lng": -1.6244 }
+          },
+          {
+            "id": "ppag-tamale",
+            "address": "Central Tamale",
+            "phone": "0302-219-038",
+            "hours": "Mon-Fri: 8am-5pm",
+            "coordinates": { "lat": 9.4075, "lng": -0.8533 }
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "MSI Reproductive Choices Centres",
+        "type": "Clinic",
+        "services": ["Family planning", "Contraceptive methods", "Safe counseling", "Post-care support"],
+        "centers": [
+          {
+            "id": "msi-accra",
+            "address": "Kokomlemle, Accra",
+            "phone": "0302-234-040",
+            "hours": "Mon-Sat: 8am-6pm",
+            "coordinates": { "lat": 5.5724, "lng": -0.2166 }
+          },
+          {
+            "id": "msi-kumasi",
+            "address": "Amakom, Kumasi",
+            "phone": "0302-234-040",
+            "hours": "Mon-Sat: 8am-6pm",
+            "coordinates": { "lat": 6.6739, "lng": -1.6162 }
+          },
+          {
+            "id": "msi-takoradi",
+            "address": "Market Circle, Takoradi",
+            "phone": "0302-234-040",
+            "hours": "Mon-Sat: 8am-6pm",
+            "coordinates": { "lat": 4.8917, "lng": -1.7519 }
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "name": "Mental Health Service Points",
+        "type": "Clinic",
+        "services": ["Crisis counseling", "Psychological first aid", "Referral support"],
+        "centers": [
+          {
+            "id": "mental-accra",
+            "address": "Adabraka, Accra",
+            "phone": "050-911-4396",
+            "hours": "Mon-Fri: 8am-5pm",
+            "coordinates": { "lat": 5.5659, "lng": -0.2084 }
+          },
+          {
+            "id": "mental-kumasi",
+            "address": "KNUST/Tech Junction Area, Kumasi",
+            "phone": "050-911-4396",
+            "hours": "Mon-Fri: 8am-5pm",
+            "coordinates": { "lat": 6.6731, "lng": -1.5719 }
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "name": "Youth-Friendly Public Clinic Hubs",
+        "type": "Clinic",
+        "services": ["Adolescent health", "STI screening", "SRH education", "Referral"],
+        "centers": [
+          {
+            "id": "ridge-accra",
+            "address": "Ridge, Accra",
+            "phone": "0302-739-373",
+            "hours": "Mon-Fri: 8am-4pm",
+            "coordinates": { "lat": 5.5606, "lng": -0.1916 }
+          },
+          {
+            "id": "komfo-anokye-kumasi",
+            "address": "Bantama, Kumasi",
+            "phone": "0322-025-951",
+            "hours": "Mon-Fri: 8am-4pm",
+            "coordinates": { "lat": 6.7108, "lng": -1.6308 }
+          },
+          {
+            "id": "tamale-teaching",
+            "address": "Education Ridge, Tamale",
+            "phone": "0372-092-499",
+            "hours": "Mon-Fri: 8am-4pm",
+            "coordinates": { "lat": 9.4252, "lng": -0.8608 }
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "name": "DKT Partner Service Points",
+        "type": "Clinic",
+        "services": ["Contraceptive access", "Emergency contraception", "Product counseling", "Referral support"],
+        "centers": [
+          {
+            "id": "dkt-accra",
+            "address": "East Legon, Accra",
+            "phone": "0302-772-799",
+            "hours": "Mon-Fri: 8am-5pm",
+            "coordinates": { "lat": 5.6402, "lng": -0.1520 }
+          },
+          {
+            "id": "dkt-kumasi",
+            "address": "Adum, Kumasi",
+            "phone": "0302-772-799",
+            "hours": "Mon-Fri: 8am-5pm",
+            "coordinates": { "lat": 6.6885, "lng": -1.6244 }
+          },
+          {
+            "id": "dkt-tamale",
+            "address": "Central Tamale",
+            "phone": "0302-772-799",
+            "hours": "Mon-Fri: 8am-5pm",
+            "coordinates": { "lat": 9.4075, "lng": -0.8533 }
           }
         ]
       }
