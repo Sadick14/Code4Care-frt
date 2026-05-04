@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Search,
   Plus,
@@ -30,31 +30,14 @@ import {
   StaffAccessService,
   StaffAccount,
   StaffRole,
+  StaffSession,
 } from '@/services/staffAccessService';
-
-interface User {
-  id: string;
-  nickname: string;
-  age: string;
-  gender: string;
-  joinDate: string;
-  status: 'active' | 'inactive' | 'suspended';
-  lastActive: string;
-  engagementCount: number;
-  engagementIntensity: number;
-}
-
-const mockUsers: User[] = [
-  { id: '1', nickname: 'SilentThinker', age: '16-18', gender: 'Female', joinDate: '2025-11-15', status: 'active', lastActive: '2 hours', engagementCount: 24, engagementIntensity: 92 },
-  { id: '2', nickname: 'BraveHeart', age: '19-24', gender: 'Male', joinDate: '2025-10-22', status: 'active', lastActive: '5 mins', engagementCount: 67, engagementIntensity: 87 },
-  { id: '3', nickname: 'DreamSeeker', age: '13-15', gender: 'Female', joinDate: '2025-09-10', status: 'active', lastActive: '1 day', engagementCount: 42, engagementIntensity: 78 },
-  { id: '4', nickname: 'LoneWanderer', age: '16-18', gender: 'Male', joinDate: '2025-08-05', status: 'inactive', lastActive: '30 days', engagementCount: 8, engagementIntensity: 12 },
-  { id: '5', nickname: 'EchoVoice', age: '19-24', gender: 'Non-binary', joinDate: '2025-12-01', status: 'suspended', lastActive: 'Never', engagementCount: 2, engagementIntensity: 5 },
-  { id: '6', nickname: 'HopeSeeker', age: '15-18', gender: 'Female', joinDate: '2025-11-20', status: 'active', lastActive: '1 hour', engagementCount: 15, engagementIntensity: 75 },
-];
+import { UserManagementService, UserListItem } from '@/services/userManagementService';
+import { logger } from '@/utils/logger';
 
 interface AdminUserManagementProps {
   selectedLanguage: string;
+  session: StaffSession;
 }
 
 const initialForm = {
@@ -65,48 +48,81 @@ const initialForm = {
   password: '',
 };
 
-export function AdminUserManagement({ selectedLanguage }: AdminUserManagementProps) {
+export function AdminUserManagement({ selectedLanguage, session }: AdminUserManagementProps) {
   void selectedLanguage;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
-
+  const [users, setUsers] = useState<UserListItem[]>([]);
   const [staff, setStaff] = useState<StaffAccount[]>(() => StaffAccessService.getStaffAccounts());
-
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [staffModalOpen, setStaffModalOpen] = useState(false);
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
   const [formData, setFormData] = useState(initialForm);
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
-  const refreshData = () => {
-    setStaff(StaffAccessService.getStaffAccounts());
+  const loadStaff = async () => {
+    try {
+      setStaff(await StaffAccessService.listStaff(session.accessToken));
+    } catch (error) {
+      logger.error('Failed to load staff', error);
+    }
   };
 
+  const loadUsers = async () => {
+    setIsLoadingUsers(true);
+    try {
+      const response = await UserManagementService.listUsers(
+        {
+          page: 1,
+          limit: 100,
+          status: filterStatus !== 'all' ? (filterStatus as any) : undefined,
+        },
+        session.accessToken
+      );
+      setUsers(response.users);
+    } catch (error) {
+      logger.error('Failed to load users', error);
+      setUsers([]);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadStaff();
+    void loadUsers();
+  }, [session.accessToken]);
+
+  useEffect(() => {
+    void loadUsers();
+  }, [filterStatus]);
+
   const filteredUsers = useMemo(() => {
-    let filtered = [...mockUsers];
+    let filtered = [...users];
 
     if (searchTerm) {
       filtered = filtered.filter((u) =>
-        u.nickname.toLowerCase().includes(searchTerm.toLowerCase()) || u.age.includes(searchTerm)
+        u.nickname.toLowerCase().includes(searchTerm.toLowerCase()) || u.age_range.includes(searchTerm)
       );
     }
 
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter((u) => u.status === filterStatus);
-    }
-
-    filtered.sort((a, b) => b.engagementIntensity - a.engagementIntensity);
+    filtered.sort((a, b) => b.engagement_score - a.engagement_score);
 
     return filtered;
-  }, [searchTerm, filterStatus]);
+  }, [users, searchTerm]);
 
   const handleAddStaff = () => {
     setEditingStaffId(null);
     setFormData(initialForm);
+    setSaveError('');
     setStaffModalOpen(true);
   };
 
   const handleEditStaff = (member: StaffAccount) => {
     setEditingStaffId(member.id);
+    setSaveError('');
     setFormData({
       name: member.name,
       email: member.email,
@@ -117,8 +133,8 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
     setStaffModalOpen(true);
   };
 
-  const handleSaveStaff = () => {
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+  const handleSaveStaff = async () => {
+    if (!formData.name.trim() || !formData.email.trim()) {
       return;
     }
 
@@ -126,30 +142,59 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
       return;
     }
 
-    StaffAccessService.upsertStaffAccount({
-      id: editingStaffId || undefined,
-      name: formData.name.trim(),
-      email: formData.email.trim(),
-      phone: formData.phone.trim(),
-      role: formData.role,
-      password: formData.password.trim() || undefined,
-    });
+    setIsSaving(true);
+    setSaveError('');
 
-    setStaffModalOpen(false);
-    setFormData(initialForm);
-    refreshData();
+    try {
+      if (editingStaffId) {
+        await StaffAccessService.updateStaffAccount(editingStaffId, {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          role: formData.role,
+          isActive: true,
+        }, session.accessToken);
+
+        StaffAccessService.upsertStaffAccount({
+          id: editingStaffId,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          role: formData.role,
+          password: formData.password.trim() || undefined,
+        });
+      } else {
+        await StaffAccessService.createStaffAccount(
+          {
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            phone: formData.phone.trim(),
+            role: formData.role,
+            password: formData.password.trim(),
+          },
+          session.accessToken,
+        );
+      }
+
+      setStaffModalOpen(false);
+      setFormData(initialForm);
+      void loadStaff();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Unable to save staff account.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDeleteStaff = (staffId: string) => {
-    StaffAccessService.deleteStaffAccount(staffId);
-    refreshData();
+  const handleDeleteStaff = async (staffId: string) => {
+    await StaffAccessService.deleteStaffAccount(staffId, session.accessToken);
+    await loadStaff();
   };
 
   const stats = {
-    total: mockUsers.length,
-    active: mockUsers.filter((u) => u.status === 'active').length,
-    inactive: mockUsers.filter((u) => u.status === 'inactive').length,
-    suspended: mockUsers.filter((u) => u.status === 'suspended').length,
+    total: users.length,
+    active: users.filter((u) => u.status === 'active').length,
+    inactive: users.filter((u) => u.status === 'inactive').length,
+    suspended: users.filter((u) => u.status === 'suspended').length,
     staffActive: staff.filter((s) => s.status === 'active').length,
     staffTotal: staff.length,
   };
@@ -244,39 +289,52 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.id} className="border-[#E8ECFF] hover:bg-gray-50 transition-colors">
-                      <TableCell className="text-gray-900 font-medium">{user.nickname}</TableCell>
-                      <TableCell className="text-gray-600 text-sm">{user.age}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={getUserStatusColor(user.status)}>
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900">{user.engagementCount} visits</span>
-                            <span className="text-xs text-gray-500">engagements</span>
-                            <Badge className={user.engagementIntensity >= 80 ? 'bg-green-50 text-green-700 border-green-200 text-xs' : user.engagementIntensity >= 50 ? 'bg-blue-50 text-blue-700 border-blue-200 text-xs' : 'bg-yellow-50 text-yellow-700 border-yellow-200 text-xs'}>
-                              {user.engagementIntensity >= 80 ? 'Very Active' : user.engagementIntensity >= 50 ? 'Active' : 'Moderate'}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                              <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600" style={{ width: `${user.engagementIntensity}%` }} />
-                            </div>
-                            <span className="text-xs text-gray-500">{user.engagementIntensity}% intensity</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                          View
-                        </Button>
+                  {isLoadingUsers ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                        Loading users...
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : filteredUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                        No users found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <TableRow key={user.id} className="border-[#E8ECFF] hover:bg-gray-50 transition-colors">
+                        <TableCell className="text-gray-900 font-medium">{user.nickname}</TableCell>
+                        <TableCell className="text-gray-600 text-sm">{user.age_range}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={getUserStatusColor(user.status)}>
+                            {user.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-900">{user.total_messages} messages</span>
+                              <Badge className={user.engagement_score >= 80 ? 'bg-green-50 text-green-700 border-green-200 text-xs' : user.engagement_score >= 50 ? 'bg-blue-50 text-blue-700 border-blue-200 text-xs' : 'bg-yellow-50 text-yellow-700 border-yellow-200 text-xs'}>
+                                {user.engagement_score >= 80 ? 'Very Active' : user.engagement_score >= 50 ? 'Active' : 'Moderate'}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600" style={{ width: `${user.engagement_score}%` }} />
+                              </div>
+                              <span className="text-xs text-gray-500">{user.engagement_score}%</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -409,14 +467,20 @@ export function AdminUserManagement({ selectedLanguage }: AdminUserManagementPro
                   className="bg-gray-50 border-[#E8ECFF] text-gray-900"
                 />
               </div>
+
+              {saveError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {saveError}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 mt-6">
-              <Button variant="outline" className="flex-1 border-gray-300" onClick={() => setStaffModalOpen(false)}>
+              <Button variant="outline" className="flex-1 border-gray-300" onClick={() => setStaffModalOpen(false)} disabled={isSaving}>
                 Cancel
               </Button>
-              <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSaveStaff}>
-                {editingStaffId ? 'Update' : 'Create'} Account
+              <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSaveStaff} disabled={isSaving}>
+                {isSaving ? 'Saving...' : editingStaffId ? 'Update' : 'Create'} Account
               </Button>
             </div>
           </Card>

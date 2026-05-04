@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Activity, Clock3, LogOut, UserCheck, CheckCircle2, PhoneCall } from 'lucide-react';
 
@@ -8,8 +8,9 @@ import { Badge } from './ui/badge';
 import {
   StaffAccessService,
   StaffSession,
-  SupportRequest,
 } from '@/services/staffAccessService';
+import { SupportRequestService, SupportRequestListItem } from '@/services/supportRequestService';
+import { logger } from '@/utils/logger';
 
 interface SupportCounselorDashboardProps {
   session: StaffSession;
@@ -17,7 +18,8 @@ interface SupportCounselorDashboardProps {
 }
 
 export function SupportCounselorDashboard({ session, onLogout }: SupportCounselorDashboardProps) {
-  const [supportRequests, setSupportRequests] = useState<SupportRequest[]>(() => StaffAccessService.getSupportRequests());
+  const [supportRequests, setSupportRequests] = useState<SupportRequestListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const waitingRequests = useMemo(
     () => supportRequests.filter((request) => request.status === 'waiting'),
@@ -25,67 +27,92 @@ export function SupportCounselorDashboard({ session, onLogout }: SupportCounselo
   );
 
   const myAssignedRequests = useMemo(
-    () => supportRequests.filter((request) => request.assignedStaffId === session.staffId && request.status === 'assigned'),
+    () => supportRequests.filter((request) => request.assigned_staff?.id === session.staffId && request.status === 'assigned'),
     [supportRequests, session.staffId]
   );
 
   const myActiveRequests = useMemo(
-    () => supportRequests.filter((request) => request.assignedStaffId === session.staffId && request.status === 'active'),
+    () => supportRequests.filter((request) => request.assigned_staff?.id === session.staffId && request.status === 'active'),
     [supportRequests, session.staffId]
   );
 
-  const refreshRequests = () => {
-    setSupportRequests(StaffAccessService.getSupportRequests());
+  useEffect(() => {
+    const loadRequests = async () => {
+      setIsLoading(true);
+      try {
+        const response = await SupportRequestService.listSupportRequests(
+          { status: 'waiting' },
+          session.accessToken || session.user?.id
+        );
+        setSupportRequests(response.requests);
+      } catch (error) {
+        logger.error('Failed to load support requests', error);
+        setSupportRequests([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadRequests();
+    const interval = setInterval(() => {
+      void loadRequests();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [session]);
+
+  const claimRequest = async (requestId: string) => {
+    try {
+      await SupportRequestService.assignSupportRequest(
+        requestId,
+        { staff_id: session.staffId, auto_start: false },
+        session.accessToken || session.user?.id
+      );
+      const updated = supportRequests.map((r) => {
+        if (r.id !== requestId) return r;
+        return { ...r, status: 'assigned' as const, assigned_staff: { id: session.staffId, name: session.name } };
+      });
+      setSupportRequests(updated);
+    } catch (error) {
+      logger.error('Failed to claim request', error);
+    }
   };
 
-  const claimRequest = (requestId: string) => {
-    const next = supportRequests.map((request) => {
-      if (request.id !== requestId) {
-        return request;
-      }
-
-      return {
-        ...request,
-        status: 'assigned' as const,
-        assignedStaffId: session.staffId,
-        assignedStaffName: session.name,
-      };
-    });
-
-    StaffAccessService.saveSupportRequests(next);
-    refreshRequests();
+  const connectRequest = async (requestId: string) => {
+    try {
+      await SupportRequestService.updateSupportRequest(
+        requestId,
+        { status: 'active' },
+        session.accessToken || session.user?.id
+      );
+      const updated = supportRequests.map((r) => {
+        if (r.id !== requestId) return r;
+        return { ...r, status: 'active' as const };
+      });
+      setSupportRequests(updated);
+    } catch (error) {
+      logger.error('Failed to connect to request', error);
+    }
   };
 
-  const connectRequest = (requestId: string) => {
-    const next = supportRequests.map((request) => {
-      if (request.id !== requestId) {
-        return request;
-      }
-
-      return {
-        ...request,
-        status: 'active' as const,
-      };
-    });
-
-    StaffAccessService.saveSupportRequests(next);
-    refreshRequests();
-  };
-
-  const resolveRequest = (requestId: string) => {
-    const next = supportRequests.map((request) => {
-      if (request.id !== requestId) {
-        return request;
-      }
-
-      return {
-        ...request,
-        status: 'resolved' as const,
-      };
-    });
-
-    StaffAccessService.saveSupportRequests(next);
-    refreshRequests();
+  const resolveRequest = async (requestId: string) => {
+    try {
+      await SupportRequestService.resolveSupportRequest(
+        requestId,
+        {
+          resolution_notes: 'Session resolved by consultant',
+          follow_up_required: false,
+        },
+        session.accessToken || session.user?.id
+      );
+      const updated = supportRequests.map((r) => {
+        if (r.id !== requestId) return r;
+        return { ...r, status: 'resolved' as const };
+      });
+      setSupportRequests(updated);
+    } catch (error) {
+      logger.error('Failed to resolve request', error);
+    }
   };
 
   const consultantStats = [

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
-import { Navigate } from "react-router-dom";
 import { AdminPanel } from "./components/AdminPanel";
 import { AdminDashboardLogin } from "./components/AdminDashboardLogin";
 import { SupportCounselorDashboard } from "./components/ConsultantDashboard";
@@ -16,9 +15,28 @@ function AdminDashboardAppContent() {
 
   // Check if admin session exists on mount
   useEffect(() => {
-    const existingSession = StaffAccessService.getSession();
-    setSession(existingSession);
-    setIsLoading(false);
+    let isMounted = true;
+
+    const initializeAdminShell = async () => {
+      try {
+        await StaffAccessService.seedDefaultAdminAccount();
+      } catch (seedError) {
+        console.error('Failed to seed default admin account:', seedError);
+      }
+
+      const existingSession = StaffAccessService.getSession();
+
+      if (isMounted) {
+        setSession(existingSession);
+        setIsLoading(false);
+      }
+    };
+
+    void initializeAdminShell();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleAdminLogin = (nextSession: StaffSession) => {
@@ -60,6 +78,7 @@ function AdminDashboardAppContent() {
       <AdminPanel
         selectedLanguage={i18n.resolvedLanguage?.split('-')[0] || 'en'}
         onLogout={handleAdminLogout}
+        session={session}
       />
     </>
   );

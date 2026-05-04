@@ -6,29 +6,31 @@ import { AdminUserManagement } from './AdminUserManagement';
 import { AdminSafetyManagement } from './AdminSafetyManagement';
 import { AdminSystemHealth } from './AdminSystemHealth';
 import { AdminReports } from './AdminReports';
+import { StaffSession } from '@/services/staffAccessService';
 
 type AdminSection = 'dashboard' | 'users' | 'safety' | 'reports' | 'health';
 
 interface AdminPanelProps {
   selectedLanguage: string;
   onLogout: () => void;
+  session: StaffSession;
 }
 
-export function AdminPanel({ selectedLanguage, onLogout }: AdminPanelProps) {
+export function AdminPanel({ selectedLanguage, onLogout, session }: AdminPanelProps) {
   const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard');
 
   const renderContent = () => {
     switch (currentSection) {
       case 'dashboard':
-        return <AdminDashboard selectedLanguage={selectedLanguage} />;
+        return <AdminDashboard selectedLanguage={selectedLanguage} session={session} />;
       case 'users':
-        return <AdminUserManagement selectedLanguage={selectedLanguage} />;
+        return <AdminUserManagement selectedLanguage={selectedLanguage} session={session} />;
       case 'safety':
-        return <AdminSafetyManagement selectedLanguage={selectedLanguage} />;
+        return <AdminSafetyManagement selectedLanguage={selectedLanguage} accessToken={session.accessToken} />;
       case 'health':
         return <AdminSystemHealth selectedLanguage={selectedLanguage} />;
       case 'reports':
-        return <AdminReports selectedLanguage={selectedLanguage} />;
+        return <AdminReports selectedLanguage={selectedLanguage} accessToken={session.accessToken} />;
       default:
         return <AdminDashboard selectedLanguage={selectedLanguage} />;
     }

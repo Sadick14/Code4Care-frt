@@ -28,6 +28,11 @@ export default defineConfig({
         secure: true,
         rewrite: () => '/v1/chat',
       },
+      '/admin/login': {
+        target: 'https://code4care-backend-production.up.railway.app',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
   optimizeDeps: {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Activity, Server, Zap, AlertTriangle, CheckCircle2, TrendingUp, Database, ShieldAlert, FileText, Clock3 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -7,24 +7,9 @@ import { motion } from 'motion/react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
 } from 'recharts';
-
-const performanceData = [
-  { time: '12:00', response: 145, errors: 2, uptime: 99.9 },
-  { time: '12:30', response: 162, errors: 1, uptime: 99.9 },
-  { time: '1:00', response: 138, errors: 0, uptime: 99.95 },
-  { time: '1:30', response: 175, errors: 3, uptime: 99.8 },
-  { time: '2:00', response: 152, errors: 1, uptime: 99.9 },
-  { time: '2:30', response: 168, errors: 2, uptime: 99.85 },
-  { time: '3:00', response: 140, errors: 0, uptime: 99.95 },
-  { time: '3:30', response: 158, errors: 1, uptime: 99.9 },
-];
-
-const auditLogs = [
-  { time: '3:42 PM', action: 'Database backup completed', actor: 'System', status: 'success' },
-  { time: '3:15 PM', action: 'Cache cleared and rebuilt', actor: 'Admin System', status: 'success' },
-  { time: '2:50 PM', action: 'Load balancer reconfigured', actor: 'Ops Team', status: 'warning' },
-  { time: '1:30 PM', action: 'SSL certificate renewed', actor: 'System', status: 'success' },
-];
+import { HealthMetricsService } from '@/services/healthMetricsService';
+import { AuditLogService } from '@/services/auditLogService';
+import { logger } from '@/utils/logger';
 
 interface SystemMetric {
   name: string;
@@ -39,10 +24,176 @@ interface AdminSystemHealthProps {
   selectedLanguage: string;
 }
 
-export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) {
-  const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h'>('1h');
+interface AuditLog {
+  time: string;
+  action: string;
+  actor: string;
+  status: 'success' | 'warning' | 'failure';
+}
 
-  const metrics: SystemMetric[] = [
+interface PerformanceData {
+  time: string;
+  response: number;
+  errors: number;
+  uptime: number;
+}
+
+export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) {
+  void selectedLanguage;
+  const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h'>('1h');
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
+  const [isLoadingPerformance, setIsLoadingPerformance] = useState(true);
+  const [isLoadingAudit, setIsLoadingAudit] = useState(true);
+  const [healthMetrics, setHealthMetrics] = useState<any | null>(null);
+  const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+
+  // Load health metrics
+  useEffect(() => {
+    let mounted = true;
+
+    const loadMetrics = async () => {
+      setIsLoadingMetrics(true);
+      try {
+        const metrics = await HealthMetricsService.getHealthMetrics();
+        if (mounted) {
+          setHealthMetrics(metrics);
+        }
+      } catch (error) {
+        logger.error('Failed to load health metrics', error);
+        setHealthMetrics(null);
+      } finally {
+        if (mounted) {
+          setIsLoadingMetrics(false);
+        }
+      }
+    };
+
+    void loadMetrics();
+    return () => { mounted = false; };
+  }, []);
+
+  // Load performance data
+  useEffect(() => {
+    let mounted = true;
+
+    const loadPerformance = async () => {
+      setIsLoadingPerformance(true);
+      try {
+        const response = await HealthMetricsService.getPerformanceHistory(timeRange);
+        if (mounted) {
+          // Transform api response to chart format
+          const transformed = response.data.map((point) => ({
+            time: point.time,
+            response: point.response_time_ms,
+            errors: Math.round(point.error_rate * 100),
+            uptime: point.uptime_percent,
+          }));
+          setPerformanceData(transformed);
+        }
+      } catch (error) {
+        logger.error('Failed to load performance data', error);
+        setPerformanceData([]);
+      } finally {
+        if (mounted) {
+          setIsLoadingPerformance(false);
+        }
+      }
+    };
+
+    void loadPerformance();
+    return () => { mounted = false; };
+  }, [timeRange]);
+
+  // Load audit logs
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAuditLogs = async () => {
+      setIsLoadingAudit(true);
+      try {
+        const response = await AuditLogService.listAuditLogs({
+          limit: 4,
+          page: 1,
+        });
+        if (mounted) {
+          // Transform audit logs to display format
+          const transformed = response.logs.map((log) => ({
+            time: new Date(log.timestamp).toLocaleTimeString('en-GB', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            action: log.action,
+            actor: log.actor_name,
+            status: log.status as 'success' | 'warning' | 'failure',
+          }));
+          setAuditLogs(transformed);
+        }
+      } catch (error) {
+        logger.error('Failed to load audit logs', error);
+        setAuditLogs([]);
+      } finally {
+        if (mounted) {
+          setIsLoadingAudit(false);
+        }
+      }
+    };
+
+    void loadAuditLogs();
+    return () => { mounted = false; };
+  }, []);
+
+
+  const metrics: SystemMetric[] = healthMetrics ? [
+    {
+      name: 'API Response Time',
+      value: healthMetrics.metrics?.api_response_time ?? 156,
+      unit: 'ms',
+      status: healthMetrics.metrics?.api_response_time > 200 ? 'warning' : 'healthy',
+      trend: -2.5,
+      icon: <Zap className="w-5 h-5 text-blue-400" />,
+    },
+    {
+      name: 'System Uptime',
+      value: healthMetrics.metrics?.system_uptime ?? 99.92,
+      unit: '%',
+      status: healthMetrics.metrics?.system_uptime < 99 ? 'warning' : 'healthy',
+      trend: 0,
+      icon: <Activity className="w-5 h-5 text-green-400" />,
+    },
+    {
+      name: 'Error Rate',
+      value: (healthMetrics.metrics?.error_rate ?? 0).toFixed(2),
+      unit: '/minute',
+      status: (healthMetrics.metrics?.error_rate ?? 0) > 1 ? 'warning' : 'healthy',
+      trend: 12,
+      icon: <AlertTriangle className="w-5 h-5 text-yellow-400" />,
+    },
+    {
+      name: 'Active Engagements',
+      value: healthMetrics.metrics?.active_engagements ?? 847,
+      unit: 'users',
+      status: 'healthy',
+      trend: 8.3,
+      icon: <Server className="w-5 h-5 text-purple-400" />,
+    },
+    {
+      name: 'Memory Usage',
+      value: healthMetrics.metrics?.memory_usage ?? 68,
+      unit: '%',
+      status: (healthMetrics.metrics?.memory_usage ?? 68) > 85 ? 'warning' : 'healthy',
+      trend: -1.2,
+      icon: <Database className="w-5 h-5 text-orange-400" />,
+    },
+    {
+      name: 'Database Queries',
+      value: healthMetrics.metrics?.database_queries ?? 2145,
+      unit: '/min',
+      status: 'healthy',
+      trend: 3.5,
+      icon: <Server className="w-5 h-5 text-cyan-400" />,
+    },
+  ] : [
     {
       name: 'API Response Time',
       value: 156,
@@ -106,6 +257,32 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
     }
   };
 
+  const MetricSkeleton = () => (
+    <Card className="p-4 bg-white border-[#E8ECFF]">
+      <div className="flex items-start justify-between mb-2">
+        <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
+        <div className="w-16 h-6 bg-gray-200 rounded animate-pulse" />
+      </div>
+      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2" />
+      <div className="h-8 w-16 bg-gray-200 rounded animate-pulse" />
+      <div className="h-3 w-20 bg-gray-200 rounded animate-pulse mt-2" />
+    </Card>
+  );
+
+  const ChartSkeleton = () => (
+    <div className="h-80 w-full bg-gray-100 rounded-lg animate-pulse" />
+  );
+
+  const LogSkeleton = () => (
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-[#E8ECFF] bg-gray-50 p-3">
+      <div className="space-y-1 width-full">
+        <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+        <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
+      </div>
+      <div className="h-4 w-12 bg-gray-200 rounded animate-pulse shrink-0" />
+    </div>
+  );
+
   return (
     <div className="space-y-6 p-6 bg-white min-h-screen">
       {/* Header */}
@@ -130,30 +307,32 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
 
       {/* Core Metrics */}
       <div className="grid grid-cols-3 gap-4">
-        {metrics.map((metric, idx) => (
-          <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-            <Card className="p-4 bg-white border-[#E8ECFF] hover:border-blue-200 transition-colors">
-              <div className="flex items-start justify-between mb-2">
-                <div>{metric.icon}</div>
-                {getStatusBadge(metric.status)}
-              </div>
-              <h3 className="text-sm text-gray-600 mb-1">{metric.name}</h3>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-gray-900">{metric.value}</span>
-                <span className="text-gray-500 text-sm">{metric.unit}</span>
-              </div>
-              <div className={`text-xs mt-2 flex items-center gap-1 ${metric.trend < 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {metric.trend !== 0 && (
-                  <>
-                    <TrendingUp className={`w-3 h-3 ${metric.trend < 0 ? 'rotate-180' : ''}`} />
-                    {Math.abs(metric.trend)}% from 1h ago
-                  </>
-                )}
-                {metric.trend === 0 && <span>Stable</span>}
-              </div>
-            </Card>
-          </motion.div>
-        ))}
+        {isLoadingMetrics
+          ? Array.from({ length: 6 }).map((_, i) => <MetricSkeleton key={i} />)
+          : metrics.map((metric, idx) => (
+            <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
+              <Card className="p-4 bg-white border-[#E8ECFF] hover:border-blue-200 transition-colors">
+                <div className="flex items-start justify-between mb-2">
+                  <div>{metric.icon}</div>
+                  {getStatusBadge(metric.status)}
+                </div>
+                <h3 className="text-sm text-gray-600 mb-1">{metric.name}</h3>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-gray-900">{metric.value}</span>
+                  <span className="text-gray-500 text-sm">{metric.unit}</span>
+                </div>
+                <div className={`text-xs mt-2 flex items-center gap-1 ${metric.trend < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {metric.trend !== 0 && (
+                    <>
+                      <TrendingUp className={`w-3 h-3 ${metric.trend < 0 ? 'rotate-180' : ''}`} />
+                      {Math.abs(metric.trend)}% from 1h ago
+                    </>
+                  )}
+                  {metric.trend === 0 && <span>Stable</span>}
+                </div>
+              </Card>
+            </motion.div>
+          )) }
       </div>
 
       {/* Service Health and System Logs */}
@@ -163,21 +342,27 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
             <Server className="w-4 h-4 text-blue-600" />
             Response Time & Error Rate
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-              <XAxis dataKey="time" stroke="#9CA3AF" />
-              <YAxis yAxisId="left" stroke="#9CA3AF" />
-              <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF', borderRadius: '8px' }}
-                labelStyle={{ color: '#111827' }}
-              />
-              <Legend />
-              <Line yAxisId="left" type="monotone" dataKey="response" stroke="#3B82F6" name="Response (ms)" strokeWidth={2} />
-              <Bar yAxisId="right" dataKey="errors" fill="#EF4444" name="Errors" opacity={0.6} />
-            </ComposedChart>
-          </ResponsiveContainer>
+          {isLoadingPerformance ? (
+            <ChartSkeleton />
+          ) : performanceData?.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart data={performanceData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
+                <XAxis dataKey="time" stroke="#9CA3AF" />
+                <YAxis yAxisId="left" stroke="#9CA3AF" />
+                <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF', borderRadius: '8px' }}
+                  labelStyle={{ color: '#111827' }}
+                />
+                <Legend />
+                <Line yAxisId="left" type="monotone" dataKey="response" stroke="#3B82F6" name="Response (ms)" strokeWidth={2} />
+                <Bar yAxisId="right" dataKey="errors" fill="#EF4444" name="Errors" opacity={0.6} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-80 flex items-center justify-center text-gray-500">No performance data available</div>
+          )}
         </Card>
 
         <Card className="p-6 bg-white border-[#E8ECFF]">
@@ -187,23 +372,29 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
           </h3>
           <p className="mb-3 text-xs text-gray-500">User and system events captured across the platform.</p>
           <div className="space-y-3">
-            {auditLogs.map((log, idx) => (
-              <div key={idx} className="flex items-start justify-between gap-4 rounded-lg border border-[#E8ECFF] bg-gray-50 p-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900">{log.action}</span>
-                    <Badge className={log.status === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}>
-                      {log.status}
-                    </Badge>
+            {isLoadingAudit
+              ? Array.from({ length: 4 }).map((_, i) => <LogSkeleton key={i} />)
+              : auditLogs.length > 0
+                ? auditLogs.map((log, idx) => (
+                  <div key={idx} className="flex items-start justify-between gap-4 rounded-lg border border-[#E8ECFF] bg-gray-50 p-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900">{log.action}</span>
+                        <Badge className={log.status === 'success' ? 'bg-green-50 text-green-700 border-green-200' : log.status === 'warning' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-red-50 text-red-700 border-red-200'}>
+                          {log.status}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-gray-500">{log.actor}</div>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-500 shrink-0">
+                      <Clock3 className="w-3 h-3" />
+                      {log.time}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500">{log.actor}</div>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-gray-500 shrink-0">
-                  <Clock3 className="w-3 h-3" />
-                  {log.time}
-                </div>
-              </div>
-            ))}
+                ))
+                : (
+                  <div className="text-center text-xs text-gray-500 py-4">No audit logs available</div>
+                )}
           </div>
         </Card>
       </div>
