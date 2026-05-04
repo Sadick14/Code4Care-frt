@@ -20,23 +20,14 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
     setError('');
     setIsLoading(true);
 
-    // Simulate authentication delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    if (!email || !password) {
-      setError('Please enter both email and password.');
-      setIsLoading(false);
-      return;
-    }
-
-    const session = StaffAccessService.verifyCredentials(email, password);
-
-    if (session) {
+    try {
+      const session = await StaffAccessService.login(email, password);
       onAdminLogin(session);
-    } else {
-      setError('Invalid credentials, inactive account, or role not permitted.');
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : 'Invalid credentials, inactive account, or role not permitted.');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (

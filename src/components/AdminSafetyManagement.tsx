@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertCircle, TrendingUp, Heart, Shield, PhoneCall, BarChart3, AlertTriangle, Siren, BadgeCheck } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -13,58 +13,79 @@ import {
   TableRow,
 } from './ui/table';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-
-interface IncidentReport {
-  id: string;
-  type: 'self-harm' | 'suicidal' | 'abuse' | 'panic';
-  userId: string;
-  userName: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  status: 'open' | 'in-review' | 'resolved' | 'escalated';
-  reportedAt: string;
-  followUp: boolean;
-  notes: string;
-}
-
-const mockIncidents: IncidentReport[] = [
-  { id: '1', type: 'panic', userId: 'U123', userName: 'Ama Osei', severity: 'high', status: 'in-review', reportedAt: '2 hours ago', followUp: true, notes: 'Panic attack during chat session' },
-  { id: '2', type: 'self-harm', userId: 'U456', userName: 'Kwame M.', severity: 'critical', status: 'escalated', reportedAt: '1 day ago', followUp: true, notes: 'User mentioned self-harm thoughts' },
-  { id: '3', type: 'abuse', userId: 'U789', userName: 'Akosua B.', severity: 'high', status: 'open', reportedAt: '3 days ago', followUp: false, notes: 'User reported experiencing abuse at home' },
-  { id: '4', type: 'suicidal', userId: 'U321', userName: 'Yaw A.', severity: 'critical', status: 'escalated', reportedAt: '5 days ago', followUp: true, notes: 'Suicidal ideation mentioned' },
-  { id: '5', type: 'panic', userId: 'U654', userName: 'Adwoa P.', severity: 'medium', status: 'resolved', reportedAt: '1 week ago', followUp: false, notes: 'Panic attack - user calmed down after support' },
-];
-
-const trendData = [
-  { day: 'Mon', reports: 3, escalations: 1 },
-  { day: 'Tue', reports: 5, escalations: 2 },
-  { day: 'Wed', reports: 2, escalations: 0 },
-  { day: 'Thu', reports: 6, escalations: 2 },
-  { day: 'Fri', reports: 4, escalations: 1 },
-  { day: 'Sat', reports: 3, escalations: 1 },
-  { day: 'Sun', reports: 2, escalations: 0 },
-];
+import { SafetyIncidentService, SafetyAnalyticsResponse, SafetyTrendDataPoint, IncidentListItem } from '@/services/safetyIncidentService';
+import { RealAnalyticsService } from '@/services/realAnalyticsService';
+import { logger } from '@/utils/logger';
 
 interface AdminSafetyManagementProps {
   selectedLanguage: string;
+  accessToken?: string;
 }
 
-export function AdminSafetyManagement({ selectedLanguage }: AdminSafetyManagementProps) {
+export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSafetyManagementProps) {
   void selectedLanguage;
   const [filterStatus, setFilterStatus] = useState<'all' | 'open' | 'in-review' | 'escalated' | 'resolved'>('all');
   const [filterSeverity, setFilterSeverity] = useState<'all' | 'low' | 'medium' | 'high' | 'critical'>('all');
+  const [incidents, setIncidents] = useState<IncidentListItem[]>([]);
+  const [safetyAnalytics, setSafetyAnalytics] = useState<SafetyAnalyticsResponse | null>(null);
+  const [trendData, setTrendData] = useState<SafetyTrendDataPoint[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredIncidents = mockIncidents.filter(incident => {
+  // Load incidents and analytics on mount
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Load from both admin incidents API and public analytics API in parallel
+        const [incidentsResponse, trendsResponse, analyticsResponse] = await Promise.all([
+          SafetyIncidentService.listIncidents({ page: 1, limit: 100 }, accessToken).catch(err => {
+            logger.warn('Failed to load admin incidents', err);
+            return { incidents: [], total: 0, page: 1, limit: 100 };
+          }),
+          SafetyIncidentService.getSafetyTrends({ period: 'week' }, accessToken).catch(err => {
+            logger.warn('Failed to load safety trends', err);
+            return [];
+          }),
+          RealAnalyticsService.getSafetyAnalytics({ period: 'week', by_region: true, by_age_group: true }, accessToken).catch(err => {
+            logger.warn('Failed to load public safety analytics', err);
+            return null;
+          }),
+        ]);
+
+        setIncidents(incidentsResponse.incidents);
+        setTrendData(trendsResponse);
+        setSafetyAnalytics(analyticsResponse);
+      } catch (err) {
+        logger.error('Failed to load safety data', err);
+        setError(err instanceof Error ? err.message : 'Failed to load safety data');
+        // Set empty defaults on error
+        setIncidents([]);
+        setTrendData([]);
+        setSafetyAnalytics(null);
+      } finally {
+        setIsLoading(false);
+        setIsLoadingAnalytics(false);
+      }
+    };
+
+    void loadData();
+  }, [accessToken]);
+
+  const filteredIncidents = incidents.filter(incident => {
     const matchesStatus = filterStatus === 'all' || incident.status === filterStatus;
     const matchesSeverity = filterSeverity === 'all' || incident.severity === filterSeverity;
     return matchesStatus && matchesSeverity;
   });
 
   const stats = {
-    total: mockIncidents.length,
-    open: mockIncidents.filter(i => i.status === 'open').length,
-    escalated: mockIncidents.filter(i => i.status === 'escalated').length,
-    resolved: mockIncidents.filter(i => i.status === 'resolved').length,
-    followUpNeeded: mockIncidents.filter(i => i.followUp && i.status !== 'resolved').length,
+    total: safetyAnalytics?.incidents.total ?? incidents.length,
+    open: incidents.filter(i => i.status === 'open').length,
+    escalated: incidents.filter(i => i.status === 'escalated').length,
+    resolved: incidents.filter(i => i.status === 'resolved').length,
+    followUpNeeded: incidents.filter(i => i.follow_up_required && i.status !== 'resolved').length,
   };
 
   const getSeverityColor = (severity: string) => {
@@ -207,54 +228,68 @@ export function AdminSafetyManagement({ selectedLanguage }: AdminSafetyManagemen
       {/* Incidents Table */}
       <Card className="border-[#E8ECFF] bg-white overflow-hidden">
         <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-[#E8ECFF] hover:bg-transparent">
-                <TableHead className="text-gray-600">User</TableHead>
-                <TableHead className="text-gray-600">Type</TableHead>
-                <TableHead className="text-gray-600">Severity</TableHead>
-                <TableHead className="text-gray-600">Status</TableHead>
-                <TableHead className="text-gray-600">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredIncidents.slice(0, 8).map((incident) => (
-                <motion.tr
-                  key={incident.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="border-[#E8ECFF] hover:bg-gray-50 transition-colors"
-                >
-                  <TableCell className="text-gray-900 font-medium">{incident.userName}</TableCell>
-                  <TableCell className="text-gray-900 font-medium">
-                    <div className="flex items-center gap-2">
-                      {getTypeIcon(incident.type)}
-                      <span className="text-sm">{getTypeLabel(incident.type)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={`capitalize ${getSeverityColor(incident.severity)}`}>
-                      {incident.severity}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={`capitalize ${getStatusColor(incident.status)}`}>
-                      {incident.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    >
-                      Review
-                    </Button>
-                  </TableCell>
-                </motion.tr>
-              ))}
-            </TableBody>
-          </Table>
+          {isLoading ? (
+            <div className="p-8 text-center text-gray-500">
+              <p>Loading incidents...</p>
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center text-red-600">
+              <p>Error: {error}</p>
+            </div>
+          ) : filteredIncidents.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              <p>No incidents found</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[#E8ECFF] hover:bg-transparent">
+                  <TableHead className="text-gray-600">User</TableHead>
+                  <TableHead className="text-gray-600">Type</TableHead>
+                  <TableHead className="text-gray-600">Severity</TableHead>
+                  <TableHead className="text-gray-600">Status</TableHead>
+                  <TableHead className="text-gray-600">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredIncidents.slice(0, 8).map((incident) => (
+                  <motion.tr
+                    key={incident.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="border-[#E8ECFF] hover:bg-gray-50 transition-colors"
+                  >
+                    <TableCell className="text-gray-900 font-medium">{incident.user_name || 'Unknown'}</TableCell>
+                    <TableCell className="text-gray-900 font-medium">
+                      <div className="flex items-center gap-2">
+                        {getTypeIcon(incident.type)}
+                        <span className="text-sm">{getTypeLabel(incident.type)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={`capitalize ${getSeverityColor(incident.severity)}`}>
+                        {incident.severity}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={`capitalize ${getStatusColor(incident.status)}`}>
+                        {incident.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      >
+                        Review
+                      </Button>
+                    </TableCell>
+                  </motion.tr>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </Card>
     </div>

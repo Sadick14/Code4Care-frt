@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { safeStorage } from '@/utils/safeStorage';
 import { logger } from '@/utils/logger';
+import { APIClient } from '@/services/apiClient';
 
 interface AppState {
   nickname: string | undefined;
@@ -42,6 +43,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [sessionId, setSessionId] = useState<string>(() => Date.now().toString());
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean>(() => safeStorage.getItem('room1221_onboarding_complete') === 'true');
   const [consultantMode, setConsultantMode] = useState<boolean>(false);
+
+  // Initialize API client on app load
+  useEffect(() => {
+    APIClient.initialize({
+      autoRefreshToken: true,
+      onTokenExpired: () => {
+        logger.warn('Session token expired');
+      },
+      onUnauthorized: () => {
+        logger.warn('User unauthorized');
+      },
+    });
+  }, []);
 
   // Persistence effects
   useEffect(() => {
