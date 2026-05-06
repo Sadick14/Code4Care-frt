@@ -64,12 +64,12 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
     const loadAnalytics = async () => {
       setIsLoadingAnalytics(true);
       try {
-        const data = await RealAnalyticsService.getDashboardSummary(
-          { period, by_region: true, by_age_group: true },
+        const data = await RealAnalyticsService.getAnalyticsSummary(
+          { period },
           session.accessToken
         );
         if (mounted) {
-          setAnalyticsData(data);
+          setAnalyticsData(RealAnalyticsService.normalizeAnalyticsSummary(data));
         }
       } catch (error) {
         logger.error('Failed to load analytics', error);

@@ -18,13 +18,7 @@ function AdminDashboardAppContent() {
     let isMounted = true;
 
     const initializeAdminShell = async () => {
-      try {
-        await StaffAccessService.seedDefaultAdminAccount();
-      } catch (seedError) {
-        console.error('Failed to seed default admin account:', seedError);
-      }
-
-      const existingSession = StaffAccessService.getSession();
+      const existingSession = await StaffAccessService.refreshSession();
 
       if (isMounted) {
         setSession(existingSession);
@@ -46,8 +40,9 @@ function AdminDashboardAppContent() {
   };
 
   const handleAdminLogout = () => {
-    StaffAccessService.clearSession();
+    const accessToken = session?.accessToken;
     setSession(null);
+    void StaffAccessService.logout(accessToken);
     toast.success('Admin session ended');
   };
 

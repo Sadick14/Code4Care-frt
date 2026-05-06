@@ -6,20 +6,24 @@
 import { logger } from '@/utils/logger';
 import { safeStorage } from '@/utils/safeStorage';
 
+export interface AdminCurrentUser {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+  last_login_at: string;
+  permissions?: string[];
+  settings?: Record<string, unknown>;
+}
+
 export interface TokenPayload {
   access_token: string;
   refresh_token: string;
   token_type: string;
   expires_in: number;
-  user?: {
-    id: string;
-    username: string;
-    email: string;
-    role: string;
-    is_active: boolean;
-    created_at: string;
-    last_login_at: string;
-  };
+  user?: AdminCurrentUser;
 }
 
 export interface RefreshTokenPayload {
@@ -32,10 +36,12 @@ export interface RefreshTokenResponse {
   expires_in: number;
 }
 
+const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
+const DEFAULT_TOKEN_EXPIRY_SECONDS = 30 * 60;
 const API_BASE_URL = (
   import.meta.env.VITE_ADMIN_API_BASE_URL ||
   import.meta.env.VITE_API_BASE_URL ||
-  ''
+  DEFAULT_API_BASE_URL
 ).trim();
 
 const TOKEN_KEY = 'code4care_access_token';
@@ -43,6 +49,7 @@ const REFRESH_TOKEN_KEY = 'code4care_refresh_token';
 const TOKEN_EXPIRY_KEY = 'code4care_token_expiry';
 const ADMIN_REFRESH_TOKEN_PATH = '/admin/refresh-token';
 const ADMIN_LOGOUT_PATH = '/admin/logout';
+const ADMIN_ME_PATH = '/admin/me';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
@@ -78,6 +85,21 @@ async function readApiError(response: Response): Promise<string> {
       return parsed.detail;
     }
 
+    if (Array.isArray(parsed.detail)) {
+      return parsed.detail
+        .map((item) => {
+          if (!item || typeof item !== 'object') {
+            return String(item);
+          }
+
+          const detail = item as Record<string, unknown>;
+          const location = Array.isArray(detail.loc) ? detail.loc.join('.') : '';
+          const message = typeof detail.msg === 'string' ? detail.msg : 'Validation error';
+          return location ? `${location}: ${message}` : message;
+        })
+        .join('; ');
+    }
+
     if (typeof parsed.message === 'string') {
       return parsed.message;
     }
@@ -92,9 +114,43 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function readRefreshTokenResponse(response: Response): Promise<RefreshTokenResponse> {
+  const bodyText = await response.text();
+  let parsed: unknown = null;
+
+  try {
+    parsed = bodyText ? JSON.parse(bodyText) as unknown : null;
+  } catch {
+    parsed = bodyText;
+  }
+
+  if (typeof parsed === 'string') {
+    return {
+      access_token: parsed,
+      token_type: 'bearer',
+      expires_in: DEFAULT_TOKEN_EXPIRY_SECONDS,
+    };
+  }
+
+  if (parsed && typeof parsed === 'object') {
+    const record = parsed as Record<string, unknown>;
+
+    if (typeof record.access_token === 'string') {
+      return {
+        access_token: record.access_token,
+        token_type: typeof record.token_type === 'string' ? record.token_type : 'bearer',
+        expires_in: typeof record.expires_in === 'number' ? record.expires_in : DEFAULT_TOKEN_EXPIRY_SECONDS,
+      };
+    }
+  }
+
+  throw new Error('Refresh token response did not include an access token.');
+}
+
 function calculateTokenExpiry(expiresIn: number): string {
   // expiresIn is in seconds, calculate when token will expire
-  const expiryTime = new Date().getTime() + expiresIn * 1000;
+  const normalizedExpiresIn = expiresIn > 0 ? expiresIn : DEFAULT_TOKEN_EXPIRY_SECONDS;
+  const expiryTime = new Date().getTime() + normalizedExpiresIn * 1000;
   return expiryTime.toString();
 }
 
@@ -178,7 +234,7 @@ export class AuthService {
         throw new Error(await readApiError(response));
       }
 
-      const data = await readJsonResponse<RefreshTokenResponse>(response);
+      const data = await readRefreshTokenResponse(response);
 
       // Update stored access token and expiry
       safeStorage.setItem(TOKEN_KEY, data.access_token);
@@ -215,6 +271,24 @@ export class AuthService {
     }
 
     return accessToken;
+  }
+
+  /**
+   * GET /admin/me - Fetch the current admin user profile
+   */
+  static async getCurrentUser(accessToken?: string): Promise<AdminCurrentUser> {
+    const token = accessToken || await this.getValidAccessToken();
+
+    const response = await fetch(buildUrl(ADMIN_ME_PATH), {
+      method: 'GET',
+      headers: buildHeaders(token),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+
+    return readJsonResponse<AdminCurrentUser>(response);
   }
 
   /**

@@ -1,6 +1,7 @@
 import { safeStorage } from '@/utils/safeStorage';
+import { AuthService } from '@/services/authService';
 
-export type StaffRole = 'admin' | 'consultant' | 'supervisor' | 'coordinator';
+export type StaffRole = 'admin' | 'consultant' | 'supervisor' | 'coordinator' | 'viewer' | 'super_admin';
 export type StaffStatus = 'active' | 'inactive';
 export type StaffAvailability = 'available' | 'busy' | 'offline';
 export type SupportRequestStatus = 'waiting' | 'assigned' | 'active' | 'resolved';
@@ -104,35 +105,169 @@ export interface AdminDashboardStats {
   pending_reports: number;
 }
 
+
+export interface AdminStaffPasswordResetRequest {
+  temporary_password: string;
+}
+
+export interface AdminStaffPasswordResetResponse {
+  id: string;
+  password_reset: boolean;
+  reset_at: string;
+  notification_sent: boolean;
+  notification_method: string;
+}
+
+export interface AdminStaffAvailabilityRequest {
+  availability: StaffAvailability;
+  reason?: string;
+  until?: string;
+}
+
+export interface AdminStaffAvailabilityResponse {
+  id: string;
+  availability: StaffAvailability | string;
+  changed_at: string;
+  active_sessions: number;
+  queued_requests: number;
+}
+
+export interface AdminConversationListItem {
+  id: string;
+  session_id: string;
+  language: string;
+  message_count: number;
+  created_at: string;
+  last_active_at: string;
+  is_escalated: boolean;
+  has_safety_flags: boolean;
+}
+
+export interface AdminConversationListResponse {
+  conversations: AdminConversationListItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface AdminConversationMessage {
+  id: string;
+  sender: string;
+  content: string;
+  language_detected: string;
+  safety_flags: string[];
+  citations: Record<string, unknown>[];
+  response_time_ms: number;
+  created_at: string;
+}
+
+export interface AdminConversationDetail {
+  id: string;
+  session_id: string;
+  language: string;
+  created_at: string;
+  last_active_at: string;
+  is_escalated: boolean;
+  auto_delete_period: string;
+  auto_delete_at: string;
+  messages: AdminConversationMessage[];
+}
+
+export interface AdminListConversationsOptions {
+  page?: number;
+  page_size?: number;
+  is_escalated?: boolean | null;
+}
+
+export interface AdminFeedbackItem {
+  id: string;
+  session_id: string;
+  message_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  message_content: string;
+}
+
+export interface AdminFeedbackListResponse {
+  feedback: AdminFeedbackItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface AdminListFeedbackOptions {
+  page?: number;
+  page_size?: number;
+  rating?: -1 | 0 | 1 | null;
+}
+
+export interface AdminReportItem {
+  id: string;
+  session_id: string;
+  message_id: string;
+  reason: string;
+  status: string;
+  created_at: string;
+  reviewed_by: string;
+  reviewed_at: string;
+  resolution_notes: string;
+  message_content: string;
+}
+
+export interface AdminReportListResponse {
+  reports: AdminReportItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface AdminListReportsOptions {
+  page?: number;
+  page_size?: number;
+  status_filter?: string | null;
+}
+
+export interface AdminUpdateReportRequest {
+  status: string;
+  resolution_notes?: string;
+}
+
 const STAFF_ACCOUNTS_KEY = 'room1221_staff_accounts';
 const SUPPORT_REQUESTS_KEY = 'room1221_support_requests';
 const SESSION_KEY = 'room1221_staff_session';
-const DEFAULT_ADMIN_SEED_KEY = 'room1221_default_admin_seeded';
+const DEFAULT_ADMIN_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
 const ADMIN_API_BASE_URL = (
   import.meta.env.VITE_ADMIN_API_BASE_URL ||
   import.meta.env.VITE_API_BASE_URL ||
-  ''
+  DEFAULT_ADMIN_API_BASE_URL
 ).trim();
-const ADMIN_BOOTSTRAP_TOKEN = import.meta.env.VITE_ADMIN_BOOTSTRAP_TOKEN?.trim() || '';
 const ADMIN_LOGIN_PATH = '/admin/login';
+const ADMIN_ME_PATH = '/admin/me';
 const ADMIN_CREATE_STAFF_PATH = '/admin/staff';
-const DEFAULT_ADMIN_ACCOUNT = {
-  username: 'System Admin',
-  email: 'admin@room1221.org',
-  password: 'admin123',
-  role: 'admin' as const,
-};
-
 function normalizeRole(role: string): StaffRole {
   if (role === 'counselor') {
     return 'consultant';
   }
 
-  if (role === 'admin' || role === 'consultant' || role === 'supervisor' || role === 'coordinator') {
+  if (role === 'admin' || role === 'consultant' || role === 'supervisor' || role === 'coordinator' || role === 'viewer' || role === 'super_admin') {
     return role;
   }
 
   return 'consultant';
+}
+
+function canAccessDashboard(role: StaffRole) {
+  return role === 'admin' || role === 'consultant' || role === 'super_admin';
+}
+
+function normalizeAvailability(availability: string): StaffAvailability {
+  if (availability === 'available' || availability === 'busy' || availability === 'offline') {
+    return availability;
+  }
+
+  return 'offline';
 }
 
 const defaultStaffAccounts: StaffAccount[] = [
@@ -147,7 +282,7 @@ const defaultStaffAccounts: StaffAccount[] = [
     joinDate: '2025-01-01',
     trained: true,
     currentLoad: 0,
-    password: 'admin123',
+    password: '',
   },
   {
     id: 'staff-consultant-1',
@@ -160,7 +295,7 @@ const defaultStaffAccounts: StaffAccount[] = [
     joinDate: '2025-01-15',
     trained: true,
     currentLoad: 0,
-    password: 'consultant123',
+    password: '',
   },
   {
     id: 'staff-supervisor-1',
@@ -173,7 +308,7 @@ const defaultStaffAccounts: StaffAccount[] = [
     joinDate: '2024-12-01',
     trained: true,
     currentLoad: 0,
-    password: 'supervisor123',
+    password: '',
   },
 ];
 
@@ -211,6 +346,31 @@ function buildAdminUrl(path: string) {
   }
 
   return new URL(path, ADMIN_API_BASE_URL).toString();
+}
+
+function buildAdminUrlWithParams(path: string, params: Record<string, string | number | boolean | null | undefined>) {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      query.set(key, String(value));
+    }
+  });
+
+  const queryString = query.toString();
+  return `${buildAdminUrl(path)}${queryString ? `?${queryString}` : ''}`;
+}
+
+function encodePathSegment(value: string) {
+  return encodeURIComponent(value);
+}
+
+function requireAdminAccessToken(accessToken?: string) {
+  if (!accessToken) {
+    throw new Error('Admin session expired. Please sign in again.');
+  }
+
+  return accessToken;
 }
 
 async function readApiError(response: Response): Promise<string> {
@@ -265,10 +425,6 @@ function buildAdminHeaders(accessToken?: string) {
   return headers;
 }
 
-function looksLikeAlreadySeeded(errorMessage: string) {
-  return /already exists|duplicate|conflict|exists/i.test(errorMessage);
-}
-
 function isAdminApiUnavailable(error: unknown) {
   return error instanceof TypeError || (error instanceof Error && /failed to fetch|networkerror|network/i.test(error.message));
 }
@@ -317,27 +473,23 @@ function mergeSingleRemoteStaff(member: AdminStaffRecord): StaffAccount {
   };
 }
 
-function buildLocalDemoSession(email: string, password: string): StaffSession | null {
-  const normalizedEmail = email.trim().toLowerCase();
-  const account = defaultStaffAccounts.find((member) => {
-    return member.email.toLowerCase() === normalizedEmail && member.password === password;
-  });
-
-  if (!account || account.status !== 'active' || (account.role !== 'admin' && account.role !== 'consultant')) {
-    return null;
-  }
-
-  return {
-    staffId: account.id,
-    name: account.name,
-    role: account.role,
-    email: account.email,
-    loginAt: new Date().toISOString(),
-  };
-}
-
 async function readJsonResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
+}
+
+async function readTextOrJsonString(response: Response): Promise<string> {
+  const bodyText = await response.text();
+
+  if (!bodyText) {
+    return '';
+  }
+
+  try {
+    const parsed = JSON.parse(bodyText) as unknown;
+    return typeof parsed === 'string' ? parsed : bodyText;
+  } catch {
+    return bodyText;
+  }
 }
 
 export class StaffAccessService {
@@ -479,8 +631,8 @@ export class StaffAccessService {
       throw new Error('Admin session expired. Please sign in again.');
     }
 
-    const response = await fetch(buildAdminUrl(`/admin/staff/${staffId}`), {
-      method: 'PUT',
+    const response = await fetch(buildAdminUrl(`/admin/staff/${encodePathSegment(staffId)}`), {
+      method: 'PATCH',
       headers: buildAdminHeaders(accessToken),
       body: JSON.stringify({
         username: payload.name.trim(),
@@ -500,36 +652,6 @@ export class StaffAccessService {
     const updated = [nextStaff, ...staff.filter((member) => member.id !== nextStaff.id)];
     this.saveStaffAccounts(updated);
     return nextStaff;
-  }
-
-  static async seedDefaultAdminAccount() {
-    if (!ADMIN_BOOTSTRAP_TOKEN) {
-      return false;
-    }
-
-    if (safeStorage.getItem(DEFAULT_ADMIN_SEED_KEY) === 'true') {
-      return true;
-    }
-
-    const response = await fetch(buildAdminUrl(ADMIN_CREATE_STAFF_PATH), {
-      method: 'POST',
-      headers: buildAdminHeaders(ADMIN_BOOTSTRAP_TOKEN),
-      body: JSON.stringify(DEFAULT_ADMIN_ACCOUNT),
-    });
-
-    if (response.ok) {
-      safeStorage.setItem(DEFAULT_ADMIN_SEED_KEY, 'true');
-      return true;
-    }
-
-    const errorMessage = await readApiError(response);
-
-    if (looksLikeAlreadySeeded(errorMessage)) {
-      safeStorage.setItem(DEFAULT_ADMIN_SEED_KEY, 'true');
-      return true;
-    }
-
-    throw new Error(errorMessage || 'Unable to seed default admin account.');
   }
 
   static syncStaffLoads() {
@@ -567,7 +689,7 @@ export class StaffAccessService {
           status: payload.status ?? member.status,
           availability: payload.availability ?? member.availability,
           trained: payload.trained ?? member.trained,
-          password: payload.password?.trim() ? payload.password : member.password,
+          password: member.password,
         };
       });
 
@@ -584,7 +706,7 @@ export class StaffAccessService {
       status: payload.status ?? 'active',
       availability: payload.availability ?? 'available',
       trained: payload.trained ?? false,
-      password: payload.password || 'change-me',
+      password: '',
       joinDate: new Date().toISOString().split('T')[0],
       currentLoad: 0,
     };
@@ -594,10 +716,63 @@ export class StaffAccessService {
     return updated;
   }
 
+  static async resetStaffPassword(
+    staffId: string,
+    temporaryPassword: string,
+    accessToken?: string,
+  ): Promise<AdminStaffPasswordResetResponse> {
+    const token = requireAdminAccessToken(accessToken);
+    const password = temporaryPassword.trim();
+
+    if (!password) {
+      throw new Error('Temporary password is required.');
+    }
+
+    const response = await fetch(buildAdminUrl(`/admin/staff/${encodePathSegment(staffId)}/reset-password`), {
+      method: 'POST',
+      headers: buildAdminHeaders(token),
+      body: JSON.stringify({
+        temporary_password: password,
+      } satisfies AdminStaffPasswordResetRequest),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+
+    return readJsonResponse<AdminStaffPasswordResetResponse>(response);
+  }
+
+  static async changeStaffAvailability(
+    staffId: string,
+    payload: AdminStaffAvailabilityRequest,
+    accessToken?: string,
+  ): Promise<AdminStaffAvailabilityResponse> {
+    const token = requireAdminAccessToken(accessToken);
+
+    const response = await fetch(buildAdminUrl(`/admin/staff/${encodePathSegment(staffId)}/change-availability`), {
+      method: 'POST',
+      headers: buildAdminHeaders(token),
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+
+    const data = await readJsonResponse<AdminStaffAvailabilityResponse>(response);
+    const normalizedAvailability = normalizeAvailability(data.availability);
+    const staff = this.getStaffAccounts().map((member) => (
+      member.id === staffId ? { ...member, availability: normalizedAvailability } : member
+    ));
+    this.saveStaffAccounts(staff);
+    return { ...data, availability: normalizedAvailability };
+  }
+
   static async deleteStaffAccount(staffId: string, accessToken?: string) {
     if (accessToken) {
       try {
-        const response = await fetch(buildAdminUrl(`/admin/staff/${staffId}`), {
+        const response = await fetch(buildAdminUrl(`/admin/staff/${encodePathSegment(staffId)}`), {
           method: 'DELETE',
           headers: buildAdminHeaders(accessToken),
         });
@@ -656,6 +831,105 @@ export class StaffAccessService {
     }
   }
 
+  static async listConversations(
+    options: AdminListConversationsOptions = {},
+    accessToken?: string,
+  ): Promise<AdminConversationListResponse> {
+    const token = requireAdminAccessToken(accessToken);
+    const response = await fetch(buildAdminUrlWithParams('/admin/conversations', {
+      page: options.page ?? 1,
+      page_size: options.page_size ?? 20,
+      is_escalated: options.is_escalated,
+    }), {
+      method: 'GET',
+      headers: buildAdminHeaders(token),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+
+    return readJsonResponse<AdminConversationListResponse>(response);
+  }
+
+  static async getConversationDetail(
+    conversationId: string,
+    accessToken?: string,
+  ): Promise<AdminConversationDetail> {
+    const token = requireAdminAccessToken(accessToken);
+    const response = await fetch(buildAdminUrl(`/admin/conversations/${encodePathSegment(conversationId)}`), {
+      method: 'GET',
+      headers: buildAdminHeaders(token),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+
+    return readJsonResponse<AdminConversationDetail>(response);
+  }
+
+  static async listFeedback(
+    options: AdminListFeedbackOptions = {},
+    accessToken?: string,
+  ): Promise<AdminFeedbackListResponse> {
+    const token = requireAdminAccessToken(accessToken);
+    const response = await fetch(buildAdminUrlWithParams('/admin/feedback', {
+      page: options.page ?? 1,
+      page_size: options.page_size ?? 20,
+      rating: options.rating,
+    }), {
+      method: 'GET',
+      headers: buildAdminHeaders(token),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+
+    return readJsonResponse<AdminFeedbackListResponse>(response);
+  }
+
+  static async listReports(
+    options: AdminListReportsOptions = {},
+    accessToken?: string,
+  ): Promise<AdminReportListResponse> {
+    const token = requireAdminAccessToken(accessToken);
+    const response = await fetch(buildAdminUrlWithParams('/admin/reports', {
+      page: options.page ?? 1,
+      page_size: options.page_size ?? 20,
+      status_filter: options.status_filter,
+    }), {
+      method: 'GET',
+      headers: buildAdminHeaders(token),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+
+    return readJsonResponse<AdminReportListResponse>(response);
+  }
+
+  static async updateReport(
+    reportId: string,
+    payload: AdminUpdateReportRequest,
+    accessToken?: string,
+  ): Promise<string> {
+    const token = requireAdminAccessToken(accessToken);
+    const response = await fetch(buildAdminUrl(`/admin/reports/${encodePathSegment(reportId)}`), {
+      method: 'PATCH',
+      headers: buildAdminHeaders(token),
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+
+    return readTextOrJsonString(response);
+  }
+
   static verifyCredentials(email: string, password: string): StaffSession | null {
     const normalizedEmail = email.trim().toLowerCase();
     const account = this.getStaffAccounts().find((member) => {
@@ -670,7 +944,7 @@ export class StaffAccessService {
       return null;
     }
 
-    if (account.role !== 'admin' && account.role !== 'consultant') {
+    if (!canAccessDashboard(account.role)) {
       return null;
     }
 
@@ -693,77 +967,123 @@ export class StaffAccessService {
       throw new Error('Please enter both email and password.');
     }
 
+    const response = await fetch(buildAdminUrl(ADMIN_LOGIN_PATH), {
+      method: 'POST',
+      headers: buildAdminHeaders(),
+      body: JSON.stringify({
+        email: normalizedEmail,
+        password: normalizedPassword,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+
+    const data = (await response.json()) as AdminLoginResponse;
+    const role = normalizeRole(data.user.role);
+
+    if (!canAccessDashboard(role)) {
+      throw new Error('Role not permitted for dashboard access.');
+    }
+
+    if (!data.user.is_active) {
+      throw new Error('Account is inactive.');
+    }
+
+    AuthService.storeToken(data);
+
+    return {
+      staffId: data.user.id,
+      name: data.user.username || data.user.email,
+      role,
+      email: data.user.email,
+      loginAt: new Date().toISOString(),
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      tokenType: data.token_type,
+      expiresIn: data.expires_in,
+      user: data.user,
+    };
+  }
+
+  static async getCurrentUser(accessToken?: string): Promise<AdminLoginUser> {
+    const token = accessToken || await AuthService.getValidAccessToken();
+    const response = await fetch(buildAdminUrl(ADMIN_ME_PATH), {
+      method: 'GET',
+      headers: buildAdminHeaders(token),
+    });
+
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+
+    return readJsonResponse<AdminLoginUser>(response);
+  }
+
+  static async refreshSession(): Promise<StaffSession | null> {
+    const session = this.getSession();
+
+    if (!session?.accessToken) {
+      return session;
+    }
+
     try {
-      const response = await fetch(buildAdminUrl(ADMIN_LOGIN_PATH), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          password: normalizedPassword,
-        }),
-      });
+      const user = await this.getCurrentUser(session.accessToken);
+      const role = normalizeRole(user.role);
 
-      if (!response.ok) {
-        const errorMessage = await readApiError(response);
+      if (!canAccessDashboard(role) || !user.is_active) {
+        this.clearSession();
+        AuthService.clearTokens();
+        return null;
+      }
 
-        if (response.status === 404 || response.status === 405) {
-          const localSession = this.verifyCredentials(normalizedEmail, normalizedPassword);
+      const refreshedSession: StaffSession = {
+        ...session,
+        staffId: user.id,
+        name: user.username || user.email,
+        role,
+        email: user.email,
+        user,
+      };
 
-          if (localSession) {
-            return localSession;
-          }
+      this.setSession(refreshedSession);
+      return refreshedSession;
+    } catch {
+      try {
+        const accessToken = await AuthService.getValidAccessToken();
+        const user = await this.getCurrentUser(accessToken);
+        const role = normalizeRole(user.role);
 
-          const demoSession = buildLocalDemoSession(normalizedEmail, normalizedPassword);
-
-          if (demoSession) {
-            return demoSession;
-          }
+        if (!canAccessDashboard(role) || !user.is_active) {
+          this.clearSession();
+          AuthService.clearTokens();
+          return null;
         }
 
-        throw new Error(errorMessage || 'Admin login request failed');
+        const refreshedSession: StaffSession = {
+          ...session,
+          staffId: user.id,
+          name: user.username || user.email,
+          role,
+          email: user.email,
+          accessToken,
+          user,
+        };
+
+        this.setSession(refreshedSession);
+        return refreshedSession;
+      } catch {
+        this.clearSession();
+        AuthService.clearTokens();
+        return null;
       }
-
-      const data = (await response.json()) as AdminLoginResponse;
-      const role = normalizeRole(data.user.role);
-
-      if (role !== 'admin' && role !== 'consultant') {
-        throw new Error('Role not permitted for dashboard access.');
-      }
-
-      if (!data.user.is_active) {
-        throw new Error('Account is inactive.');
-      }
-
-      return {
-        staffId: data.user.id,
-        name: data.user.username || data.user.email,
-        role,
-        email: data.user.email,
-        loginAt: new Date().toISOString(),
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
-        tokenType: data.token_type,
-        expiresIn: data.expires_in,
-        user: data.user,
-      };
-    } catch (error) {
-      const localSession = this.verifyCredentials(normalizedEmail, normalizedPassword);
-
-      if (localSession) {
-        return localSession;
-      }
-
-      const demoSession = buildLocalDemoSession(normalizedEmail, normalizedPassword);
-
-      if (demoSession) {
-        return demoSession;
-      }
-
-      throw error instanceof Error ? error : new Error('Admin login request failed');
     }
+  }
+
+  static async logout(accessToken?: string): Promise<void> {
+    await AuthService.logout(accessToken);
+    this.clearSession();
   }
 
   static setSession(session: StaffSession) {

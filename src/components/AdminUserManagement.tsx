@@ -154,13 +154,16 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
           isActive: true,
         }, session.accessToken);
 
+        if (formData.password.trim()) {
+          await StaffAccessService.resetStaffPassword(editingStaffId, formData.password.trim(), session.accessToken);
+        }
+
         StaffAccessService.upsertStaffAccount({
           id: editingStaffId,
           name: formData.name.trim(),
           email: formData.email.trim(),
           phone: formData.phone.trim(),
           role: formData.role,
-          password: formData.password.trim() || undefined,
         });
       } else {
         await StaffAccessService.createStaffAccount(
