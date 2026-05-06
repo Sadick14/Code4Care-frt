@@ -27,14 +27,12 @@ interface Message {
 }
 
 interface ChatInterfaceProps {
-  onRequestFollowUpId: () => void;
   clearTrigger?: number;
 }
 
 const CHATBOT_AVATAR_SRC = "/chatbot.jpg";
 
 export function ChatInterface({ 
-  onRequestFollowUpId, 
   clearTrigger = 0 
 }: ChatInterfaceProps) {
   const { t, i18n } = useTranslation();
@@ -145,6 +143,40 @@ export function ChatInterface({
     };
   };
 
+  const getRetentionMs = (duration: string): number | null => {
+    if (duration === 'logout') {
+      return null;
+    }
+
+    const amount = Number.parseInt(duration, 10);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return 24 * 60 * 60 * 1000;
+    }
+
+    if (duration.endsWith('h')) {
+      return amount * 60 * 60 * 1000;
+    }
+
+    if (duration.endsWith('d')) {
+      return amount * 24 * 60 * 60 * 1000;
+    }
+
+    return 24 * 60 * 60 * 1000;
+  };
+
+  const applyRetentionPolicy = (existingMessages: Message[]) => {
+    const retentionMs = getRetentionMs(sessionDuration);
+    if (!retentionMs) {
+      return existingMessages;
+    }
+
+    const cutoff = Date.now() - retentionMs;
+    return existingMessages.filter((message) => {
+      const timeValue = new Date(message.timestamp).getTime();
+      return Number.isFinite(timeValue) && timeValue >= cutoff;
+    });
+  };
+
   const rebuildMessagesForLanguage = (existingMessages: Message[]) => {
     return existingMessages.map((message, index) => {
       // Keep the first bot greeting localized with localized quick replies.
@@ -167,10 +199,22 @@ export function ChatInterface({
       const storedMessages = localStorage.getItem(STORAGE_KEY);
       if (storedMessages) {
         const parsed = JSON.parse(storedMessages);
-        setMessages(parsed.map((msg: any) => ({
+        const hydratedMessages = parsed.map((msg: any) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
-        })));
+        }));
+
+        const retainedMessages = applyRetentionPolicy(hydratedMessages);
+
+        if (retainedMessages.length > 0) {
+          setMessages(retainedMessages);
+          if (retainedMessages.length !== hydratedMessages.length) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(retainedMessages));
+          }
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+          setMessages([getInitialMessage()]);
+        }
       } else {
         setMessages([getInitialMessage()]);
       }
@@ -181,7 +225,7 @@ export function ChatInterface({
       setMessages([getInitialMessage()]);
       setIsLoaded(true);
     }
-  }, [STORAGE_KEY, clearTrigger, consultantMode]);
+  }, [STORAGE_KEY, clearTrigger, consultantMode, sessionDuration]);
 
   useEffect(() => {
     if (!isLoaded || messages.length === 0 || isTyping) {
@@ -463,18 +507,6 @@ export function ChatInterface({
           </Button>
         </div>
         
-        <AnimatePresence>
-            {messages.length > 5 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto mt-4 text-center">
-                <button 
-                    onClick={onRequestFollowUpId} 
-                    className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-700 transition-colors"
-                >
-                {t('common.followUpKey')}
-                </button>
-            </motion.div>
-            )}
-        </AnimatePresence>
       </div>
     </div>
   );

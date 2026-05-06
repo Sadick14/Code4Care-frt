@@ -8,13 +8,11 @@ import { Badge } from '@/components/ui/badge';
 interface HeaderProps {
   onMenuClick: () => void;
   onPanicClick: () => void;
-  onFollowUpClick: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
   onMenuClick, 
-  onPanicClick, 
-  onFollowUpClick
+  onPanicClick
 }) => {
   const { t } = useTranslation();
   const { nickname, botName, consultantMode } = useApp();

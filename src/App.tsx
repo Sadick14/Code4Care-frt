@@ -17,7 +17,6 @@ import { Pharmacy } from "./components/Pharmacy";
 import { SettingsPage } from "./components/SettingsPage";
 import { PanicScreen } from "./components/PanicScreen";
 import { NicknameModal } from "./components/NicknameModal";
-import { FollowUpId } from "./components/FollowUpId";
 import OnboardingScreen from "./components/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { UserEngagementService } from "@/services/userEngagementService";
@@ -50,7 +49,6 @@ function AppContent() {
   const [currentSection, setCurrentSection] = useState<Section>("chat");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showPanicScreen, setShowPanicScreen] = useState(false);
-  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [showNicknameModal, setShowNicknameModal] = useState(!nickname);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -197,7 +195,6 @@ function AppContent() {
         <Header 
           onMenuClick={() => setSidebarOpen(true)}
           onPanicClick={() => setShowPanicScreen(true)}
-          onFollowUpClick={() => setShowFollowUpModal(true)}
         />
 
         <main className="relative flex-1 min-w-0 overflow-hidden">
@@ -212,7 +209,6 @@ function AppContent() {
             >
               {currentSection === "chat" && (
                 <ChatInterface 
-                  onRequestFollowUpId={() => setShowFollowUpModal(true)}
                   clearTrigger={clearChatTrigger}
                 />
               )}
@@ -237,8 +233,6 @@ function AppContent() {
         onClose={() => setShowNicknameModal(false)}
         onSubmit={(name) => { setNickname(name); setShowNicknameModal(false); }}
       />
-      
-      <FollowUpId isOpen={showFollowUpModal} onClose={() => setShowFollowUpModal(false)} />
 
       {/* Clear Chat Confirmation */}
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
