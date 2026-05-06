@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, Clock, User, ShieldCheck } from "lucide-react";
+import { Send, Mic, Clock, User, ShieldCheck, Volume2, Pause } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from 'react-markdown';
@@ -52,6 +52,9 @@ export function ChatInterface({
   const recognitionRef = useRef<any>(null);
   const STORAGE_KEY = `room1221_chat_${sessionId}`;
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playingId, setPlayingId] = useState<string | undefined>(undefined);
+
   const langMap: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
 
   const speakText = (text: string, langCode?: string) => {
@@ -86,6 +89,45 @@ export function ChatInterface({
       window.speechSynthesis.speak(utter);
     } catch (err) {
       logger.error('Speech synthesis failed', err);
+    }
+  };
+
+  const togglePlay = async (id: string, text: string, langCode?: string) => {
+    if (playingId === id) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current = null;
+      }
+      try { window.speechSynthesis.cancel(); } catch {}
+      setPlayingId(undefined);
+      return;
+    }
+
+    setPlayingId(id);
+    const useRemote = import.meta.env.VITE_USE_REMOTE_TTS === 'true';
+    if (useRemote) {
+      try {
+        const url = await fetchSpeechAudio(text, import.meta.env.VITE_TTS_VOICE || 'alloy');
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => setPlayingId(undefined);
+        await audio.play();
+      } catch (e) {
+        logger.error('Audio playback failed', e);
+        setPlayingId(undefined);
+      }
+    } else {
+      try {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = langMap[langCode || chatLanguage] || 'en-US';
+        utter.onend = () => setPlayingId(undefined);
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utter);
+      } catch (e) {
+        logger.error('Speech synthesis failed', e);
+        setPlayingId(undefined);
+      }
     }
   };
 
@@ -337,14 +379,15 @@ export function ChatInterface({
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                       <button
-                        onClick={() => speakText(message.text, message.languageDetected || chatLanguage)}
+                        onClick={() => togglePlay(message.id, message.text, message.languageDetected || chatLanguage)}
                         className="ml-2 p-1 rounded-md hover:bg-slate-100 transition-colors"
                         aria-label="Play response audio"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                          <path d="M19 5a4 4 0 010 14" />
-                        </svg>
+                        {playingId === message.id ? (
+                          <Pause className="w-4 h-4 text-slate-600" />
+                        ) : (
+                          <Volume2 className="w-4 h-4 text-slate-400" />
+                        )}
                       </button>
                   </div>
 

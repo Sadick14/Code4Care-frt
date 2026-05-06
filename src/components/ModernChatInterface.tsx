@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Volume2, Pause } from "lucide-react";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { motion, AnimatePresence } from "motion/react";
@@ -28,6 +28,8 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playingId, setPlayingId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadMessages();
@@ -112,6 +114,43 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
       window.speechSynthesis.speak(utter);
     } catch (err) {
       // noop for now
+    }
+  };
+
+  const togglePlay = async (id: string, text: string) => {
+    if (playingId === id) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current = null;
+      }
+      try { window.speechSynthesis.cancel(); } catch {}
+      setPlayingId(undefined);
+      return;
+    }
+
+    setPlayingId(id);
+    const useRemote = import.meta.env.VITE_USE_REMOTE_TTS === 'true';
+    if (useRemote) {
+      try {
+        const url = await fetchSpeechAudio(text, import.meta.env.VITE_TTS_VOICE || 'alloy');
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => setPlayingId(undefined);
+        await audio.play();
+      } catch (e) {
+        setPlayingId(undefined);
+      }
+    } else {
+      try {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = langMap['en'] || 'en-US';
+        utter.onend = () => setPlayingId(undefined);
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utter);
+      } catch (e) {
+        setPlayingId(undefined);
+      }
     }
   };
 
@@ -221,14 +260,15 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
                       </p>
                       {message.sender === 'ai' && (
                         <button
-                          onClick={() => speakText(message.text)}
+                          onClick={() => togglePlay(message.id, message.text)}
                           className="ml-2 p-1 rounded-md hover:bg-slate-100 transition-colors"
                           aria-label="Play response audio"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                            <path d="M19 5a4 4 0 010 14" />
-                          </svg>
+                          {playingId === message.id ? (
+                            <Pause className="w-4 h-4 text-gray-600" />
+                          ) : (
+                            <Volume2 className="w-4 h-4 text-gray-400" />
+                          )}
                         </button>
                       )}
                     </div>
