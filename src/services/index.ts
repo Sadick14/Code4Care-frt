@@ -24,6 +24,22 @@ export type {
   AdminLoginUser,
   AdminLoginResponse,
   AdminDashboardStats,
+  AdminStaffPasswordResetRequest,
+  AdminStaffPasswordResetResponse,
+  AdminStaffAvailabilityRequest,
+  AdminStaffAvailabilityResponse,
+  AdminConversationListItem,
+  AdminConversationListResponse,
+  AdminConversationMessage,
+  AdminConversationDetail,
+  AdminListConversationsOptions,
+  AdminFeedbackItem,
+  AdminFeedbackListResponse,
+  AdminListFeedbackOptions,
+  AdminReportItem,
+  AdminReportListResponse,
+  AdminListReportsOptions,
+  AdminUpdateReportRequest,
 } from './staffAccessService';
 
 // User Management Services
@@ -71,10 +87,30 @@ export type {
   ChatSessionHistoryResponse,
 } from './enhancedChatService';
 
+// User Engagement Services
+export { UserEngagementService } from './userEngagementService';
+export type {
+  UserLanguage,
+  ChatEventCategory,
+  ChatInputMethod,
+  SessionAction,
+  DeviceType,
+  CaptureDemographicsPayload,
+  CaptureDemographicsResponse,
+  LogChatEventPayload,
+  LogChatEventResponse,
+  UpdateUserSettingsPayload,
+  UpdateUserSettingsResponse,
+  TrackSessionPayload,
+  TrackSessionResponse,
+} from './userEngagementService';
+
 // Analytics Services
 export { RealAnalyticsService } from './realAnalyticsService';
 export type {
+  AnalyticsPeriod,
   AnalyticsSummary,
+  AnalyticsOverviewSummary,
   TopicEngagementItem,
   TopicEngagementResponse,
   UserAnalyticsResponse,

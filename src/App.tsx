@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { NicknameModal } from "./components/NicknameModal";
 import { FollowUpId } from "./components/FollowUpId";
 import OnboardingScreen from "./components/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { UserEngagementService } from "@/services/userEngagementService";
 
 type Section = "chat" | "story" | "myths" | "support" | "pharmacy" | "settings";
 
@@ -28,7 +29,7 @@ function AppContent() {
   const { 
     hasSeenOnboarding, setHasSeenOnboarding,
     nickname, setNickname,
-    botName, setBotName,
+    setBotName,
     setAgeRange,
     setGenderIdentity,
     setRegion,
@@ -46,11 +47,43 @@ function AppContent() {
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [clearChatTrigger, setClearChatTrigger] = useState(0);
+  const sessionStartedAtRef = useRef(Date.now());
+  const sessionEndedRef = useRef(false);
 
   // Sync nickname modal visibility with global state
   useEffect(() => {
     setShowNicknameModal(!nickname && hasSeenOnboarding);
   }, [nickname, hasSeenOnboarding]);
+
+  useEffect(() => {
+    if (!hasSeenOnboarding) {
+      return;
+    }
+
+    sessionStartedAtRef.current = Date.now();
+    sessionEndedRef.current = false;
+    UserEngagementService.logNonBlocking(
+      UserEngagementService.trackSession(
+        UserEngagementService.buildSessionPayload(sessionId, 'continue', true),
+      ),
+      'Failed to track session continue event',
+    );
+
+    return () => {
+      if (sessionEndedRef.current) {
+        return;
+      }
+
+      sessionEndedRef.current = true;
+      const durationSeconds = Math.max(0, Math.round((Date.now() - sessionStartedAtRef.current) / 1000));
+      UserEngagementService.logNonBlocking(
+        UserEngagementService.trackSession(
+          UserEngagementService.buildSessionPayload(sessionId, 'end', true, durationSeconds),
+        ),
+        'Failed to track session end event',
+      );
+    };
+  }, [hasSeenOnboarding, sessionId]);
 
   const handleClearChat = () => {
     localStorage.removeItem(`room1221_chat_${sessionId}`);
@@ -61,6 +94,14 @@ function AppContent() {
   };
 
   const handleLogout = () => {
+    sessionEndedRef.current = true;
+    const durationSeconds = Math.max(0, Math.round((Date.now() - sessionStartedAtRef.current) / 1000));
+    UserEngagementService.logNonBlocking(
+      UserEngagementService.trackSession(
+        UserEngagementService.buildSessionPayload(sessionId, 'end', hasSeenOnboarding, durationSeconds),
+      ),
+      'Failed to track session logout event',
+    );
     resetAll();
     setShowLogoutDialog(false);
     setCurrentSection("chat");
@@ -70,12 +111,35 @@ function AppContent() {
   if (!hasSeenOnboarding) {
     return (
       <OnboardingScreen
-        onComplete={({ botName: nextBotName, ageRange, genderIdentity, region }) => {
+        onComplete={({ botName: nextBotName, ageRange: nextAgeRange, genderIdentity: nextGenderIdentity, region: nextRegion }) => {
+          const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
           setBotName(nextBotName);
-          setAgeRange(ageRange);
-          setGenderIdentity(genderIdentity);
-          setRegion(region);
+          setAgeRange(nextAgeRange);
+          setGenderIdentity(nextGenderIdentity);
+          setRegion(nextRegion);
           setHasSeenOnboarding(true);
+          UserEngagementService.logNonBlocking(
+            UserEngagementService.captureDemographics({
+              session_id: sessionId,
+              bot_name: nextBotName,
+              age_range: nextAgeRange,
+              gender_identity: nextGenderIdentity,
+              region: nextRegion,
+              language: languageCode,
+            }),
+            'Failed to capture onboarding demographics',
+          );
+          UserEngagementService.logNonBlocking(
+            UserEngagementService.updateUserSettings({
+              session_id: sessionId,
+              nickname: nickname || '',
+              language: languageCode,
+              chat_retention: '24h',
+              analytics_consent: true,
+              consultant_mode_enabled: consultantMode,
+            }),
+            'Failed to initialize user settings',
+          );
         }}
       />
     );

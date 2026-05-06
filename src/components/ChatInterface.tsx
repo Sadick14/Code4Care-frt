@@ -10,6 +10,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useApp } from "@/providers/AppProvider";
 import { ChatCitation, requestChatCompletion } from "@/services/chatbotService";
+import { UserEngagementService } from "@/services/userEngagementService";
 import { logger } from "@/utils/logger";
 import { TypewriterMessage } from "./TypewriterMessage";
 
@@ -189,6 +190,20 @@ export function ChatInterface({
 
     try {
       const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+      UserEngagementService.logNonBlocking(
+        UserEngagementService.logChatEvent({
+          session_id: sessionId,
+          event_type: 'message_sent',
+          event_category: 'engagement',
+          input_method: presetMessage ? 'quick_reply' : 'typed',
+          metadata: {
+            message_length: outgoingMessage.length,
+            consultant_mode: consultantMode,
+          },
+        }),
+        'Failed to log outgoing chat event',
+      );
+
       const response = await requestChatCompletion({
         message: outgoingMessage,
         language: languageCode,
@@ -210,6 +225,21 @@ export function ChatInterface({
         };
 
         setMessages(prev => [...prev, botMsg]);
+        UserEngagementService.logNonBlocking(
+          UserEngagementService.logChatEvent({
+            session_id: sessionId,
+            event_type: 'bot_response_received',
+            event_category: response.safety_flags.length ? 'safety' : 'engagement',
+            input_method: 'system',
+            metadata: {
+              response_time_ms: response.response_time_ms,
+              language_detected: response.language_detected,
+              citations_count: response.citations.length,
+              safety_flags_count: response.safety_flags.length,
+            },
+          }),
+          'Failed to log bot response chat event',
+        );
       } else {
         logger.warn('Chat API returned an empty answer.', response);
       }

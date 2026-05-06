@@ -5,20 +5,23 @@
 
 import { logger } from '@/utils/logger';
 
+export type AnalyticsPeriod = 'today' | 'week' | 'month' | 'year' | string;
+
 export interface AnalyticsSummary {
   generated_at: string;
-  period: 'today' | 'week' | 'month' | 'year';
+  period: AnalyticsPeriod;
   summary: {
-    total_active_users: number;
-    new_users_total: number;
-    new_users_in_period: number;
-    returning_users: number;
-    total_conversations: number;
-    conversations_in_period: number;
-    total_messages: number;
-    messages_in_period: number;
-    average_session_duration_minutes: number;
-    average_messages_per_session: number;
+    total_active_users?: number;
+    new_users_total?: number;
+    new_users_in_period?: number;
+    returning_users?: number;
+    total_conversations?: number;
+    conversations_in_period?: number;
+    total_messages?: number;
+    messages_in_period?: number;
+    average_session_duration_minutes?: number;
+    average_messages_per_session?: number;
+    [key: string]: unknown;
   };
   demographics: Record<string, unknown>;
   engagement: Record<string, unknown>;
@@ -27,12 +30,31 @@ export interface AnalyticsSummary {
   funnel: Record<string, unknown>;
 }
 
+export interface AnalyticsOverviewSummary {
+  period: AnalyticsPeriod;
+  generatedAt: string;
+  demographics: Record<string, unknown>;
+  topicEngagement: Array<Record<string, unknown>>;
+  safetyMetrics: Record<string, unknown>;
+  performance: Record<string, unknown>;
+  funnel: Record<string, unknown>;
+  trends: Array<Record<string, unknown>>;
+}
+
 export interface TopicEngagementItem {
   topic: string;
-  count: number;
-  percentage: number;
-  trend: 'up' | 'down' | 'stable';
-  avg_satisfaction: number;
+  inquiries?: number;
+  avg_session_time_seconds?: number;
+  satisfaction_score?: number;
+  trending?: boolean;
+  change_vs_last_period?: number;
+  common_questions?: string[];
+  age_groups?: Record<string, unknown>;
+  gender_breakdown?: Record<string, unknown>;
+  count?: number;
+  percentage?: number;
+  trend?: 'up' | 'down' | 'stable';
+  avg_satisfaction?: number;
 }
 
 export interface TopicEngagementResponse {
@@ -123,10 +145,12 @@ export interface SessionAnalyticsResponse {
   status: 'recorded';
 }
 
+const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
 const API_BASE_URL = (
+  import.meta.env.VITE_ANALYTICS_API_BASE_URL ||
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_ADMIN_API_BASE_URL ||
-  ''
+  DEFAULT_API_BASE_URL
 ).trim();
 
 const ANALYTICS_BASE_PATH = '/analytics';
@@ -136,6 +160,38 @@ function buildUrl(path: string): string {
     return path;
   }
   return new URL(path, API_BASE_URL).toString();
+}
+
+function buildUrlWithParams(path: string, params: Record<string, string | number | boolean | null | undefined>) {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      query.set(key, String(value));
+    }
+  });
+
+  const queryString = query.toString();
+  return `${buildUrl(path)}${queryString ? `?${queryString}` : ''}`;
+}
+
+function getNumber(record: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+
+    if (typeof value === 'number') {
+      return value;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value);
+      if (!Number.isNaN(parsed)) {
+        return parsed;
+      }
+    }
+  }
+
+  return 0;
 }
 
 function buildHeaders(accessToken?: string): Record<string, string> {
@@ -165,6 +221,21 @@ async function readApiError(response: Response): Promise<string> {
       return parsed.detail;
     }
 
+    if (Array.isArray(parsed.detail)) {
+      return parsed.detail
+        .map((item) => {
+          if (!item || typeof item !== 'object') {
+            return String(item);
+          }
+
+          const detail = item as Record<string, unknown>;
+          const location = Array.isArray(detail.loc) ? detail.loc.join('.') : '';
+          const message = typeof detail.msg === 'string' ? detail.msg : 'Validation error';
+          return location ? `${location}: ${message}` : message;
+        })
+        .join('; ');
+    }
+
     if (typeof parsed.message === 'string') {
       return parsed.message;
     }
@@ -179,7 +250,98 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+function normalizeTrendItem(item: Record<string, unknown>) {
+  return {
+    ...item,
+    timestamp: item.timestamp ?? item.date ?? item.period ?? item.created_at ?? '',
+    value: getNumber(item, 'value', 'engagements', 'count', 'messages', 'sessions'),
+  };
+}
+
+function normalizeAnalyticsOverviewSummary(data: AnalyticsOverviewSummary): AnalyticsSummary {
+  const demographics = data.demographics ?? {};
+  const safetyMetrics = data.safetyMetrics ?? {};
+  const performance = data.performance ?? {};
+  const funnel = data.funnel ?? {};
+  const topicEngagement = data.topicEngagement ?? [];
+  const totalTopicInquiries = topicEngagement.reduce((total, item) => total + getNumber(item, 'inquiries', 'count', 'value'), 0);
+
+  return {
+    generated_at: data.generatedAt,
+    period: data.period,
+    summary: {
+      total_active_users: getNumber(demographics, 'totalActiveUsers', 'total_active_users', 'activeUsers', 'active_users'),
+      conversations_in_period: totalTopicInquiries,
+      total_conversations: totalTopicInquiries,
+      total_messages: getNumber(performance, 'totalMessages', 'total_messages', 'messages'),
+      average_session_duration_minutes: getNumber(performance, 'averageSessionDurationMinutes', 'avg_session_duration_minutes'),
+    },
+    demographics: {
+      ...demographics,
+      ageRange: demographics.ageRange ?? demographics.age_range ?? demographics.ageGroups ?? demographics.age_groups ?? {},
+      regions: demographics.regions ?? demographics.region ?? demographics.regionBreakdown ?? demographics.region_breakdown ?? {},
+      totalActiveUsers: demographics.totalActiveUsers ?? demographics.total_active_users ?? demographics.activeUsers ?? demographics.active_users ?? 0,
+    },
+    engagement: {
+      topicEngagement,
+    },
+    safety: {
+      ...safetyMetrics,
+      panic_exits_total: safetyMetrics.panic_exits_total ?? safetyMetrics.panicExitsTotal ?? safetyMetrics.panic_exits ?? 0,
+      crisis_interventions: safetyMetrics.crisis_interventions ?? safetyMetrics.crisisInterventions ?? safetyMetrics.crisis_interventions_triggered ?? 0,
+      self_harm_mentions: safetyMetrics.self_harm_mentions ?? safetyMetrics.selfHarmMentions ?? safetyMetrics.self_harm_mentions_detected ?? 0,
+      suicidal_ideation_mentions: safetyMetrics.suicidal_ideation_mentions ?? safetyMetrics.suicidalIdeationMentions ?? 0,
+    },
+    performance: {
+      ...performance,
+      avgResponseTime: performance.avgResponseTime ?? performance.avg_response_time_ms ?? performance.response_time_ms ?? 0,
+      systemUptime: performance.systemUptime ?? performance.system_uptime ?? performance.uptime_percent ?? 0,
+      messageProcessingSuccess: performance.messageProcessingSuccess ?? performance.message_processing_success ?? performance.success_rate ?? 0,
+    },
+    funnel: {
+      ...funnel,
+      total_visitors: funnel.total_visitors ?? funnel.totalVisitors ?? funnel.visitors ?? 0,
+      completed_onboarding: funnel.completed_onboarding ?? funnel.completedOnboarding ?? funnel.onboarded ?? 0,
+      had_first_chat: funnel.had_first_chat ?? funnel.hadFirstChat ?? funnel.firstChat ?? 0,
+      completed_story_module: funnel.completed_story_module ?? funnel.completedStoryModule ?? funnel.storyModule ?? 0,
+    },
+    trends: (data.trends ?? []).map(normalizeTrendItem),
+  };
+}
+
 export class RealAnalyticsService {
+  /**
+   * GET /v1/analytics/summary - Aggregated analytics for the admin dashboard.
+   */
+  static async getAnalyticsSummary(
+    options?: {
+      period?: AnalyticsPeriod;
+    },
+    accessToken?: string,
+  ): Promise<AnalyticsOverviewSummary> {
+    try {
+      const response = await fetch(buildUrlWithParams('/v1/analytics/summary', {
+        period: options?.period ?? 'week',
+      }), {
+        method: 'GET',
+        headers: buildHeaders(accessToken),
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiError(response));
+      }
+
+      return await readJsonResponse<AnalyticsOverviewSummary>(response);
+    } catch (error) {
+      logger.error('Failed to get analytics summary', error);
+      throw error;
+    }
+  }
+
+  static normalizeAnalyticsSummary(data: AnalyticsOverviewSummary): AnalyticsSummary {
+    return normalizeAnalyticsOverviewSummary(data);
+  }
+
   /**
    * GET /analytics/dashboard - Get overall system analytics and KPIs
    */
@@ -192,14 +354,9 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<AnalyticsSummary> {
-    const params = new URLSearchParams();
-
-    if (options?.period) params.append('period', options.period);
-    if (options?.by_region) params.append('by_region', String(options.by_region));
-    if (options?.by_age_group) params.append('by_age_group', String(options.by_age_group));
-    if (options?.by_language) params.append('by_language', String(options.by_language));
-
-    const url = `${buildUrl(`${ANALYTICS_BASE_PATH}/dashboard`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/dashboard`, {
+      period: options?.period ?? 'week',
+    });
 
     try {
       const response = await fetch(url, {
@@ -228,12 +385,9 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<TopicEngagementResponse> {
-    const params = new URLSearchParams();
-
-    if (options?.period) params.append('period', options.period);
-    if (options?.limit) params.append('limit', String(options.limit));
-
-    const url = `${buildUrl(`${ANALYTICS_BASE_PATH}/topics`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/topics`, {
+      period: options?.period ?? 'week',
+    });
 
     try {
       const response = await fetch(url, {
@@ -262,12 +416,9 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<UserAnalyticsResponse> {
-    const params = new URLSearchParams();
-
-    if (options?.period) params.append('period', options.period);
-    if (options?.segment) params.append('segment', options.segment);
-
-    const url = `${buildUrl(`${ANALYTICS_BASE_PATH}/users`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/users`, {
+      period: options?.period ?? 'week',
+    });
 
     try {
       const response = await fetch(url, {
@@ -296,12 +447,9 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<SafetyAnalyticsResponse> {
-    const params = new URLSearchParams();
-
-    if (options?.period) params.append('period', options.period);
-    if (options?.severity) params.append('severity', options.severity);
-
-    const url = `${buildUrl(`${ANALYTICS_BASE_PATH}/safety`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/safety`, {
+      period: options?.period ?? 'week',
+    });
 
     try {
       const response = await fetch(url, {
@@ -329,11 +477,9 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<PerformanceMetricsResponse> {
-    const params = new URLSearchParams();
-
-    if (options?.period) params.append('period', options.period);
-
-    const url = `${buildUrl(`${ANALYTICS_BASE_PATH}/performance`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/performance`, {
+      period: options?.period ?? 'week',
+    });
 
     try {
       const response = await fetch(url, {

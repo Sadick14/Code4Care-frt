@@ -10,6 +10,7 @@ import { SupportRequestService } from './supportRequestService';
 import { RealAnalyticsService } from './realAnalyticsService';
 import { EnhancedChatService } from './enhancedChatService';
 import { requestChatCompletion } from './chatbotService';
+import { UserEngagementService } from './userEngagementService';
 import { logger } from '@/utils/logger';
 
 export interface ApiClientConfig {
@@ -159,6 +160,26 @@ export class APIClient {
     },
 
     /**
+     * Reset staff account password
+     */
+    resetStaffPassword: async (staffId: string, temporaryPassword: string, accessToken?: string) => {
+      const token = accessToken || (this.config.autoRefreshToken ? await this.ensureValidToken() : undefined);
+      return StaffAccessService.resetStaffPassword(staffId, temporaryPassword, token);
+    },
+
+    /**
+     * Change staff availability
+     */
+    changeStaffAvailability: async (
+      staffId: string,
+      payload: Parameters<typeof StaffAccessService.changeStaffAvailability>[1],
+      accessToken?: string,
+    ) => {
+      const token = accessToken || (this.config.autoRefreshToken ? await this.ensureValidToken() : undefined);
+      return StaffAccessService.changeStaffAvailability(staffId, payload, token);
+    },
+
+    /**
      * Delete staff account
      */
     deleteStaff: async (staffId: string, accessToken?: string) => {
@@ -172,6 +193,50 @@ export class APIClient {
     getDashboardStats: async (accessToken?: string) => {
       const token = accessToken || (this.config.autoRefreshToken ? await this.ensureValidToken() : undefined);
       return StaffAccessService.getDashboardStats(token);
+    },
+
+    /**
+     * List admin conversations
+     */
+    listConversations: async (options?: Parameters<typeof StaffAccessService.listConversations>[0], accessToken?: string) => {
+      const token = accessToken || (this.config.autoRefreshToken ? await this.ensureValidToken() : undefined);
+      return StaffAccessService.listConversations(options, token);
+    },
+
+    /**
+     * Get admin conversation details
+     */
+    getConversationDetail: async (conversationId: string, accessToken?: string) => {
+      const token = accessToken || (this.config.autoRefreshToken ? await this.ensureValidToken() : undefined);
+      return StaffAccessService.getConversationDetail(conversationId, token);
+    },
+
+    /**
+     * List admin feedback
+     */
+    listFeedback: async (options?: Parameters<typeof StaffAccessService.listFeedback>[0], accessToken?: string) => {
+      const token = accessToken || (this.config.autoRefreshToken ? await this.ensureValidToken() : undefined);
+      return StaffAccessService.listFeedback(options, token);
+    },
+
+    /**
+     * List admin reports
+     */
+    listReports: async (options?: Parameters<typeof StaffAccessService.listReports>[0], accessToken?: string) => {
+      const token = accessToken || (this.config.autoRefreshToken ? await this.ensureValidToken() : undefined);
+      return StaffAccessService.listReports(options, token);
+    },
+
+    /**
+     * Update admin report status
+     */
+    updateReport: async (
+      reportId: string,
+      payload: Parameters<typeof StaffAccessService.updateReport>[1],
+      accessToken?: string,
+    ) => {
+      const token = accessToken || (this.config.autoRefreshToken ? await this.ensureValidToken() : undefined);
+      return StaffAccessService.updateReport(reportId, payload, token);
     },
   };
 
@@ -313,6 +378,14 @@ export class APIClient {
 
   Analytics = {
     /**
+     * Get aggregated admin analytics summary
+     */
+    getSummary: async (options?: Parameters<typeof RealAnalyticsService.getAnalyticsSummary>[0], accessToken?: string) => {
+      const token = accessToken || (this.config.autoRefreshToken ? await this.ensureValidToken() : undefined);
+      return RealAnalyticsService.getAnalyticsSummary(options, token);
+    },
+
+    /**
      * Get dashboard summary
      */
     getDashboard: async (
@@ -398,6 +471,38 @@ export class APIClient {
       const token = accessToken || (this.config.autoRefreshToken ? await this.ensureValidToken() : undefined);
       return EnhancedChatService.getChatSessionHistory(sessionId, options, token);
     },
+
+    /**
+     * Log chat interaction event
+     */
+    logEvent: (payload: Parameters<typeof UserEngagementService.logChatEvent>[0]) => {
+      return UserEngagementService.logChatEvent(payload);
+    },
+  };
+
+  // ========== User Engagement APIs ==========
+
+  UserEngagement = {
+    /**
+     * Capture onboarding demographics
+     */
+    captureDemographics: (payload: Parameters<typeof UserEngagementService.captureDemographics>[0]) => {
+      return UserEngagementService.captureDemographics(payload);
+    },
+
+    /**
+     * Update user settings
+     */
+    updateSettings: (payload: Parameters<typeof UserEngagementService.updateUserSettings>[0]) => {
+      return UserEngagementService.updateUserSettings(payload);
+    },
+
+    /**
+     * Track user session event
+     */
+    trackSession: (payload: Parameters<typeof UserEngagementService.trackSession>[0]) => {
+      return UserEngagementService.trackSession(payload);
+    },
   };
 }
 
@@ -414,4 +519,5 @@ export {
   SupportRequestService,
   RealAnalyticsService,
   EnhancedChatService,
+  UserEngagementService,
 };

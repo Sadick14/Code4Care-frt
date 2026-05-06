@@ -104,7 +104,7 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
             </Button>
 
             <p className="text-center text-xs text-gray-400 pt-2">
-              Default admin: admin@room1221.org / admin123
+              Use the admin credentials provisioned by the Code4Care backend.
             </p>
           </form>
         </div>
