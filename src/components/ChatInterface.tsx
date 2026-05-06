@@ -251,9 +251,9 @@ export function ChatInterface({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#f8faff]">
-      <div className="flex-1 overflow-y-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto space-y-6">
+    <div className="flex h-full min-h-0 flex-col bg-[#f8faff]">
+      <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-8">
+        <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
            <div className="rounded-3xl border border-[#CFE0FF] bg-gradient-to-r from-white to-[#EDF4FF] p-4 md:p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -388,19 +388,22 @@ export function ChatInterface({
         </div>
       </div>
 
-      <div className="bg-white border-t border-slate-100 p-6 pb-8">
-        <div className="max-w-3xl mx-auto flex gap-4 items-center">
+      <div
+        className="bg-white border-t border-slate-100 p-3 pb-4 sm:p-6 sm:pb-8"
+        style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+      >
+        <div className="mx-auto flex max-w-3xl items-center gap-2 sm:gap-4">
           <div className="flex-1 relative group">
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder={t('chat.placeholder')}
-              className="h-12 rounded-full pl-5 pr-14 bg-white border border-slate-100 shadow-sm focus:bg-white focus:border-blue-400 transition-all text-sm font-medium"
+              className="h-11 sm:h-12 rounded-full pl-4 sm:pl-5 pr-12 sm:pr-14 bg-white border border-slate-100 shadow-sm focus:bg-white focus:border-blue-400 transition-all text-sm font-medium"
             />
             <button
               onClick={() => { if(!recognitionRef.current) return; isListening ? recognitionRef.current.stop() : (recognitionRef.current.start(), setIsListening(true)); }}
-              className={`absolute right-16 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600' : 'text-slate-400 hover:text-blue-600'}`}
+              className={`absolute right-12 sm:right-16 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600' : 'text-slate-400 hover:text-blue-600'}`}
             >
               <Mic className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
             </button>
@@ -408,7 +411,7 @@ export function ChatInterface({
           <Button
             onClick={() => { handleSend(); }}
             disabled={!inputValue.trim()}
-            className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center"
+            className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center"
           >
             <Send className="w-5 h-5 text-white" />
           </Button>

@@ -21,16 +21,16 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-white border-b border-[#E8ECFF] flex-shrink-0 sticky top-0 z-50 px-4 py-3 shadow-sm">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-2 sm:gap-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Button variant="ghost" size="icon" className="rounded-xl lg:hidden" onClick={onMenuClick}>
             <Menu className="w-5 h-5" />
           </Button>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-col">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
               <Shield className="w-4 h-4 text-[#0048ff]" />
-              <h1 className="font-bold text-gray-900 leading-none">{botName}</h1>
-              <Badge variant="outline" className="h-5 px-1.5 bg-green-50 text-green-600 border-green-100 gap-1">
+              <h1 className="min-w-0 truncate font-bold leading-none text-gray-900">{botName}</h1>
+              <Badge variant="outline" className="hidden h-5 gap-1 border-green-100 bg-green-50 px-1.5 text-green-600 sm:flex">
                 <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
                 {t('common.online')}
               </Badge>
@@ -46,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {consultantMode && (
              <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white hidden sm:flex items-center gap-1 px-2 py-1">
                <AlertCircle className="w-3 h-3" />
@@ -57,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
             variant="destructive" 
             size="sm" 
             onClick={onPanicClick}
-            className="rounded-full px-4 h-9 bg-[#ff4444] hover:bg-[#ff1111] shadow-lg shadow-red-200"
+            className="h-9 rounded-full px-3 text-xs sm:px-4 sm:text-sm bg-[#ff4444] hover:bg-[#ff1111] shadow-lg shadow-red-200"
           >
             {t('common.panic', 'PANIC')}
           </Button>

@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { registerSW } from "virtual:pwa-register";
 import "./i18n/i18n"; // Initialize i18n
 import { AppProvider } from "./providers/AppProvider";
 import { LanguageProvider } from "./providers/LanguageProvider";
@@ -8,6 +9,10 @@ import App from "./App.tsx";
 import AdminDashboardApp from "./AdminDashboardApp.tsx";
 import { NotFoundPage } from "./components/NotFoundPage";
 import "./index.css";
+
+registerSW({
+  immediate: true,
+});
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

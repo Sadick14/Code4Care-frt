@@ -21,6 +21,10 @@ import { FollowUpId } from "./components/FollowUpId";
 import OnboardingScreen from "./components/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { UserEngagementService } from "@/services/userEngagementService";
+import { InstallPrompt } from "@/components/InstallPrompt";
+import { OfflineBanner } from "@/components/OfflineBanner";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
+import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 
 type Section = "chat" | "story" | "myths" | "support" | "pharmacy" | "settings";
 
@@ -38,6 +42,10 @@ function AppContent() {
     consultantMode,
     setConsultantMode
   } = useApp();
+
+  // PWA hooks
+  const { isInstallable, handleInstall, handleDismiss } = useInstallPrompt();
+  const { isOnline, showOfflineBanner, wasOffline } = useOfflineStatus();
 
   const [currentSection, setCurrentSection] = useState<Section>("chat");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -150,8 +158,16 @@ function AppContent() {
   }
 
   return (
-    <div className="flex h-[100dvh] lg:h-screen overflow-hidden bg-white">
+    <div className="flex h-dvh min-h-dvh w-full max-w-full overflow-hidden bg-white">
       <Toaster position="top-center" toastOptions={{ className: 'rounded-2xl' }} />
+      
+      {/* PWA Components */}
+      <OfflineBanner isOffline={showOfflineBanner} wasOffline={wasOffline} />
+      <InstallPrompt 
+        isVisible={isInstallable} 
+        onInstall={handleInstall} 
+        onDismiss={handleDismiss}
+      />
       
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-[280px] flex-shrink-0">
@@ -165,7 +181,7 @@ function AppContent() {
 
       {/* Mobile Sidebar (Sheet) */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-[300px]">
+        <SheetContent side="left" className="p-0 w-[86vw] max-w-[300px] sm:w-[300px]">
           <Sidebar 
             currentSection={currentSection} 
             setCurrentSection={setCurrentSection}
@@ -177,14 +193,14 @@ function AppContent() {
       </Sheet>
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 h-[100dvh] lg:h-screen overflow-hidden">
+      <div className="flex min-w-0 flex-col flex-1 h-dvh min-h-dvh overflow-hidden">
         <Header 
           onMenuClick={() => setSidebarOpen(true)}
           onPanicClick={() => setShowPanicScreen(true)}
           onFollowUpClick={() => setShowFollowUpModal(true)}
         />
 
-        <main className="flex-1 overflow-hidden relative">
+        <main className="relative flex-1 min-w-0 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSection}
