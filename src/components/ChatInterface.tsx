@@ -393,21 +393,24 @@ export function ChatInterface({
         style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
       >
         <div className="mx-auto flex max-w-3xl items-center gap-2 sm:gap-4">
-          <div className="flex-1 relative group">
+          <div className="flex-1">
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder={t('chat.placeholder')}
-              className="h-11 sm:h-12 rounded-full pl-4 sm:pl-5 pr-12 sm:pr-14 bg-white border border-slate-100 shadow-sm focus:bg-white focus:border-blue-400 transition-all text-sm font-medium"
+              className="h-11 sm:h-12 w-full rounded-full pl-4 sm:pl-5 pr-4 bg-white border border-slate-100 shadow-sm focus:bg-white focus:border-blue-400 transition-all text-sm font-medium"
             />
-            <button
-              onClick={() => { if(!recognitionRef.current) return; isListening ? recognitionRef.current.stop() : (recognitionRef.current.start(), setIsListening(true)); }}
-              className={`absolute right-12 sm:right-16 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600' : 'text-slate-400 hover:text-blue-600'}`}
-            >
-              <Mic className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
-            </button>
           </div>
+
+          <button
+            onClick={() => { if(!recognitionRef.current) return; isListening ? recognitionRef.current.stop() : (recognitionRef.current.start(), setIsListening(true)); }}
+            className={`p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0 ${isListening ? 'bg-red-100 text-red-600' : 'text-slate-400 hover:text-blue-600'}`}
+            aria-label="Toggle voice input"
+          >
+            <Mic className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
+          </button>
+
           <Button
             onClick={() => { handleSend(); }}
             disabled={!inputValue.trim()}
