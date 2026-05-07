@@ -210,21 +210,30 @@ export function ChatInterface({
 
         if (retainedMessages.length > 0) {
           setMessages(retainedMessages);
+          setCompletedBotMessages(
+            new Set(retainedMessages.filter((message) => message.sender === 'bot').map((message) => message.id))
+          );
           if (retainedMessages.length !== hydratedMessages.length) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(retainedMessages));
           }
         } else {
           localStorage.removeItem(STORAGE_KEY);
-          setMessages([getInitialMessage()]);
+          const initialMessage = getInitialMessage();
+          setMessages([initialMessage]);
+          setCompletedBotMessages(new Set([initialMessage.id]));
         }
       } else {
-        setMessages([getInitialMessage()]);
+        const initialMessage = getInitialMessage();
+        setMessages([initialMessage]);
+        setCompletedBotMessages(new Set([initialMessage.id]));
       }
       setIsLoaded(true);
       setChatLanguage((i18n.resolvedLanguage || i18n.language || 'en').split('-')[0]);
     } catch (error) {
       logger.error('Error loading chat history:', error);
-      setMessages([getInitialMessage()]);
+      const initialMessage = getInitialMessage();
+      setMessages([initialMessage]);
+      setCompletedBotMessages(new Set([initialMessage.id]));
       setIsLoaded(true);
     }
   }, [STORAGE_KEY, clearTrigger, consultantMode, sessionDuration]);

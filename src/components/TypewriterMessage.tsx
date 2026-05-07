@@ -35,9 +35,6 @@ export function TypewriterMessage({
   return (
     <div className={`text-sm leading-relaxed whitespace-pre-wrap chat-markdown ${className}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{textToDisplay}</ReactMarkdown>
-      {!isComplete && !isCompleted && (
-        <span className="inline-block w-1.5 h-5 ml-0.5 bg-current opacity-70 animate-pulse" />
-      )}
     </div>
   );
 }

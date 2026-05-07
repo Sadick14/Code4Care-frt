@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shield, Menu, UserCheck, AlertCircle } from "lucide-react";
+import { Shield, Menu, UserCheck, AlertCircle, Phone } from "lucide-react";
+import { dktSupportLines } from '@/data/dktProducts';
 import { useApp } from '@/providers/AppProvider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,8 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { t } = useTranslation();
   const { nickname, botName, consultantMode } = useApp();
+  const dktPrimary = (dktSupportLines && dktSupportLines.length > 0) ? dktSupportLines[0] : undefined;
+  const consultantPhone = dktPrimary?.phone || '';
 
   return (
     <header className="bg-white border-b border-[#E8ECFF] flex-shrink-0 sticky top-0 z-50 px-4 py-3 shadow-sm">
@@ -45,6 +48,17 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* Mobile-only consultant call button (next to panic) */}
+          {consultantPhone && (
+            <a
+              href={`tel:${consultantPhone.replace(/\D/g, '')}`}
+              title={t('chat.talkToConsultant', 'Talk to consultant')}
+              aria-label={t('chat.talkToConsultant', 'Talk to consultant')}
+              className="inline-flex items-center justify-center rounded-full p-2 text-white bg-emerald-600 hover:bg-emerald-700 sm:hidden"
+            >
+              <Phone className="w-4 h-4" />
+            </a>
+          )}
           {consultantMode && (
              <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white hidden sm:flex items-center gap-1 px-2 py-1">
                <AlertCircle className="w-3 h-3" />
