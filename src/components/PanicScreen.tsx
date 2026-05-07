@@ -1,14 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
+import { SafetyService } from "@/services";
+import { logger } from "@/utils/logger";
 
 interface PanicScreenProps {
   onExit: () => void;
+  sessionId?: string;
 }
 
-export function PanicScreen({ onExit }: PanicScreenProps) {
+export function PanicScreen({ onExit, sessionId }: PanicScreenProps) {
   const { t } = useTranslation();
   const [display, setDisplay] = useState("0");
+  const activationTimeRef = useRef<number>(Date.now());
+
+  // Log panic activation when component mounts
+  useEffect(() => {
+    if (sessionId) {
+      SafetyService.logPanicEvent({
+        session_id: sessionId,
+        action: 'activated',
+        time_active_seconds: 0,
+      }).catch((error) => {
+        logger.error('Failed to log panic activation', error);
+        // Don't block the panic screen if logging fails
+      });
+    }
+  }, [sessionId]);
 
   const handleNumber = (num: string) => {
     setDisplay(prev => prev === "0" ? num : prev + num);
@@ -29,10 +47,28 @@ export function PanicScreen({ onExit }: PanicScreenProps) {
     }
   };
 
+  const handlePanicExit = async () => {
+    if (sessionId) {
+      try {
+        const timeActiveSeconds = Math.floor((Date.now() - activationTimeRef.current) / 1000);
+        await SafetyService.logPanicEvent({
+          session_id: sessionId,
+          action: 'dismissed',
+          time_active_seconds: timeActiveSeconds,
+        });
+        logger.info(`Panic screen dismissed after ${timeActiveSeconds} seconds`);
+      } catch (error) {
+        logger.error('Failed to log panic dismissal', error);
+        // Don't block exit if logging fails
+      }
+    }
+    onExit();
+  };
+
   const buttons = [
     { label: "C", action: handleClear, color: "bg-slate-700 text-teal-400" },
     { label: "⌫", action: handleDelete, color: "bg-slate-700 text-teal-400" },
-    { label: t('common.back', 'Back'), action: onExit, color: "bg-teal-700 text-white" },
+    { label: t('common.back', 'Back'), action: handlePanicExit, color: "bg-teal-700 text-white" },
     { label: "÷", action: () => handleNumber("/"), color: "bg-slate-700 text-orange-400" },
     { label: "7", action: () => handleNumber("7"), color: "bg-slate-800 text-white" },
     { label: "8", action: () => handleNumber("8"), color: "bg-slate-800 text-white" },

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, Clock, User, ShieldCheck, Volume2, Pause } from "lucide-react";
+import { Send, Mic, Clock, User, ShieldCheck, Volume2, Pause, ThumbsUp, ThumbsDown, Flag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from 'react-markdown';
@@ -9,7 +9,7 @@ import fetchSpeechAudio from '@/services/ttsService';
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useApp } from "@/providers/AppProvider";
-import { ChatCitation, requestChatCompletion } from "@/services/chatbotService";
+import { ChatCitation, requestChatCompletion, FeedbackService, ReportService, SuggestionsService } from "@/services/chatbotService";
 import { UserEngagementService } from "@/services/userEngagementService";
 import { RealAnalyticsService } from "@/services/realAnalyticsService";
 import { safeStorage } from "@/utils/safeStorage";
@@ -26,6 +26,8 @@ interface Message {
   citations?: ChatCitation[];
   languageDetected?: string;
   responseTimeMs?: number;
+  feedbackRating?: number;
+  isReported?: boolean;
 }
 
 interface ChatInterfaceProps {
@@ -47,6 +49,7 @@ export function ChatInterface({
   const [isLoaded, setIsLoaded] = useState(false);
   const [chatLanguage, setChatLanguage] = useState(i18n.resolvedLanguage?.split('-')[0] || i18n.language || 'en');
   const [completedBotMessages, setCompletedBotMessages] = useState<Set<string>>(new Set());
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -227,6 +230,19 @@ export function ChatInterface({
       setMessages([getInitialMessage()]);
       setIsLoaded(true);
     }
+
+    // Fetch conversation starter suggestions
+    const fetchSuggestions = async () => {
+      try {
+        const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+        const response = await SuggestionsService.getSuggestions(languageCode);
+        setSuggestions(response.suggestions || []);
+      } catch (error) {
+        logger.error('Failed to fetch suggestions', error);
+      }
+    };
+
+    fetchSuggestions();
   }, [STORAGE_KEY, clearTrigger, consultantMode, sessionDuration]);
 
   useEffect(() => {
@@ -377,6 +393,49 @@ export function ChatInterface({
     }
   };
 
+  const handleFeedback = async (messageId: string, rating: number) => {
+    try {
+      await FeedbackService.submitFeedback({
+        session_id: sessionId,
+        message_id: messageId,
+        rating,
+      });
+
+      // Update message with feedback rating
+      setMessages(prev => prev.map(msg =>
+        msg.id === messageId ? { ...msg, feedbackRating: rating } : msg
+      ));
+
+      logger.info(`Feedback submitted for message ${messageId}: ${rating}`);
+    } catch (error) {
+      logger.error('Failed to submit feedback', error);
+    }
+  };
+
+  const handleReport = async (messageId: string) => {
+    const reason = prompt(t('chat.reportPrompt', 'Please describe why you are reporting this message:'));
+    if (!reason) return;
+
+    try {
+      await ReportService.submitReport({
+        session_id: sessionId,
+        message_id: messageId,
+        reason,
+      });
+
+      // Mark message as reported
+      setMessages(prev => prev.map(msg =>
+        msg.id === messageId ? { ...msg, isReported: true } : msg
+      ));
+
+      logger.info(`Message ${messageId} reported`);
+      alert(t('chat.reportSuccess', 'Thank you for your report. We will review it.'));
+    } catch (error) {
+      logger.error('Failed to submit report', error);
+      alert(t('chat.reportError', 'Failed to submit report. Please try again.'));
+    }
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-[#f8faff]">
       <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-8">
@@ -398,6 +457,31 @@ export function ChatInterface({
                 </div>
               </div>
            </div>
+
+          {messages.length <= 3 && suggestions.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-2"
+            >
+              <p className="text-xs text-slate-500 font-medium px-1">
+                {t('chat.suggestionsLabel', 'Conversation starters:')}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.slice(0, 4).map((suggestion, idx) => (
+                  <Button
+                    key={idx}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSend(suggestion)}
+                    className="rounded-xl border-blue-100 text-blue-600 bg-white hover:bg-blue-50 text-xs py-2 h-auto"
+                  >
+                    {suggestion}
+                  </Button>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           <AnimatePresence initial={false}>
             {messages.map((message) => (
@@ -474,6 +558,48 @@ export function ChatInterface({
                           <Volume2 className="w-4 h-4 text-slate-400" />
                         )}
                       </button>
+
+                      {message.sender === 'bot' && (
+                        <>
+                          <button
+                            onClick={() => handleFeedback(message.id, 5)}
+                            className={`p-1 rounded-md transition-colors ${
+                              message.feedbackRating === 5
+                                ? 'bg-green-100 text-green-600'
+                                : 'hover:bg-slate-100 text-slate-400'
+                            }`}
+                            aria-label="Helpful"
+                            title="Helpful"
+                          >
+                            <ThumbsUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleFeedback(message.id, 1)}
+                            className={`p-1 rounded-md transition-colors ${
+                              message.feedbackRating === 1
+                                ? 'bg-red-100 text-red-600'
+                                : 'hover:bg-slate-100 text-slate-400'
+                            }`}
+                            aria-label="Not helpful"
+                            title="Not helpful"
+                          >
+                            <ThumbsDown className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleReport(message.id)}
+                            className={`p-1 rounded-md transition-colors ${
+                              message.isReported
+                                ? 'bg-orange-100 text-orange-600'
+                                : 'hover:bg-slate-100 text-slate-400'
+                            }`}
+                            aria-label="Report message"
+                            title="Report message"
+                            disabled={message.isReported}
+                          >
+                            <Flag className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                   </div>
 
                   {message.options && (

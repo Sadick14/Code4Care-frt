@@ -23,6 +23,9 @@ import {
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { getStoryModules, StoryModule } from "@/data/storyModules";
+import { FeatureAnalyticsService } from "@/services";
+import { useApp } from "@/providers/AppProvider";
+import { logger } from "@/utils/logger";
 
 const STORY_MODULE_ICONS: Record<string, { icon: LucideIcon; accent: string; background: string }> = {
   "puberty-body-changes": {
@@ -69,6 +72,7 @@ const STORY_MODULE_ICONS: Record<string, { icon: LucideIcon; accent: string; bac
 
 export function StoryMode() {
   const { t, i18n } = useTranslation();
+  const { sessionId } = useApp();
   const activeLanguage = (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
 
   const modules = useMemo(() => getStoryModules(activeLanguage), [activeLanguage]);
@@ -116,7 +120,31 @@ export function StoryMode() {
     setSelectedChoice(answers[currentIdx] ?? null);
   }, [currentIdx, answers]);
 
-  const handleChoice = (idx: number) => {
+  // Track module completion
+  useEffect(() => {
+    if (isCompleted && sessionId && selectedModuleId) {
+      const logCompletion = async () => {
+        try {
+          const module = modules.find(m => m.id === selectedModuleId);
+          await FeatureAnalyticsService.logStoryEvent({
+            session_id: sessionId,
+            story_id: selectedModuleId,
+            event_type: 'completed',
+            module_name: module?.title || selectedModuleId,
+            score_achieved: score,
+            total_questions: stories.length,
+          });
+          logger.info(`Story module completed: ${selectedModuleId} - Score: ${score}/${stories.length}`);
+        } catch (error) {
+          logger.error('Failed to log story completion event', error);
+        }
+      };
+
+      logCompletion();
+    }
+  }, [isCompleted, sessionId, selectedModuleId, score, stories.length, modules]);
+
+  const handleChoice = async (idx: number) => {
     if (selectedChoice !== null || isCompleted) return;
 
     setSelectedChoice(idx);
@@ -126,11 +154,29 @@ export function StoryMode() {
       return next;
     });
 
+    const isCorrect = idx === story?.correct;
+
     // Show celebration if correct answer
-    if (idx === story?.correct) {
+    if (isCorrect) {
       setShowCelebration(true);
       // Auto-hide celebration after 1.5 seconds
       setTimeout(() => setShowCelebration(false), 1500);
+    }
+
+    // Track answer event
+    if (sessionId && story) {
+      try {
+        await FeatureAnalyticsService.logStoryEvent({
+          session_id: sessionId,
+          story_id: selectedModuleId,
+          event_type: isCorrect ? 'question_correct' : 'question_incorrect',
+          module_name: currentModule?.title || selectedModuleId,
+          question_index: currentIdx,
+          choice_selected: idx,
+        });
+      } catch (error) {
+        logger.error('Failed to log story answer event', error);
+      }
     }
   };
 
@@ -151,13 +197,29 @@ export function StoryMode() {
     setShowCelebration(false);
   };
 
-  const startModuleQuiz = (moduleId: string) => {
+  const startModuleQuiz = async (moduleId: string) => {
     setSelectedModuleId(moduleId);
     setCurrentIdx(0);
     setSelectedChoice(null);
     setAnswers([]);
     setShowCelebration(false);
     setViewMode("quiz");
+
+    // Track story module start
+    if (sessionId) {
+      try {
+        const module = modules.find(m => m.id === moduleId);
+        await FeatureAnalyticsService.logStoryEvent({
+          session_id: sessionId,
+          story_id: moduleId,
+          event_type: 'started',
+          module_name: module?.title || moduleId,
+        });
+        logger.info(`Story module started: ${moduleId}`);
+      } catch (error) {
+        logger.error('Failed to log story start event', error);
+      }
+    }
   };
 
   const backToModules = () => {

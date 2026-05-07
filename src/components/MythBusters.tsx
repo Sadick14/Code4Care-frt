@@ -7,11 +7,15 @@ import { Button } from "./ui/button";
 import { ChevronLeft, ChevronRight, X, Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { getMythBusters, MythBusterItem } from "@/data/mythBustersData";
+import { FeatureAnalyticsService } from "@/services";
+import { useApp } from "@/providers/AppProvider";
+import { logger } from "@/utils/logger";
 
 const MYTHS_PER_PAGE = 10;
 
 export function MythBusters() {
   const { t, i18n } = useTranslation();
+  const { sessionId } = useApp();
   const [selectedMyth, setSelectedMyth] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const activeLanguage = (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
@@ -33,9 +37,46 @@ export function MythBusters() {
     }
   }, [currentPage, totalPages]);
 
-  const handleCopy = (text: string) => {
+  const handleCopy = async (text: string, mythItem: MythBusterItem) => {
     navigator.clipboard.writeText(text);
     toast.success(t('common.copied', 'Copied to clipboard!'));
+
+    // Track copy event
+    if (sessionId) {
+      try {
+        await FeatureAnalyticsService.logMythBusterEvent({
+          session_id: sessionId,
+          myth_id: mythItem.id,
+          event_type: 'fact_copied',
+          category: mythItem.category,
+          myth_text: mythItem.myth,
+        });
+        logger.info(`Myth fact copied: ${mythItem.id}`);
+      } catch (error) {
+        logger.error('Failed to log myth copy event', error);
+      }
+    }
+  };
+
+  const handleMythClick = async (mythItem: MythBusterItem) => {
+    const isExpanding = selectedMyth !== mythItem.id;
+    setSelectedMyth(selectedMyth === mythItem.id ? null : mythItem.id);
+
+    // Track myth view event when expanding
+    if (isExpanding && sessionId) {
+      try {
+        await FeatureAnalyticsService.logMythBusterEvent({
+          session_id: sessionId,
+          myth_id: mythItem.id,
+          event_type: 'myth_viewed',
+          category: mythItem.category,
+          myth_text: mythItem.myth,
+        });
+        logger.info(`Myth viewed: ${mythItem.id}`);
+      } catch (error) {
+        logger.error('Failed to log myth view event', error);
+      }
+    }
   };
 
   return (
@@ -82,9 +123,9 @@ export function MythBusters() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
             >
-              <Card 
+              <Card
                 className="p-6 cursor-pointer border-[#E8ECFF] hover:border-blue-200 transition-all hover:shadow-xl"
-                onClick={() => setSelectedMyth(selectedMyth === item.id ? null : item.id)}
+                onClick={() => handleMythClick(item)}
               >
                 <div className="flex items-center justify-between mb-4">
                   <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-none px-3 py-1">
@@ -119,11 +160,11 @@ export function MythBusters() {
                               <p className="text-[10px] text-gray-400 mt-3 italic">Source: {item.source}</p>
                             </div>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="w-full text-blue-600 hover:bg-blue-50 bg-white border border-blue-50 rounded-xl"
-                            onClick={(e) => { e.stopPropagation(); handleCopy(`${item.myth}\nFact: ${item.fact}`); }}
+                            onClick={(e) => { e.stopPropagation(); handleCopy(`${item.myth}\nFact: ${item.fact}`, item); }}
                           >
                             <Copy className="w-4 h-4 mr-2" />
                             {t('common.copy', 'Copy this Fact')}

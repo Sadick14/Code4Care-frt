@@ -6,13 +6,17 @@ import { Heart, Shield, MessageCircle, Sparkles, ChevronRight, ChevronLeft, Bot 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { UserTrackingService } from "@/services";
+import { logger } from "@/utils/logger";
 
 interface OnboardingScreenProps {
   onComplete: (payload: { botName: string; ageRange: string; genderIdentity: string; region: string }) => void;
+  sessionId?: string;
+  language?: string;
 }
 
-export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
-  const { t } = useTranslation();
+export default function OnboardingScreen({ onComplete, sessionId, language = 'en' }: OnboardingScreenProps) {
+  const { t, i18n } = useTranslation();
   // Welcome screen is intentionally disabled for now.
   const [currentPage, setCurrentPage] = useState(1);
   const [botName, setBotName] = useState("");
@@ -20,7 +24,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   const [genderIdentity, setGenderIdentity] = useState("");
   const [region, setRegion] = useState("");
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (currentPage === 1) {
       setCurrentPage(2);
       return;
@@ -36,6 +40,25 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     }
 
     const finalBotName = botName.trim() || t("onboarding.page2.defaultName");
+
+    // Capture demographics via UserTrackingService
+    if (sessionId) {
+      try {
+        await UserTrackingService.captureDemographics({
+          session_id: sessionId,
+          bot_name: finalBotName,
+          age_range: ageRange,
+          gender_identity: genderIdentity,
+          region: region,
+          language: language || i18n.language || 'en',
+        });
+        logger.info('User demographics captured successfully');
+      } catch (error) {
+        logger.error('Failed to capture demographics', error);
+        // Don't block onboarding if API call fails
+      }
+    }
+
     onComplete({
       botName: finalBotName,
       ageRange,

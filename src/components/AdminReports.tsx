@@ -33,6 +33,8 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { RealAnalyticsService } from '@/services/realAnalyticsService';
+import { ReportOrchestrationService } from '@/services';
+import { generateAnalyticsExcelReport } from '@/utils/excelExporter';
 import { logger } from '@/utils/logger';
 import { generateReportFromAnalytics } from '@/utils/pdfReportGenerator';
 
@@ -340,6 +342,49 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
     );
   };
 
+  const handleExportExcel = () => {
+    if (!analyticsData) {
+      logger.error('Analytics data not loaded');
+      return;
+    }
+
+    const filename = `code4care-${reportType}-report-${reportRangeLabel.replace(/\s+/g, '').replace(/-/g, 'to')}.xlsx`;
+    generateAnalyticsExcelReport(
+      analyticsData,
+      reportType,
+      {
+        startYear,
+        endYear,
+        label: reportRangeLabel,
+      },
+      filename
+    );
+    logger.info(`Excel report exported: ${filename}`);
+  };
+
+  const handleGenerateTemplateReport = async (templateId: string) => {
+    try {
+      const template = ReportOrchestrationService.getReportTemplate(templateId);
+      if (!template) {
+        logger.error(`Template not found: ${templateId}`);
+        return;
+      }
+
+      await ReportOrchestrationService.generateAndExport(
+        {
+          type: template.type,
+          period: 'month',
+          format: template.defaultFormat,
+        },
+        accessToken
+      );
+
+      logger.info(`Generated report from template: ${template.name}`);
+    } catch (error) {
+      logger.error('Failed to generate template report', error);
+    }
+  };
+
   const ageChartData = analyticsData ? Object.entries(analyticsData.demographics?.ageRange ?? {}).map(([name, value]: [string, any]) => ({
     name,
     value,
@@ -391,6 +436,10 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
           <p className="text-gray-500">Build overview reports, choose a data focus, and export a full year-range package.</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleExportExcel}>
+            <Download className="w-4 h-4" />
+            Export Excel
+          </Button>
           <Button variant="outline" className="gap-2" onClick={handleExportCsv}>
             <Download className="w-4 h-4" />
             Export CSV
