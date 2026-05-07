@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, Clock, User, ShieldCheck } from "lucide-react";
+import { Send, Mic, Clock, User, ShieldCheck, Volume2, Pause } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from 'react-markdown';
@@ -10,6 +10,9 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useApp } from "@/providers/AppProvider";
 import { ChatCitation, requestChatCompletion } from "@/services/chatbotService";
+import { UserEngagementService } from "@/services/userEngagementService";
+import { RealAnalyticsService } from "@/services/realAnalyticsService";
+import { safeStorage } from "@/utils/safeStorage";
 import { logger } from "@/utils/logger";
 import { TypewriterMessage } from "./TypewriterMessage";
 
@@ -26,18 +29,16 @@ interface Message {
 }
 
 interface ChatInterfaceProps {
-  onRequestFollowUpId: () => void;
   clearTrigger?: number;
 }
 
 const CHATBOT_AVATAR_SRC = "/chatbot.jpg";
 
 export function ChatInterface({ 
-  onRequestFollowUpId, 
   clearTrigger = 0 
 }: ChatInterfaceProps) {
   const { t, i18n } = useTranslation();
-  const { nickname, botName, sessionId, consultantMode, sessionDuration } = useApp();
+  const { nickname, botName, sessionId, consultantMode, sessionDuration, ageRange, genderIdentity, region, analyticsOptIn } = useApp();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -50,6 +51,9 @@ export function ChatInterface({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const STORAGE_KEY = `room1221_chat_${sessionId}`;
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playingId, setPlayingId] = useState<string | undefined>(undefined);
 
   const langMap: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
 
@@ -88,6 +92,45 @@ export function ChatInterface({
     }
   };
 
+  const togglePlay = async (id: string, text: string, langCode?: string) => {
+    if (playingId === id) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current = null;
+      }
+      try { window.speechSynthesis.cancel(); } catch {}
+      setPlayingId(undefined);
+      return;
+    }
+
+    setPlayingId(id);
+    const useRemote = import.meta.env.VITE_USE_REMOTE_TTS === 'true';
+    if (useRemote) {
+      try {
+        const url = await fetchSpeechAudio(text, import.meta.env.VITE_TTS_VOICE || 'alloy');
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => setPlayingId(undefined);
+        await audio.play();
+      } catch (e) {
+        logger.error('Audio playback failed', e);
+        setPlayingId(undefined);
+      }
+    } else {
+      try {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = langMap[langCode || chatLanguage] || 'en-US';
+        utter.onend = () => setPlayingId(undefined);
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utter);
+      } catch (e) {
+        logger.error('Speech synthesis failed', e);
+        setPlayingId(undefined);
+      }
+    }
+  };
+
   const getInitialMessage = () => {
     const initialText = consultantMode ? t('chat.consultantMessage') : t('chat.initialMessage');
     const quickReplies = t('chat.quickReplies', { returnObjects: true }) as Record<string, string>;
@@ -100,6 +143,40 @@ export function ChatInterface({
       options: Object.values(quickReplies),
       mode: consultantMode ? 'consultant' as const : 'chatbot' as const,
     };
+  };
+
+  const getRetentionMs = (duration: string): number | null => {
+    if (duration === 'logout') {
+      return null;
+    }
+
+    const amount = Number.parseInt(duration, 10);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return 24 * 60 * 60 * 1000;
+    }
+
+    if (duration.endsWith('h')) {
+      return amount * 60 * 60 * 1000;
+    }
+
+    if (duration.endsWith('d')) {
+      return amount * 24 * 60 * 60 * 1000;
+    }
+
+    return 24 * 60 * 60 * 1000;
+  };
+
+  const applyRetentionPolicy = (existingMessages: Message[]) => {
+    const retentionMs = getRetentionMs(sessionDuration);
+    if (!retentionMs) {
+      return existingMessages;
+    }
+
+    const cutoff = Date.now() - retentionMs;
+    return existingMessages.filter((message) => {
+      const timeValue = new Date(message.timestamp).getTime();
+      return Number.isFinite(timeValue) && timeValue >= cutoff;
+    });
   };
 
   const rebuildMessagesForLanguage = (existingMessages: Message[]) => {
@@ -124,10 +201,22 @@ export function ChatInterface({
       const storedMessages = localStorage.getItem(STORAGE_KEY);
       if (storedMessages) {
         const parsed = JSON.parse(storedMessages);
-        setMessages(parsed.map((msg: any) => ({
+        const hydratedMessages = parsed.map((msg: any) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
-        })));
+        }));
+
+        const retainedMessages = applyRetentionPolicy(hydratedMessages);
+
+        if (retainedMessages.length > 0) {
+          setMessages(retainedMessages);
+          if (retainedMessages.length !== hydratedMessages.length) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(retainedMessages));
+          }
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+          setMessages([getInitialMessage()]);
+        }
       } else {
         setMessages([getInitialMessage()]);
       }
@@ -138,7 +227,7 @@ export function ChatInterface({
       setMessages([getInitialMessage()]);
       setIsLoaded(true);
     }
-  }, [STORAGE_KEY, clearTrigger, consultantMode]);
+  }, [STORAGE_KEY, clearTrigger, consultantMode, sessionDuration]);
 
   useEffect(() => {
     if (!isLoaded || messages.length === 0 || isTyping) {
@@ -189,6 +278,20 @@ export function ChatInterface({
 
     try {
       const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+      UserEngagementService.logNonBlocking(
+        UserEngagementService.logChatEvent({
+          session_id: sessionId,
+          event_type: 'message_sent',
+          event_category: 'engagement',
+          input_method: presetMessage ? 'quick_reply' : 'typed',
+          metadata: {
+            message_length: outgoingMessage.length,
+            consultant_mode: consultantMode,
+          },
+        }),
+        'Failed to log outgoing chat event',
+      );
+
       const response = await requestChatCompletion({
         message: outgoingMessage,
         language: languageCode,
@@ -210,6 +313,21 @@ export function ChatInterface({
         };
 
         setMessages(prev => [...prev, botMsg]);
+        UserEngagementService.logNonBlocking(
+          UserEngagementService.logChatEvent({
+            session_id: sessionId,
+            event_type: 'bot_response_received',
+            event_category: response.safety_flags.length ? 'safety' : 'engagement',
+            input_method: 'system',
+            metadata: {
+              response_time_ms: response.response_time_ms,
+              language_detected: response.language_detected,
+              citations_count: response.citations.length,
+              safety_flags_count: response.safety_flags.length,
+            },
+          }),
+          'Failed to log bot response chat event',
+        );
       } else {
         logger.warn('Chat API returned an empty answer.', response);
       }
@@ -217,13 +335,52 @@ export function ChatInterface({
       logger.error('Chat API failed:', error);
     } finally {
       setIsTyping(false);
+      // Post an incremental analytics snapshot so messages are recorded instantly
+      try {
+        if (analyticsOptIn) {
+          const chatStorageKey = `room1221_chat_${sessionId}`;
+          const storedMessagesRaw = safeStorage.getItem(chatStorageKey, '[]');
+          let messagesExchanged = 0;
+          try {
+            const storedMessages = storedMessagesRaw ? JSON.parse(storedMessagesRaw) : [];
+            messagesExchanged = Array.isArray(storedMessages) ? storedMessages.length : 0;
+          } catch {}
+
+          const startTs = Number(safeStorage.getItem('room1221_session_started_at')) || Date.now();
+          const durationSeconds = Math.max(0, Math.round((Date.now() - startTs) / 1000));
+
+          void RealAnalyticsService.recordSessionAnalytics({
+            session_id: sessionId,
+            user_id: nickname || undefined,
+            age_range: ageRange,
+            gender_identity: genderIdentity,
+            region,
+            language: (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0],
+            start_time: new Date(startTs).toISOString(),
+            end_time: new Date().toISOString(),
+            duration_seconds: durationSeconds,
+            messages_exchanged: messagesExchanged,
+            topics_discussed: [],
+            panic_button_used: safeStorage.getItem('room1221_panic_triggered') === 'true',
+            crisis_support_accessed: false,
+            story_modules_started: 0,
+            story_modules_completed: 0,
+            pharmacy_searches: 0,
+            satisfaction_rating: undefined,
+            would_return: true,
+            safety_flags: safeStorage.getItem('room1221_panic_triggered') === 'true' ? ['panic-button'] : [],
+          });
+        }
+      } catch (err) {
+        // intentionally ignore analytics errors
+      }
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#f8faff]">
-      <div className="flex-1 overflow-y-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto space-y-6">
+    <div className="flex h-full min-h-0 flex-col bg-[#f8faff]">
+      <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-8">
+        <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
            <div className="rounded-3xl border border-[#CFE0FF] bg-gradient-to-r from-white to-[#EDF4FF] p-4 md:p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -307,14 +464,15 @@ export function ChatInterface({
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                       <button
-                        onClick={() => speakText(message.text, message.languageDetected || chatLanguage)}
+                        onClick={() => togglePlay(message.id, message.text, message.languageDetected || chatLanguage)}
                         className="ml-2 p-1 rounded-md hover:bg-slate-100 transition-colors"
                         aria-label="Play response audio"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                          <path d="M19 5a4 4 0 010 14" />
-                        </svg>
+                        {playingId === message.id ? (
+                          <Pause className="w-4 h-4 text-slate-600" />
+                        ) : (
+                          <Volume2 className="w-4 h-4 text-slate-400" />
+                        )}
                       </button>
                   </div>
 
@@ -358,44 +516,38 @@ export function ChatInterface({
         </div>
       </div>
 
-      <div className="bg-white border-t border-slate-100 p-6 pb-8">
-        <div className="max-w-3xl mx-auto flex gap-4 items-center">
-          <div className="flex-1 relative group">
+      <div
+        className="bg-white border-t border-slate-100 p-3 pb-4 sm:p-6 sm:pb-8"
+        style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+      >
+        <div className="mx-auto flex max-w-3xl items-center gap-2 sm:gap-4">
+          <div className="flex-1">
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder={t('chat.placeholder')}
-              className="h-12 rounded-full pl-5 pr-14 bg-white border border-slate-100 shadow-sm focus:bg-white focus:border-blue-400 transition-all text-sm font-medium"
+              className="h-11 sm:h-12 w-full rounded-full pl-4 sm:pl-5 pr-4 bg-white border border-slate-100 shadow-sm focus:bg-white focus:border-blue-400 transition-all text-sm font-medium"
             />
-            <button
-              onClick={() => { if(!recognitionRef.current) return; isListening ? recognitionRef.current.stop() : (recognitionRef.current.start(), setIsListening(true)); }}
-              className={`absolute right-16 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600' : 'text-slate-400 hover:text-blue-600'}`}
-            >
-              <Mic className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
-            </button>
           </div>
+
+          <button
+            onClick={() => { if(!recognitionRef.current) return; isListening ? recognitionRef.current.stop() : (recognitionRef.current.start(), setIsListening(true)); }}
+            className={`p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0 ${isListening ? 'bg-red-100 text-red-600' : 'text-slate-400 hover:text-blue-600'}`}
+            aria-label="Toggle voice input"
+          >
+            <Mic className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
+          </button>
+
           <Button
             onClick={() => { handleSend(); }}
             disabled={!inputValue.trim()}
-            className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center"
+            className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center"
           >
             <Send className="w-5 h-5 text-white" />
           </Button>
         </div>
         
-        <AnimatePresence>
-            {messages.length > 5 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto mt-4 text-center">
-                <button 
-                    onClick={onRequestFollowUpId} 
-                    className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-700 transition-colors"
-                >
-                {t('common.followUpKey')}
-                </button>
-            </motion.div>
-            )}
-        </AnimatePresence>
       </div>
     </div>
   );

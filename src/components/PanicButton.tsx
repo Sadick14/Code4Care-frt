@@ -1,3 +1,4 @@
+import { safeStorage } from '@/utils/safeStorage';
 import { AlertTriangle } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -13,9 +14,14 @@ export function PanicButton({ onPanic, selectedLanguage }: PanicButtonProps) {
     ewe: "Do go kaba"
   };
 
+  const handlePanic = () => {
+    safeStorage.setItem('room1221_panic_triggered', 'true');
+    onPanic();
+  };
+
   return (
     <Button
-      onClick={onPanic}
+      onClick={handlePanic}
       className="rounded-full px-4 py-2 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
       style={{ 
         backgroundColor: '#ff4444', 

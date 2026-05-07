@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
@@ -17,9 +17,15 @@ import { Pharmacy } from "./components/Pharmacy";
 import { SettingsPage } from "./components/SettingsPage";
 import { PanicScreen } from "./components/PanicScreen";
 import { NicknameModal } from "./components/NicknameModal";
-import { FollowUpId } from "./components/FollowUpId";
 import OnboardingScreen from "./components/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { UserEngagementService } from "@/services/userEngagementService";
+import { RealAnalyticsService } from "@/services/realAnalyticsService";
+import { InstallPrompt } from "@/components/InstallPrompt";
+import { OfflineBanner } from "@/components/OfflineBanner";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
+import { useOfflineStatus } from "@/hooks/useOfflineStatus";
+import { safeStorage } from "@/utils/safeStorage";
 
 type Section = "chat" | "story" | "myths" | "support" | "pharmacy" | "settings";
 
@@ -28,7 +34,11 @@ function AppContent() {
   const { 
     hasSeenOnboarding, setHasSeenOnboarding,
     nickname, setNickname,
-    botName, setBotName,
+    ageRange,
+    genderIdentity,
+    region,
+    analyticsOptIn,
+    setBotName,
     setAgeRange,
     setGenderIdentity,
     setRegion,
@@ -38,19 +48,104 @@ function AppContent() {
     setConsultantMode
   } = useApp();
 
+  // PWA hooks
+  const { isInstallable, handleInstall, handleDismiss } = useInstallPrompt();
+  const { isOnline, showOfflineBanner, wasOffline } = useOfflineStatus();
+
   const [currentSection, setCurrentSection] = useState<Section>("chat");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showPanicScreen, setShowPanicScreen] = useState(false);
-  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [showNicknameModal, setShowNicknameModal] = useState(!nickname);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [clearChatTrigger, setClearChatTrigger] = useState(0);
+  const sessionStartedAtRef = useRef(Date.now());
+  const sessionEndedRef = useRef(false);
+  const sessionAnalyticsRecordedRef = useRef(false);
 
   // Sync nickname modal visibility with global state
   useEffect(() => {
     setShowNicknameModal(!nickname && hasSeenOnboarding);
   }, [nickname, hasSeenOnboarding]);
+
+  useEffect(() => {
+    if (!hasSeenOnboarding) {
+      return;
+    }
+
+    sessionStartedAtRef.current = Date.now();
+    try {
+      safeStorage.setItem('room1221_session_started_at', String(sessionStartedAtRef.current));
+    } catch {}
+    sessionEndedRef.current = false;
+    sessionAnalyticsRecordedRef.current = false;
+    UserEngagementService.logNonBlocking(
+      UserEngagementService.trackSession(
+        UserEngagementService.buildSessionPayload(sessionId, 'continue', true),
+      ),
+      'Failed to track session continue event',
+    );
+
+    return () => {
+      if (sessionEndedRef.current) {
+        return;
+      }
+
+      sessionEndedRef.current = true;
+      recordSessionAnalytics();
+      const durationSeconds = Math.max(0, Math.round((Date.now() - sessionStartedAtRef.current) / 1000));
+      UserEngagementService.logNonBlocking(
+        UserEngagementService.trackSession(
+          UserEngagementService.buildSessionPayload(sessionId, 'end', true, durationSeconds),
+        ),
+        'Failed to track session end event',
+      );
+    };
+  }, [hasSeenOnboarding, sessionId]);
+
+  const recordSessionAnalytics = () => {
+    if (sessionAnalyticsRecordedRef.current || !hasSeenOnboarding || !analyticsOptIn) {
+      return;
+    }
+
+    sessionAnalyticsRecordedRef.current = true;
+
+    const durationSeconds = Math.max(0, Math.round((Date.now() - sessionStartedAtRef.current) / 1000));
+    const chatStorageKey = `room1221_chat_${sessionId}`;
+    const storedMessagesRaw = safeStorage.getItem(chatStorageKey, '[]');
+
+    let messagesExchanged = 0;
+    try {
+      const storedMessages = storedMessagesRaw ? JSON.parse(storedMessagesRaw) : [];
+      messagesExchanged = Array.isArray(storedMessages) ? storedMessages.length : 0;
+    } catch {
+      messagesExchanged = 0;
+    }
+
+    const panicTriggered = safeStorage.getItem('room1221_panic_triggered') === 'true';
+
+    void RealAnalyticsService.recordSessionAnalytics({
+      session_id: sessionId,
+      user_id: nickname || undefined,
+      age_range: ageRange,
+      gender_identity: genderIdentity,
+      region,
+      language: (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0],
+      start_time: new Date(sessionStartedAtRef.current).toISOString(),
+      end_time: new Date().toISOString(),
+      duration_seconds: durationSeconds,
+      messages_exchanged: messagesExchanged,
+      topics_discussed: [],
+      panic_button_used: panicTriggered,
+      crisis_support_accessed: false,
+      story_modules_started: 0,
+      story_modules_completed: 0,
+      pharmacy_searches: 0,
+      satisfaction_rating: undefined,
+      would_return: true,
+      safety_flags: panicTriggered ? ['panic-button'] : [],
+    });
+  };
 
   const handleClearChat = () => {
     localStorage.removeItem(`room1221_chat_${sessionId}`);
@@ -60,7 +155,59 @@ function AppContent() {
     toast.success(t('chat.clearChatMsg', 'Chat history cleared'));
   };
 
+  const handlePanicClick = () => {
+    safeStorage.setItem('room1221_panic_triggered', 'true');
+    setShowPanicScreen(true);
+    // Post an immediate analytics snapshot so panic events are recorded instantly
+    try {
+      const panicTriggered = true;
+      const chatStorageKey = `room1221_chat_${sessionId}`;
+      const storedMessagesRaw = safeStorage.getItem(chatStorageKey, '[]');
+      let messagesExchanged = 0;
+      try {
+        const storedMessages = storedMessagesRaw ? JSON.parse(storedMessagesRaw) : [];
+        messagesExchanged = Array.isArray(storedMessages) ? storedMessages.length : 0;
+      } catch {}
+
+      const startTs = Number(safeStorage.getItem('room1221_session_started_at')) || Date.now();
+      const durationSeconds = Math.max(0, Math.round((Date.now() - startTs) / 1000));
+
+      void RealAnalyticsService.recordSessionAnalytics({
+        session_id: sessionId,
+        user_id: nickname || undefined,
+        age_range: ageRange,
+        gender_identity: genderIdentity,
+        region,
+        language: (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0],
+        start_time: new Date(startTs).toISOString(),
+        end_time: new Date().toISOString(),
+        duration_seconds: durationSeconds,
+        messages_exchanged: messagesExchanged,
+        topics_discussed: [],
+        panic_button_used: panicTriggered,
+        crisis_support_accessed: false,
+        story_modules_started: 0,
+        story_modules_completed: 0,
+        pharmacy_searches: 0,
+        satisfaction_rating: undefined,
+        would_return: true,
+        safety_flags: panicTriggered ? ['panic-button'] : [],
+      });
+    } catch (e) {
+      // swallow analytics errors
+    }
+  };
+
   const handleLogout = () => {
+    sessionEndedRef.current = true;
+    recordSessionAnalytics();
+    const durationSeconds = Math.max(0, Math.round((Date.now() - sessionStartedAtRef.current) / 1000));
+    UserEngagementService.logNonBlocking(
+      UserEngagementService.trackSession(
+        UserEngagementService.buildSessionPayload(sessionId, 'end', hasSeenOnboarding, durationSeconds),
+      ),
+      'Failed to track session logout event',
+    );
     resetAll();
     setShowLogoutDialog(false);
     setCurrentSection("chat");
@@ -70,12 +217,80 @@ function AppContent() {
   if (!hasSeenOnboarding) {
     return (
       <OnboardingScreen
-        onComplete={({ botName: nextBotName, ageRange, genderIdentity, region }) => {
+        onComplete={({ botName: nextBotName, ageRange: nextAgeRange, genderIdentity: nextGenderIdentity, region: nextRegion }) => {
+          const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
           setBotName(nextBotName);
-          setAgeRange(ageRange);
-          setGenderIdentity(genderIdentity);
-          setRegion(region);
+          setAgeRange(nextAgeRange);
+          setGenderIdentity(nextGenderIdentity);
+          setRegion(nextRegion);
+          // mark onboarding complete and record session start
           setHasSeenOnboarding(true);
+          try {
+            sessionStartedAtRef.current = Date.now();
+            safeStorage.setItem('room1221_session_started_at', String(sessionStartedAtRef.current));
+          } catch {}
+
+          UserEngagementService.logNonBlocking(
+            UserEngagementService.captureDemographics({
+              session_id: sessionId,
+              bot_name: nextBotName,
+              age_range: nextAgeRange,
+              gender_identity: nextGenderIdentity,
+              region: nextRegion,
+              language: languageCode,
+            }),
+            'Failed to capture onboarding demographics',
+          );
+          UserEngagementService.logNonBlocking(
+            UserEngagementService.updateUserSettings({
+              session_id: sessionId,
+              nickname: nickname || '',
+              language: languageCode,
+              chat_retention: '24h',
+              analytics_consent: true,
+              consultant_mode_enabled: consultantMode,
+            }),
+            'Failed to initialize user settings',
+          );
+
+          // Post an immediate session analytics snapshot for onboarding completion
+          try {
+            if (analyticsOptIn) {
+              const chatStorageKey = `room1221_chat_${sessionId}`;
+              const storedMessagesRaw = safeStorage.getItem(chatStorageKey, '[]');
+              let messagesExchanged = 0;
+              try {
+                const storedMessages = storedMessagesRaw ? JSON.parse(storedMessagesRaw) : [];
+                messagesExchanged = Array.isArray(storedMessages) ? storedMessages.length : 0;
+              } catch {}
+
+              const startTs = Number(safeStorage.getItem('room1221_session_started_at')) || sessionStartedAtRef.current || Date.now();
+
+              void RealAnalyticsService.recordSessionAnalytics({
+                session_id: sessionId,
+                user_id: nickname || undefined,
+                age_range: nextAgeRange,
+                gender_identity: nextGenderIdentity,
+                region: nextRegion,
+                language: languageCode,
+                start_time: new Date(startTs).toISOString(),
+                end_time: new Date().toISOString(),
+                duration_seconds: 0,
+                messages_exchanged: messagesExchanged,
+                topics_discussed: [],
+                panic_button_used: safeStorage.getItem('room1221_panic_triggered') === 'true',
+                crisis_support_accessed: false,
+                story_modules_started: 0,
+                story_modules_completed: 0,
+                pharmacy_searches: 0,
+                satisfaction_rating: undefined,
+                would_return: true,
+                safety_flags: safeStorage.getItem('room1221_panic_triggered') === 'true' ? ['panic-button'] : [],
+              });
+            }
+          } catch (err) {
+            // ignore analytics errors
+          }
         }}
       />
     );
@@ -86,8 +301,16 @@ function AppContent() {
   }
 
   return (
-    <div className="flex h-[100dvh] lg:h-screen overflow-hidden bg-white">
+    <div className="flex h-dvh min-h-dvh w-full max-w-full overflow-hidden bg-white">
       <Toaster position="top-center" toastOptions={{ className: 'rounded-2xl' }} />
+      
+      {/* PWA Components */}
+      <OfflineBanner isOffline={showOfflineBanner} wasOffline={wasOffline} />
+      <InstallPrompt 
+        isVisible={isInstallable} 
+        onInstall={handleInstall} 
+        onDismiss={handleDismiss}
+      />
       
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-[280px] flex-shrink-0">
@@ -101,7 +324,7 @@ function AppContent() {
 
       {/* Mobile Sidebar (Sheet) */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-[300px]">
+        <SheetContent side="left" className="p-0 w-[86vw] max-w-[300px] sm:w-[300px]">
           <Sidebar 
             currentSection={currentSection} 
             setCurrentSection={setCurrentSection}
@@ -113,14 +336,13 @@ function AppContent() {
       </Sheet>
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 h-[100dvh] lg:h-screen overflow-hidden">
+      <div className="flex min-w-0 flex-col flex-1 h-dvh min-h-dvh overflow-hidden">
         <Header 
           onMenuClick={() => setSidebarOpen(true)}
-          onPanicClick={() => setShowPanicScreen(true)}
-          onFollowUpClick={() => setShowFollowUpModal(true)}
+          onPanicClick={handlePanicClick}
         />
 
-        <main className="flex-1 overflow-hidden relative">
+        <main className="relative flex-1 min-w-0 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSection}
@@ -132,7 +354,6 @@ function AppContent() {
             >
               {currentSection === "chat" && (
                 <ChatInterface 
-                  onRequestFollowUpId={() => setShowFollowUpModal(true)}
                   clearTrigger={clearChatTrigger}
                 />
               )}
@@ -157,8 +378,6 @@ function AppContent() {
         onClose={() => setShowNicknameModal(false)}
         onSubmit={(name) => { setNickname(name); setShowNicknameModal(false); }}
       />
-      
-      <FollowUpId isOpen={showFollowUpModal} onClose={() => setShowFollowUpModal(false)} />
 
       {/* Clear Chat Confirmation */}
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>

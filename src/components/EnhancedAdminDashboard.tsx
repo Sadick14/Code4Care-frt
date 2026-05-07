@@ -14,7 +14,6 @@ import {
   ResponsiveContainer,
   Legend,
   Cell,
-  ComposedChart,
 } from 'recharts';
 import {
   Card,
@@ -33,15 +32,13 @@ import {
 } from './ui/button';
 import {
   Users,
-  TrendingUp,
   AlertTriangle,
-  Clock,
   Heart,
   BarChart3,
   Download,
 } from 'lucide-react';
 import { RealAnalyticsService } from '@/services/realAnalyticsService';
-import { StaffAccessService, StaffSession, AdminDashboardStats } from '@/services/staffAccessService';
+import { StaffSession } from '@/services/staffAccessService';
 import { logger } from '@/utils/logger';
 
 interface AdminDashboardProps {
@@ -49,13 +46,12 @@ interface AdminDashboardProps {
   session: StaffSession;
 }
 
-const COLORS = ['#0048ff', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'];
+const AGE_COLORS = ['#0f766e', '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4'];
+const GENDER_COLORS = ['#7c3aed', '#f97316', '#e11d48', '#2563eb', '#16a34a', '#ca8a04'];
 
 export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProps) {
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('week');
-  const [remoteStats, setRemoteStats] = useState<AdminDashboardStats | null>(null);
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
 
   useEffect(() => {
@@ -64,12 +60,13 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
     const loadAnalytics = async () => {
       setIsLoadingAnalytics(true);
       try {
-        const data = await RealAnalyticsService.getDashboardSummary(
-          { period, by_region: true, by_age_group: true },
-          session.accessToken
-        );
+        const summary = await RealAnalyticsService.getAnalyticsSummary({ period }, session.accessToken).catch((error) => {
+          logger.error('Failed to load analytics summary', error);
+          return null;
+        });
+
         if (mounted) {
-          setAnalyticsData(data);
+          setAnalyticsData(summary ? RealAnalyticsService.normalizeAnalyticsSummary(summary) : null);
         }
       } catch (error) {
         logger.error('Failed to load analytics', error);
@@ -87,33 +84,6 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
       mounted = false;
     };
   }, [period, session.accessToken]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadRemoteStats = async () => {
-      setIsLoadingStats(true);
-      try {
-        const stats = await StaffAccessService.getDashboardStats(session.accessToken);
-        if (mounted) {
-          setRemoteStats(stats);
-        }
-      } catch (error) {
-        logger.error('Failed to load dashboard stats', error);
-        setRemoteStats(null);
-      } finally {
-        if (mounted) {
-          setIsLoadingStats(false);
-        }
-      }
-    };
-
-    void loadRemoteStats();
-
-    return () => {
-      mounted = false;
-    };
-  }, [session.accessToken]);
 
   const content = {
     en: {
@@ -133,8 +103,7 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
       retention: 'Day-7 Retention',
       demographicsTitle: 'Demographics by Age',
       demographicsRegionTitle: 'Demographics by Region',
-      trendsTitle: 'Engagement Trends',
-      funnelTitle: 'User Journey Funnel',
+      demographicsGenderTitle: 'Demographics by Gender',
       topicsTitle: 'Topic Engagement',
       contentTitle: 'Story Module Performance',
       moduleName: 'Module',
@@ -151,30 +120,35 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
 
   const lang = content[selectedLanguage as keyof typeof content] || content.en;
 
+  const performanceTrendData = useMemo(() => analyticsData?.trends ?? [], [analyticsData?.trends]);
+
+  const averageSatisfaction = useMemo(() => {
+    const topics = analyticsData?.engagement?.topics ?? analyticsData?.engagement?.topicEngagement ?? [];
+
+    if (topics.length === 0) {
+      return 0;
+    }
+
+    const total = topics.reduce((sum: number, topic: any) => sum + Number(topic.satisfaction_score ?? topic.satisfactionScore ?? 0), 0);
+    return Number((total / topics.length).toFixed(1));
+  }, [analyticsData?.engagement?.topics, analyticsData?.engagement?.topicEngagement]);
+
   // KPI Stats - with fallback to empty values while loading
   const kpis = [
-    { label: lang.activeUsers, value: remoteStats?.active_sessions_today ?? analyticsData?.summary?.total_active_users ?? 0, icon: Users, color: 'from-blue-500 to-blue-600' },
-    { label: lang.engagements, value: remoteStats?.total_messages ?? analyticsData?.summary?.conversations_in_period ?? 0, icon: BarChart3, color: 'from-purple-500 to-purple-600' },
-    { label: lang.satisfaction, value: analyticsData ? '4.2' : '0', icon: Heart, color: 'from-red-500 to-red-600' },
+    { label: lang.activeUsers, value: analyticsData?.summary?.total_active_users ?? 0, icon: Users, color: 'from-blue-500 to-blue-600' },
+    { label: lang.engagements, value: analyticsData?.summary?.conversations_in_period ?? 0, icon: BarChart3, color: 'from-purple-500 to-purple-600' },
+    { label: lang.satisfaction, value: averageSatisfaction || 0, icon: Heart, color: 'from-red-500 to-red-600' },
   ];
 
   // Safety metrics
   const safetyMetrics = [
-    { label: 'Panic Exits', value: remoteStats?.safety_flags_today ?? analyticsData?.safety?.panic_exits_total ?? 0, icon: AlertTriangle, color: 'text-yellow-600' },
-    { label: 'Crisis Interventions', value: remoteStats?.escalations_today ?? analyticsData?.safety?.crisis_interventions ?? 0, icon: Heart, color: 'text-red-600' },
+    { label: 'Panic Exits', value: analyticsData?.safety?.panic_exits_total ?? 0, icon: AlertTriangle, color: 'text-yellow-600' },
+    { label: 'Crisis Interventions', value: analyticsData?.safety?.crisis_interventions ?? 0, icon: Heart, color: 'text-red-600' },
     { label: 'Self-Harm Mentions', value: analyticsData?.safety?.self_harm_mentions ?? 0, icon: AlertTriangle, color: 'text-orange-600' },
     { label: 'Suicidal Ideation', value: analyticsData?.safety?.suicidal_ideation_mentions ?? 0, icon: AlertTriangle, color: 'text-red-700' },
   ];
 
-  // Funnel data - placeholder since API structure differs
-  const funnelData = [
-    { stage: 'Visitors', value: analyticsData?.funnel?.total_visitors ?? 0 },
-    { stage: 'Onboarded', value: analyticsData?.funnel?.completed_onboarding ?? 0 },
-    { stage: 'First Chat', value: analyticsData?.funnel?.had_first_chat ?? 0 },
-    { stage: 'Story Module', value: analyticsData?.funnel?.completed_story_module ?? 0 },
-  ];
-
-  if (isLoadingStats || isLoadingAnalytics) {
+  if (isLoadingAnalytics) {
     return (
       <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto">
@@ -265,7 +239,7 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
             const Icon = kpi.icon;
             return (
               <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-                {isLoadingStats && !remoteStats ? (
+                {isLoadingAnalytics && !analyticsData ? (
                   <KPISkeleton />
                 ) : (
                   <Card className="p-4 bg-white border-[#E8ECFF]">
@@ -297,7 +271,7 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
               {/* Demographics - Age & Region */}
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="p-6 bg-white border-[#E8ECFF]">
                   <h3 className="font-semibold text-gray-900 mb-4">{lang.demographicsTitle}</h3>
                   {isLoadingAnalytics ? (
@@ -314,7 +288,7 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                           outerRadius={80}
                         >
                           {analyticsData?.demographics?.ageRange && Object.entries(analyticsData.demographics.ageRange).map((_, idx) => (
-                            <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                            <Cell key={idx} fill={AGE_COLORS[idx % AGE_COLORS.length]} />
                           ))}
                         </Pie>
                         <Tooltip />
@@ -339,40 +313,34 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                     </ResponsiveContainer>
                   )}
                 </Card>
+
+                <Card className="p-6 bg-white border-[#E8ECFF]">
+                  <h3 className="font-semibold text-gray-900 mb-4">{lang.demographicsGenderTitle}</h3>
+                  {isLoadingAnalytics ? (
+                    <ChartSkeleton />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={analyticsData?.demographics?.gender ? Object.entries(analyticsData.demographics.gender).map(([gender, value]) => ({ gender, value })) : []}
+                          dataKey="value"
+                          nameKey="gender"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                        >
+                          {analyticsData?.demographics?.gender && Object.entries(analyticsData.demographics.gender).map((_, idx) => (
+                            <Cell key={idx} fill={GENDER_COLORS[idx % GENDER_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </Card>
               </div>
 
-              {/* Trends */}
-              <Card className="p-6 bg-white border-[#E8ECFF]">
-                <h3 className="font-semibold text-gray-900 mb-4">{lang.trendsTitle}</h3>
-                {isLoadingAnalytics ? (
-                  <ChartSkeleton />
-                ) : (
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={analyticsData?.trends ?? []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-                      <XAxis dataKey="timestamp" stroke="#9CA3AF" style={{ fontSize: 12 }} />
-                      <YAxis stroke="#9CA3AF" style={{ fontSize: 12 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-                      <Line type="monotone" dataKey="value" stroke="#0048ff" strokeWidth={2} name="Engagements" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </Card>
             </div>
-
-            {/* Funnel */}
-            <Card className="p-6 bg-white border-[#E8ECFF]">
-              <h3 className="font-semibold text-gray-900 mb-4">{lang.funnelTitle}</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={funnelData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-                  <XAxis type="number" stroke="#9CA3AF" />
-                  <YAxis dataKey="stage" type="category" stroke="#9CA3AF" width={100} />
-                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-                  <Bar dataKey="value" fill="#0048ff" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
           </TabsContent>
 
           {/* Engagement removed to simplify dashboard. */}
@@ -399,30 +367,6 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
               })}
             </div>
 
-            {/* Safety Incidents Table */}
-            <Card className="p-6 bg-white border-[#E8ECFF]">
-              <h3 className="font-semibold text-gray-900 mb-4">Recent Incidents</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#E8ECFF]">
-                      <th className="text-left py-2 px-4 text-gray-600 font-semibold">Type</th>
-                      <th className="text-left py-2 px-4 text-gray-600 font-semibold">User</th>
-                      <th className="text-left py-2 px-4 text-gray-600 font-semibold">Time</th>
-                      <th className="text-left py-2 px-4 text-gray-600 font-semibold">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-[#E8ECFF] hover:bg-gray-50">
-                      <td className="py-3 px-4"><Badge className="bg-red-50 text-red-600 border-red-200">Self-Harm</Badge></td>
-                      <td className="py-3 px-4 text-gray-900">Ama O.</td>
-                      <td className="py-3 px-4 text-gray-600">2 hours ago</td>
-                      <td className="py-3 px-4"><Badge className="bg-purple-50 text-purple-600 border-purple-200">Escalated</Badge></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </Card>
           </TabsContent>
 
           {/* Performance Tab */}
@@ -452,7 +396,7 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
             <Card className="p-6 bg-white border-[#E8ECFF]">
               <h3 className="font-semibold text-gray-900 mb-4">Performance Trend</h3>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={analyticsData?.trends ?? []}>
+                <LineChart data={performanceTrendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
                   <XAxis dataKey="timestamp" stroke="#9CA3AF" style={{ fontSize: 12 }} />
                   <YAxis stroke="#9CA3AF" style={{ fontSize: 12 }} />

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Bot, Clock3, Languages, LogOut, Shield, Trash2, UserRound } from "lucide-react";
 
 import { useApp } from "@/providers/AppProvider";
+import { UserEngagementService } from "@/services/userEngagementService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,8 @@ export function SettingsPage({ onClearChat, onLogout }: SettingsPageProps) {
     setSessionDuration,
     analyticsOptIn,
     setAnalyticsOptIn,
+    sessionId,
+    consultantMode,
   } = useApp();
 
   const [draftNickname, setDraftNickname] = useState(nickname ?? "");
@@ -52,12 +55,29 @@ export function SettingsPage({ onClearChat, onLogout }: SettingsPageProps) {
     setDraftBotName(botName);
   }, [botName]);
 
+  const syncUserSettings = (overrides: Partial<{ nickname: string; language: string; chatRetention: string; analyticsConsent: boolean; consultantModeEnabled: boolean }> = {}) => {
+    const languageCode = overrides.language ?? (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
+
+    UserEngagementService.logNonBlocking(
+      UserEngagementService.updateUserSettings({
+        session_id: sessionId,
+        nickname: overrides.nickname ?? nickname ?? "",
+        language: languageCode,
+        chat_retention: overrides.chatRetention ?? sessionDuration,
+        analytics_consent: overrides.analyticsConsent ?? analyticsOptIn,
+        consultant_mode_enabled: overrides.consultantModeEnabled ?? consultantMode,
+      }),
+      "Failed to update user settings",
+    );
+  };
+
   const handleSaveNames = () => {
     const safeBotName = draftBotName.trim() || "Room 1221";
     const safeNickname = draftNickname.trim();
 
     setBotName(safeBotName);
     setNickname(safeNickname ? safeNickname : undefined);
+    syncUserSettings({ nickname: safeNickname });
   };
 
   const currentLanguage = (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
@@ -139,7 +159,10 @@ export function SettingsPage({ onClearChat, onLogout }: SettingsPageProps) {
                 return (
                   <button
                     key={lang.code}
-                    onClick={() => i18n.changeLanguage(lang.code)}
+                    onClick={() => {
+                      void i18n.changeLanguage(lang.code);
+                      syncUserSettings({ language: lang.code });
+                    }}
                     className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
                       active
                         ? "border-[#0048ff] bg-gradient-to-r from-[#0048ff] to-[#0066ff] text-white shadow-md shadow-blue-200/80"
@@ -171,7 +194,10 @@ export function SettingsPage({ onClearChat, onLogout }: SettingsPageProps) {
                 return (
                   <button
                     key={option.value}
-                    onClick={() => setSessionDuration(option.value)}
+                    onClick={() => {
+                      setSessionDuration(option.value);
+                      syncUserSettings({ chatRetention: option.value });
+                    }}
                     className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
                       active
                         ? "border-[#0048ff] bg-[#0048ff] text-white shadow-sm"
@@ -204,7 +230,13 @@ export function SettingsPage({ onClearChat, onLogout }: SettingsPageProps) {
                   {t("settings.analyticsHint", "No personal identifiers are collected.")}
                 </p>
               </div>
-              <Switch checked={analyticsOptIn} onCheckedChange={setAnalyticsOptIn} />
+              <Switch
+                checked={analyticsOptIn}
+                onCheckedChange={(checked) => {
+                  setAnalyticsOptIn(checked);
+                  syncUserSettings({ analyticsConsent: checked });
+                }}
+              />
             </div>
           </CardContent>
         </Card>

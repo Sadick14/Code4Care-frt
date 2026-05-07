@@ -2989,6 +2989,25 @@ html {
   scroll-padding-bottom: 20px;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+/* Keep long content from forcing horizontal scrolling on narrow screens. */
+* {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 @property --tw-translate-x {
   syntax: "*";
   inherits: false;

@@ -5,34 +5,63 @@
 
 import { logger } from '@/utils/logger';
 
+export type AnalyticsPeriod = 'today' | 'week' | 'month' | 'year' | string;
+
 export interface AnalyticsSummary {
   generated_at: string;
-  period: 'today' | 'week' | 'month' | 'year';
+  period: AnalyticsPeriod;
   summary: {
-    total_active_users: number;
-    new_users_total: number;
-    new_users_in_period: number;
-    returning_users: number;
-    total_conversations: number;
-    conversations_in_period: number;
-    total_messages: number;
-    messages_in_period: number;
-    average_session_duration_minutes: number;
-    average_messages_per_session: number;
+    total_active_users?: number;
+    new_users_total?: number;
+    new_users_in_period?: number;
+    returning_users?: number;
+    total_conversations?: number;
+    conversations_in_period?: number;
+    total_messages?: number;
+    messages_in_period?: number;
+    average_session_duration_minutes?: number;
+    average_messages_per_session?: number;
+    [key: string]: unknown;
   };
   demographics: Record<string, unknown>;
   engagement: Record<string, unknown>;
   safety: Record<string, unknown>;
   performance: Record<string, unknown>;
   funnel: Record<string, unknown>;
+  trends: Array<Record<string, unknown>>;
+}
+
+export interface AnalyticsOverviewSummary {
+  period: AnalyticsPeriod;
+  generatedAt?: string;
+  generated_at?: string;
+  summary?: Record<string, unknown>;
+  demographics: Record<string, unknown>;
+  engagement?: Record<string, unknown> & {
+    topics?: Array<Record<string, unknown>>;
+  };
+  topicEngagement?: Array<Record<string, unknown>>;
+  safety?: Record<string, unknown>;
+  safetyMetrics?: Record<string, unknown>;
+  performance?: Record<string, unknown>;
+  funnel?: Record<string, unknown>;
+  trends?: Array<Record<string, unknown>>;
 }
 
 export interface TopicEngagementItem {
   topic: string;
-  count: number;
-  percentage: number;
-  trend: 'up' | 'down' | 'stable';
-  avg_satisfaction: number;
+  inquiries?: number;
+  avg_session_time_seconds?: number;
+  satisfaction_score?: number;
+  trending?: boolean;
+  change_vs_last_period?: number;
+  common_questions?: string[];
+  age_groups?: Record<string, unknown>;
+  gender_breakdown?: Record<string, unknown>;
+  count?: number;
+  percentage?: number;
+  trend?: 'up' | 'down' | 'stable';
+  avg_satisfaction?: number;
 }
 
 export interface TopicEngagementResponse {
@@ -123,10 +152,12 @@ export interface SessionAnalyticsResponse {
   status: 'recorded';
 }
 
+const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
 const API_BASE_URL = (
+  import.meta.env.VITE_ANALYTICS_API_BASE_URL ||
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_ADMIN_API_BASE_URL ||
-  ''
+  DEFAULT_API_BASE_URL
 ).trim();
 
 const ANALYTICS_BASE_PATH = '/analytics';
@@ -136,6 +167,38 @@ function buildUrl(path: string): string {
     return path;
   }
   return new URL(path, API_BASE_URL).toString();
+}
+
+function buildUrlWithParams(path: string, params: Record<string, string | number | boolean | null | undefined>) {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      query.set(key, String(value));
+    }
+  });
+
+  const queryString = query.toString();
+  return `${buildUrl(path)}${queryString ? `?${queryString}` : ''}`;
+}
+
+function getNumber(record: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+
+    if (typeof value === 'number') {
+      return value;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value);
+      if (!Number.isNaN(parsed)) {
+        return parsed;
+      }
+    }
+  }
+
+  return 0;
 }
 
 function buildHeaders(accessToken?: string): Record<string, string> {
@@ -165,6 +228,21 @@ async function readApiError(response: Response): Promise<string> {
       return parsed.detail;
     }
 
+    if (Array.isArray(parsed.detail)) {
+      return parsed.detail
+        .map((item) => {
+          if (!item || typeof item !== 'object') {
+            return String(item);
+          }
+
+          const detail = item as Record<string, unknown>;
+          const location = Array.isArray(detail.loc) ? detail.loc.join('.') : '';
+          const message = typeof detail.msg === 'string' ? detail.msg : 'Validation error';
+          return location ? `${location}: ${message}` : message;
+        })
+        .join('; ');
+    }
+
     if (typeof parsed.message === 'string') {
       return parsed.message;
     }
@@ -179,7 +257,189 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+function normalizeTrendItem(item: Record<string, unknown>) {
+  return {
+    ...item,
+    timestamp: item.timestamp ?? item.date ?? item.period ?? item.created_at ?? '',
+    value: getNumber(item, 'value', 'engagements', 'count', 'messages', 'sessions'),
+  };
+}
+
+function normalizeTopicEngagementItem(item: Record<string, unknown>) {
+  return {
+    ...item,
+    topic: typeof item.topic === 'string' ? item.topic : String(item.topic ?? 'Unknown'),
+    inquiries: getNumber(item, 'inquiries', 'count', 'value'),
+    avg_session_time_seconds: getNumber(item, 'avg_session_time_seconds', 'avgSessionTime', 'avg_session_time'),
+    satisfaction_score: getNumber(item, 'satisfaction_score', 'satisfactionScore', 'avg_satisfaction'),
+    trending: Boolean(item.trending ?? item.trend === 'up'),
+  };
+}
+
+function normalizeRecordSection(
+  source: Record<string, unknown> | undefined,
+  aliases: Record<string, string[]>,
+) {
+  const normalized: Record<string, unknown> = {
+    ...(source ?? {}),
+  };
+
+  Object.entries(aliases).forEach(([targetKey, keys]) => {
+    if (normalized[targetKey] !== undefined) {
+      return;
+    }
+
+    for (const key of keys) {
+      const value = source?.[key];
+      if (value !== undefined) {
+        normalized[targetKey] = value;
+        return;
+      }
+    }
+  });
+
+  return normalized;
+}
+
+function normalizeAnalyticsOverviewSummary(data: AnalyticsOverviewSummary): AnalyticsSummary {
+  const summary = data.summary ?? {};
+  const demographics = data.demographics ?? {};
+  const safetyMetrics = data.safetyMetrics ?? data.safety ?? {};
+  const performance = data.performance ?? {};
+  const funnel = data.funnel ?? {};
+  const rawTopicEngagement = data.topicEngagement ?? data.engagement?.topics ?? [];
+  const topicEngagement = rawTopicEngagement.map((item) => normalizeTopicEngagementItem(item));
+  const totalTopicInquiries = topicEngagement.reduce((total, item) => total + getNumber(item, 'inquiries', 'count', 'value'), 0);
+  const engagementRecord = normalizeRecordSection(data.engagement, {
+    topics: ['topics'],
+    high_engagement_topics: ['high_engagement_topics', 'highEngagementTopics'],
+    low_engagement_topics: ['low_engagement_topics', 'lowEngagementTopics'],
+  });
+  const safetyRecord = normalizeRecordSection(safetyMetrics, {
+    panic_exits_total: ['panic_exits_total', 'panicExitsTotal'],
+    panic_exits_in_period: ['panic_exits_in_period', 'panicExitsToday', 'panic_exits_today'],
+    crisis_interventions: ['crisis_interventions', 'crisisInterventions', 'crisis_interventions_triggered'],
+    self_harm_mentions: ['self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'],
+    suicidal_ideation_mentions: ['suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'],
+    abuse_mentions: ['abuse_mentions', 'abuseMentionsDetected', 'abuse_mentions_detected'],
+    concerned_users_followed_up: ['concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up'],
+    risks_escalated_to_human: ['risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated'],
+  });
+  const performanceRecord = normalizeRecordSection(performance, {
+    avgResponseTime: ['avgResponseTime', 'avg_response_time_ms', 'response_time_ms'],
+    systemUptime: ['systemUptime', 'system_uptime_percent', 'uptime_percent'],
+    messageProcessingSuccess: ['messageProcessingSuccess', 'message_processing_success_percent', 'success_rate'],
+    crashesOrErrors: ['crashesOrErrors', 'crashes_or_errors'],
+    consecutiveHours: ['consecutiveHours', 'consecutive_hours_service'],
+  });
+  const funnelRecord = normalizeRecordSection(funnel, {
+    total_visitors: ['total_visitors', 'totalVisitors', 'visitors'],
+    completed_onboarding: ['completed_onboarding', 'completedOnboarding', 'onboarded'],
+    had_first_chat: ['had_first_chat', 'hadFirstChat', 'firstChat'],
+    completed_story_module: ['completed_story_module', 'completedStoryModule', 'storyModule'],
+    used_pharmacy: ['used_pharmacy', 'usedPharmacy'],
+    accessed_crisis_support: ['accessed_crisis_support', 'accessedCrisisSupport'],
+    return_rate_percent: ['return_rate_percent', 'returnRatePercent'],
+  });
+
+  return {
+    generated_at: data.generatedAt ?? data.generated_at ?? new Date().toISOString(),
+    period: data.period,
+    summary: {
+      ...summary,
+      total_active_users: getNumber(summary, 'total_active_users', 'totalActiveUsers', 'activeUsers', 'active_users') || getNumber(demographics, 'totalActiveUsers', 'total_active_users', 'activeUsers', 'active_users'),
+      new_users_total: getNumber(summary, 'new_users_total', 'newUsersTotal', 'new_users'),
+      new_users_in_period: getNumber(summary, 'new_users_in_period', 'newUsersInPeriod'),
+      returning_users: getNumber(summary, 'returning_users', 'returningUsers'),
+      total_conversations: getNumber(summary, 'total_conversations', 'totalConversations', 'conversations') || totalTopicInquiries,
+      conversations_in_period: totalTopicInquiries,
+      total_messages: getNumber(summary, 'total_messages', 'totalMessages', 'messages') || getNumber(performance, 'totalMessages', 'total_messages', 'messages'),
+      messages_in_period: getNumber(summary, 'messages_in_period', 'messagesInPeriod'),
+      average_session_duration_minutes: getNumber(summary, 'average_session_duration_minutes', 'averageSessionDurationMinutes', 'avg_session_duration_minutes'),
+      average_messages_per_session: getNumber(summary, 'average_messages_per_session', 'averageMessagesPerSession'),
+    },
+    demographics: {
+      ...demographics,
+      ageRange: demographics.ageRange ?? demographics.age_range ?? demographics.ageGroups ?? demographics.age_groups ?? {},
+      age_range: demographics.age_range ?? demographics.ageRange ?? demographics.ageGroups ?? demographics.age_groups ?? {},
+      gender: demographics.gender ?? demographics.by_gender ?? {},
+      languagePreference: demographics.languagePreference ?? demographics.language_preference ?? {},
+      language_preference: demographics.language_preference ?? demographics.languagePreference ?? {},
+      regions: demographics.regions ?? demographics.region ?? demographics.regionBreakdown ?? demographics.region_breakdown ?? {},
+      region_breakdown: demographics.region_breakdown ?? demographics.regionBreakdown ?? demographics.regions ?? {},
+      totalActiveUsers: demographics.totalActiveUsers ?? demographics.total_active_users ?? demographics.activeUsers ?? demographics.active_users ?? 0,
+    },
+    engagement: {
+      ...engagementRecord,
+      topics: topicEngagement,
+      topicEngagement,
+    },
+    safety: {
+      ...safetyRecord,
+      panic_exits_total: getNumber(safetyRecord, 'panic_exits_total', 'panicExitsTotal', 'panic_exits'),
+      panic_exits_in_period: getNumber(safetyRecord, 'panic_exits_in_period', 'panicExitsToday', 'panic_exits_today'),
+      crisis_interventions: getNumber(safetyRecord, 'crisis_interventions', 'crisisInterventions', 'crisis_interventions_triggered'),
+      self_harm_mentions: getNumber(safetyRecord, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'),
+      suicidal_ideation_mentions: getNumber(safetyRecord, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'),
+      abuse_mentions: getNumber(safetyRecord, 'abuse_mentions', 'abuseMentionsDetected', 'abuse_mentions_detected'),
+      concerned_users_followed_up: getNumber(safetyRecord, 'concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up'),
+      risks_escalated_to_human: getNumber(safetyRecord, 'risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated'),
+    },
+    performance: {
+      ...performanceRecord,
+      avgResponseTime: getNumber(performanceRecord, 'avgResponseTime', 'avg_response_time_ms', 'response_time_ms'),
+      systemUptime: getNumber(performanceRecord, 'systemUptime', 'system_uptime_percent', 'uptime_percent'),
+      messageProcessingSuccess: getNumber(performanceRecord, 'messageProcessingSuccess', 'message_processing_success_percent', 'success_rate'),
+      crashesOrErrors: getNumber(performanceRecord, 'crashesOrErrors', 'crashes_or_errors'),
+      consecutiveHours: getNumber(performanceRecord, 'consecutiveHours', 'consecutive_hours_service'),
+    },
+    funnel: {
+      ...funnelRecord,
+      total_visitors: getNumber(funnelRecord, 'total_visitors', 'totalVisitors', 'visitors'),
+      completed_onboarding: getNumber(funnelRecord, 'completed_onboarding', 'completedOnboarding', 'onboarded'),
+      had_first_chat: getNumber(funnelRecord, 'had_first_chat', 'hadFirstChat', 'firstChat'),
+      completed_story_module: getNumber(funnelRecord, 'completed_story_module', 'completedStoryModule', 'storyModule'),
+      used_pharmacy: getNumber(funnelRecord, 'used_pharmacy', 'usedPharmacy'),
+      accessed_crisis_support: getNumber(funnelRecord, 'accessed_crisis_support', 'accessedCrisisSupport'),
+      return_rate_percent: getNumber(funnelRecord, 'return_rate_percent', 'returnRatePercent'),
+    },
+    trends: (data.trends ?? []).map(normalizeTrendItem),
+  };
+}
+
 export class RealAnalyticsService {
+  /**
+   * GET /v1/analytics/summary - Aggregated analytics for the admin dashboard.
+   */
+  static async getAnalyticsSummary(
+    options?: {
+      period?: AnalyticsPeriod;
+    },
+    accessToken?: string,
+  ): Promise<AnalyticsOverviewSummary> {
+    try {
+      const response = await fetch(buildUrlWithParams('/v1/analytics/summary', {
+        period: options?.period ?? 'week',
+      }), {
+        method: 'GET',
+        headers: buildHeaders(accessToken),
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiError(response));
+      }
+
+      return await readJsonResponse<AnalyticsOverviewSummary>(response);
+    } catch (error) {
+      logger.error('Failed to get analytics summary', error);
+      throw error;
+    }
+  }
+
+  static normalizeAnalyticsSummary(data: AnalyticsOverviewSummary): AnalyticsSummary {
+    return normalizeAnalyticsOverviewSummary(data);
+  }
+
   /**
    * GET /analytics/dashboard - Get overall system analytics and KPIs
    */
@@ -192,14 +452,9 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<AnalyticsSummary> {
-    const params = new URLSearchParams();
-
-    if (options?.period) params.append('period', options.period);
-    if (options?.by_region) params.append('by_region', String(options.by_region));
-    if (options?.by_age_group) params.append('by_age_group', String(options.by_age_group));
-    if (options?.by_language) params.append('by_language', String(options.by_language));
-
-    const url = `${buildUrl(`${ANALYTICS_BASE_PATH}/dashboard`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/dashboard`, {
+      period: options?.period ?? 'week',
+    });
 
     try {
       const response = await fetch(url, {
@@ -228,12 +483,9 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<TopicEngagementResponse> {
-    const params = new URLSearchParams();
-
-    if (options?.period) params.append('period', options.period);
-    if (options?.limit) params.append('limit', String(options.limit));
-
-    const url = `${buildUrl(`${ANALYTICS_BASE_PATH}/topics`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/topics`, {
+      period: options?.period ?? 'week',
+    });
 
     try {
       const response = await fetch(url, {
@@ -262,12 +514,9 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<UserAnalyticsResponse> {
-    const params = new URLSearchParams();
-
-    if (options?.period) params.append('period', options.period);
-    if (options?.segment) params.append('segment', options.segment);
-
-    const url = `${buildUrl(`${ANALYTICS_BASE_PATH}/users`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/users`, {
+      period: options?.period ?? 'week',
+    });
 
     try {
       const response = await fetch(url, {
@@ -296,12 +545,9 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<SafetyAnalyticsResponse> {
-    const params = new URLSearchParams();
-
-    if (options?.period) params.append('period', options.period);
-    if (options?.severity) params.append('severity', options.severity);
-
-    const url = `${buildUrl(`${ANALYTICS_BASE_PATH}/safety`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/safety`, {
+      period: options?.period ?? 'week',
+    });
 
     try {
       const response = await fetch(url, {
@@ -329,11 +575,9 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<PerformanceMetricsResponse> {
-    const params = new URLSearchParams();
-
-    if (options?.period) params.append('period', options.period);
-
-    const url = `${buildUrl(`${ANALYTICS_BASE_PATH}/performance`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/performance`, {
+      period: options?.period ?? 'week',
+    });
 
     try {
       const response = await fetch(url, {
