@@ -28,17 +28,24 @@ export interface AnalyticsSummary {
   safety: Record<string, unknown>;
   performance: Record<string, unknown>;
   funnel: Record<string, unknown>;
+  trends: Array<Record<string, unknown>>;
 }
 
 export interface AnalyticsOverviewSummary {
   period: AnalyticsPeriod;
-  generatedAt: string;
+  generatedAt?: string;
+  generated_at?: string;
+  summary?: Record<string, unknown>;
   demographics: Record<string, unknown>;
-  topicEngagement: Array<Record<string, unknown>>;
-  safetyMetrics: Record<string, unknown>;
-  performance: Record<string, unknown>;
-  funnel: Record<string, unknown>;
-  trends: Array<Record<string, unknown>>;
+  engagement?: Record<string, unknown> & {
+    topics?: Array<Record<string, unknown>>;
+  };
+  topicEngagement?: Array<Record<string, unknown>>;
+  safety?: Record<string, unknown>;
+  safetyMetrics?: Record<string, unknown>;
+  performance?: Record<string, unknown>;
+  funnel?: Record<string, unknown>;
+  trends?: Array<Record<string, unknown>>;
 }
 
 export interface TopicEngagementItem {
@@ -258,52 +265,143 @@ function normalizeTrendItem(item: Record<string, unknown>) {
   };
 }
 
+function normalizeTopicEngagementItem(item: Record<string, unknown>) {
+  return {
+    ...item,
+    topic: typeof item.topic === 'string' ? item.topic : String(item.topic ?? 'Unknown'),
+    inquiries: getNumber(item, 'inquiries', 'count', 'value'),
+    avg_session_time_seconds: getNumber(item, 'avg_session_time_seconds', 'avgSessionTime', 'avg_session_time'),
+    satisfaction_score: getNumber(item, 'satisfaction_score', 'satisfactionScore', 'avg_satisfaction'),
+    trending: Boolean(item.trending ?? item.trend === 'up'),
+  };
+}
+
+function normalizeRecordSection(
+  source: Record<string, unknown> | undefined,
+  aliases: Record<string, string[]>,
+) {
+  const normalized: Record<string, unknown> = {
+    ...(source ?? {}),
+  };
+
+  Object.entries(aliases).forEach(([targetKey, keys]) => {
+    if (normalized[targetKey] !== undefined) {
+      return;
+    }
+
+    for (const key of keys) {
+      const value = source?.[key];
+      if (value !== undefined) {
+        normalized[targetKey] = value;
+        return;
+      }
+    }
+  });
+
+  return normalized;
+}
+
 function normalizeAnalyticsOverviewSummary(data: AnalyticsOverviewSummary): AnalyticsSummary {
+  const summary = data.summary ?? {};
   const demographics = data.demographics ?? {};
-  const safetyMetrics = data.safetyMetrics ?? {};
+  const safetyMetrics = data.safetyMetrics ?? data.safety ?? {};
   const performance = data.performance ?? {};
   const funnel = data.funnel ?? {};
-  const topicEngagement = data.topicEngagement ?? [];
+  const rawTopicEngagement = data.topicEngagement ?? data.engagement?.topics ?? [];
+  const topicEngagement = rawTopicEngagement.map((item) => normalizeTopicEngagementItem(item));
   const totalTopicInquiries = topicEngagement.reduce((total, item) => total + getNumber(item, 'inquiries', 'count', 'value'), 0);
+  const engagementRecord = normalizeRecordSection(data.engagement, {
+    topics: ['topics'],
+    high_engagement_topics: ['high_engagement_topics', 'highEngagementTopics'],
+    low_engagement_topics: ['low_engagement_topics', 'lowEngagementTopics'],
+  });
+  const safetyRecord = normalizeRecordSection(safetyMetrics, {
+    panic_exits_total: ['panic_exits_total', 'panicExitsTotal'],
+    panic_exits_in_period: ['panic_exits_in_period', 'panicExitsToday', 'panic_exits_today'],
+    crisis_interventions: ['crisis_interventions', 'crisisInterventions', 'crisis_interventions_triggered'],
+    self_harm_mentions: ['self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'],
+    suicidal_ideation_mentions: ['suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'],
+    abuse_mentions: ['abuse_mentions', 'abuseMentionsDetected', 'abuse_mentions_detected'],
+    concerned_users_followed_up: ['concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up'],
+    risks_escalated_to_human: ['risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated'],
+  });
+  const performanceRecord = normalizeRecordSection(performance, {
+    avgResponseTime: ['avgResponseTime', 'avg_response_time_ms', 'response_time_ms'],
+    systemUptime: ['systemUptime', 'system_uptime_percent', 'uptime_percent'],
+    messageProcessingSuccess: ['messageProcessingSuccess', 'message_processing_success_percent', 'success_rate'],
+    crashesOrErrors: ['crashesOrErrors', 'crashes_or_errors'],
+    consecutiveHours: ['consecutiveHours', 'consecutive_hours_service'],
+  });
+  const funnelRecord = normalizeRecordSection(funnel, {
+    total_visitors: ['total_visitors', 'totalVisitors', 'visitors'],
+    completed_onboarding: ['completed_onboarding', 'completedOnboarding', 'onboarded'],
+    had_first_chat: ['had_first_chat', 'hadFirstChat', 'firstChat'],
+    completed_story_module: ['completed_story_module', 'completedStoryModule', 'storyModule'],
+    used_pharmacy: ['used_pharmacy', 'usedPharmacy'],
+    accessed_crisis_support: ['accessed_crisis_support', 'accessedCrisisSupport'],
+    return_rate_percent: ['return_rate_percent', 'returnRatePercent'],
+  });
 
   return {
-    generated_at: data.generatedAt,
+    generated_at: data.generatedAt ?? data.generated_at ?? new Date().toISOString(),
     period: data.period,
     summary: {
-      total_active_users: getNumber(demographics, 'totalActiveUsers', 'total_active_users', 'activeUsers', 'active_users'),
+      ...summary,
+      total_active_users: getNumber(summary, 'total_active_users', 'totalActiveUsers', 'activeUsers', 'active_users') || getNumber(demographics, 'totalActiveUsers', 'total_active_users', 'activeUsers', 'active_users'),
+      new_users_total: getNumber(summary, 'new_users_total', 'newUsersTotal', 'new_users'),
+      new_users_in_period: getNumber(summary, 'new_users_in_period', 'newUsersInPeriod'),
+      returning_users: getNumber(summary, 'returning_users', 'returningUsers'),
+      total_conversations: getNumber(summary, 'total_conversations', 'totalConversations', 'conversations') || totalTopicInquiries,
       conversations_in_period: totalTopicInquiries,
-      total_conversations: totalTopicInquiries,
-      total_messages: getNumber(performance, 'totalMessages', 'total_messages', 'messages'),
-      average_session_duration_minutes: getNumber(performance, 'averageSessionDurationMinutes', 'avg_session_duration_minutes'),
+      total_messages: getNumber(summary, 'total_messages', 'totalMessages', 'messages') || getNumber(performance, 'totalMessages', 'total_messages', 'messages'),
+      messages_in_period: getNumber(summary, 'messages_in_period', 'messagesInPeriod'),
+      average_session_duration_minutes: getNumber(summary, 'average_session_duration_minutes', 'averageSessionDurationMinutes', 'avg_session_duration_minutes'),
+      average_messages_per_session: getNumber(summary, 'average_messages_per_session', 'averageMessagesPerSession'),
     },
     demographics: {
       ...demographics,
       ageRange: demographics.ageRange ?? demographics.age_range ?? demographics.ageGroups ?? demographics.age_groups ?? {},
+      age_range: demographics.age_range ?? demographics.ageRange ?? demographics.ageGroups ?? demographics.age_groups ?? {},
+      gender: demographics.gender ?? demographics.by_gender ?? {},
+      languagePreference: demographics.languagePreference ?? demographics.language_preference ?? {},
+      language_preference: demographics.language_preference ?? demographics.languagePreference ?? {},
       regions: demographics.regions ?? demographics.region ?? demographics.regionBreakdown ?? demographics.region_breakdown ?? {},
+      region_breakdown: demographics.region_breakdown ?? demographics.regionBreakdown ?? demographics.regions ?? {},
       totalActiveUsers: demographics.totalActiveUsers ?? demographics.total_active_users ?? demographics.activeUsers ?? demographics.active_users ?? 0,
     },
     engagement: {
+      ...engagementRecord,
+      topics: topicEngagement,
       topicEngagement,
     },
     safety: {
-      ...safetyMetrics,
-      panic_exits_total: safetyMetrics.panic_exits_total ?? safetyMetrics.panicExitsTotal ?? safetyMetrics.panic_exits ?? 0,
-      crisis_interventions: safetyMetrics.crisis_interventions ?? safetyMetrics.crisisInterventions ?? safetyMetrics.crisis_interventions_triggered ?? 0,
-      self_harm_mentions: safetyMetrics.self_harm_mentions ?? safetyMetrics.selfHarmMentions ?? safetyMetrics.self_harm_mentions_detected ?? 0,
-      suicidal_ideation_mentions: safetyMetrics.suicidal_ideation_mentions ?? safetyMetrics.suicidalIdeationMentions ?? 0,
+      ...safetyRecord,
+      panic_exits_total: getNumber(safetyRecord, 'panic_exits_total', 'panicExitsTotal', 'panic_exits'),
+      panic_exits_in_period: getNumber(safetyRecord, 'panic_exits_in_period', 'panicExitsToday', 'panic_exits_today'),
+      crisis_interventions: getNumber(safetyRecord, 'crisis_interventions', 'crisisInterventions', 'crisis_interventions_triggered'),
+      self_harm_mentions: getNumber(safetyRecord, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'),
+      suicidal_ideation_mentions: getNumber(safetyRecord, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'),
+      abuse_mentions: getNumber(safetyRecord, 'abuse_mentions', 'abuseMentionsDetected', 'abuse_mentions_detected'),
+      concerned_users_followed_up: getNumber(safetyRecord, 'concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up'),
+      risks_escalated_to_human: getNumber(safetyRecord, 'risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated'),
     },
     performance: {
-      ...performance,
-      avgResponseTime: performance.avgResponseTime ?? performance.avg_response_time_ms ?? performance.response_time_ms ?? 0,
-      systemUptime: performance.systemUptime ?? performance.system_uptime ?? performance.uptime_percent ?? 0,
-      messageProcessingSuccess: performance.messageProcessingSuccess ?? performance.message_processing_success ?? performance.success_rate ?? 0,
+      ...performanceRecord,
+      avgResponseTime: getNumber(performanceRecord, 'avgResponseTime', 'avg_response_time_ms', 'response_time_ms'),
+      systemUptime: getNumber(performanceRecord, 'systemUptime', 'system_uptime_percent', 'uptime_percent'),
+      messageProcessingSuccess: getNumber(performanceRecord, 'messageProcessingSuccess', 'message_processing_success_percent', 'success_rate'),
+      crashesOrErrors: getNumber(performanceRecord, 'crashesOrErrors', 'crashes_or_errors'),
+      consecutiveHours: getNumber(performanceRecord, 'consecutiveHours', 'consecutive_hours_service'),
     },
     funnel: {
-      ...funnel,
-      total_visitors: funnel.total_visitors ?? funnel.totalVisitors ?? funnel.visitors ?? 0,
-      completed_onboarding: funnel.completed_onboarding ?? funnel.completedOnboarding ?? funnel.onboarded ?? 0,
-      had_first_chat: funnel.had_first_chat ?? funnel.hadFirstChat ?? funnel.firstChat ?? 0,
-      completed_story_module: funnel.completed_story_module ?? funnel.completedStoryModule ?? funnel.storyModule ?? 0,
+      ...funnelRecord,
+      total_visitors: getNumber(funnelRecord, 'total_visitors', 'totalVisitors', 'visitors'),
+      completed_onboarding: getNumber(funnelRecord, 'completed_onboarding', 'completedOnboarding', 'onboarded'),
+      had_first_chat: getNumber(funnelRecord, 'had_first_chat', 'hadFirstChat', 'firstChat'),
+      completed_story_module: getNumber(funnelRecord, 'completed_story_module', 'completedStoryModule', 'storyModule'),
+      used_pharmacy: getNumber(funnelRecord, 'used_pharmacy', 'usedPharmacy'),
+      accessed_crisis_support: getNumber(funnelRecord, 'accessed_crisis_support', 'accessedCrisisSupport'),
+      return_rate_percent: getNumber(funnelRecord, 'return_rate_percent', 'returnRatePercent'),
     },
     trends: (data.trends ?? []).map(normalizeTrendItem),
   };

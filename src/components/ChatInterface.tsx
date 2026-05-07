@@ -11,6 +11,8 @@ import { Input } from "./ui/input";
 import { useApp } from "@/providers/AppProvider";
 import { ChatCitation, requestChatCompletion } from "@/services/chatbotService";
 import { UserEngagementService } from "@/services/userEngagementService";
+import { RealAnalyticsService } from "@/services/realAnalyticsService";
+import { safeStorage } from "@/utils/safeStorage";
 import { logger } from "@/utils/logger";
 import { TypewriterMessage } from "./TypewriterMessage";
 
@@ -36,7 +38,7 @@ export function ChatInterface({
   clearTrigger = 0 
 }: ChatInterfaceProps) {
   const { t, i18n } = useTranslation();
-  const { nickname, botName, sessionId, consultantMode, sessionDuration } = useApp();
+  const { nickname, botName, sessionId, consultantMode, sessionDuration, ageRange, genderIdentity, region, analyticsOptIn } = useApp();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -333,6 +335,45 @@ export function ChatInterface({
       logger.error('Chat API failed:', error);
     } finally {
       setIsTyping(false);
+      // Post an incremental analytics snapshot so messages are recorded instantly
+      try {
+        if (analyticsOptIn) {
+          const chatStorageKey = `room1221_chat_${sessionId}`;
+          const storedMessagesRaw = safeStorage.getItem(chatStorageKey, '[]');
+          let messagesExchanged = 0;
+          try {
+            const storedMessages = storedMessagesRaw ? JSON.parse(storedMessagesRaw) : [];
+            messagesExchanged = Array.isArray(storedMessages) ? storedMessages.length : 0;
+          } catch {}
+
+          const startTs = Number(safeStorage.getItem('room1221_session_started_at')) || Date.now();
+          const durationSeconds = Math.max(0, Math.round((Date.now() - startTs) / 1000));
+
+          void RealAnalyticsService.recordSessionAnalytics({
+            session_id: sessionId,
+            user_id: nickname || undefined,
+            age_range: ageRange,
+            gender_identity: genderIdentity,
+            region,
+            language: (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0],
+            start_time: new Date(startTs).toISOString(),
+            end_time: new Date().toISOString(),
+            duration_seconds: durationSeconds,
+            messages_exchanged: messagesExchanged,
+            topics_discussed: [],
+            panic_button_used: safeStorage.getItem('room1221_panic_triggered') === 'true',
+            crisis_support_accessed: false,
+            story_modules_started: 0,
+            story_modules_completed: 0,
+            pharmacy_searches: 0,
+            satisfaction_rating: undefined,
+            would_return: true,
+            safety_flags: safeStorage.getItem('room1221_panic_triggered') === 'true' ? ['panic-button'] : [],
+          });
+        }
+      } catch (err) {
+        // intentionally ignore analytics errors
+      }
     }
   };
 

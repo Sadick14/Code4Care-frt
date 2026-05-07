@@ -39,7 +39,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [genderIdentity, setGenderIdentity] = useState<string>(() => safeStorage.getItem('room1221_gender_identity') || 'prefer-not-say');
   const [region, setRegion] = useState<string>(() => safeStorage.getItem('room1221_region') || 'greater-accra');
   const [sessionDuration, setSessionDuration] = useState<string>(() => safeStorage.getItem('room1221_duration') || '24h');
-  const [analyticsOptIn, setAnalyticsOptIn] = useState<boolean>(() => safeStorage.getItem('room1221_analytics') !== 'false');
+  const [analyticsOptIn, setAnalyticsOptIn] = useState<boolean>(() => {
+    try {
+      const stored = safeStorage.getItem('room1221_analytics');
+      if (stored === null) {
+        // default to enabled and persist
+        safeStorage.setItem('room1221_analytics', 'true');
+        return true;
+      }
+      return stored !== 'false';
+    } catch {
+      return true;
+    }
+  });
   const [sessionId, setSessionId] = useState<string>(() => safeStorage.getItem('room1221_session_id') || Date.now().toString());
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean>(() => safeStorage.getItem('room1221_onboarding_complete') === 'true');
   const [consultantMode, setConsultantMode] = useState<boolean>(false);

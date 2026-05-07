@@ -20,10 +20,12 @@ import { NicknameModal } from "./components/NicknameModal";
 import OnboardingScreen from "./components/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { UserEngagementService } from "@/services/userEngagementService";
+import { RealAnalyticsService } from "@/services/realAnalyticsService";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
+import { safeStorage } from "@/utils/safeStorage";
 
 type Section = "chat" | "story" | "myths" | "support" | "pharmacy" | "settings";
 
@@ -32,6 +34,10 @@ function AppContent() {
   const { 
     hasSeenOnboarding, setHasSeenOnboarding,
     nickname, setNickname,
+    ageRange,
+    genderIdentity,
+    region,
+    analyticsOptIn,
     setBotName,
     setAgeRange,
     setGenderIdentity,
@@ -55,6 +61,7 @@ function AppContent() {
   const [clearChatTrigger, setClearChatTrigger] = useState(0);
   const sessionStartedAtRef = useRef(Date.now());
   const sessionEndedRef = useRef(false);
+  const sessionAnalyticsRecordedRef = useRef(false);
 
   // Sync nickname modal visibility with global state
   useEffect(() => {
@@ -67,7 +74,11 @@ function AppContent() {
     }
 
     sessionStartedAtRef.current = Date.now();
+    try {
+      safeStorage.setItem('room1221_session_started_at', String(sessionStartedAtRef.current));
+    } catch {}
     sessionEndedRef.current = false;
+    sessionAnalyticsRecordedRef.current = false;
     UserEngagementService.logNonBlocking(
       UserEngagementService.trackSession(
         UserEngagementService.buildSessionPayload(sessionId, 'continue', true),
@@ -81,6 +92,7 @@ function AppContent() {
       }
 
       sessionEndedRef.current = true;
+      recordSessionAnalytics();
       const durationSeconds = Math.max(0, Math.round((Date.now() - sessionStartedAtRef.current) / 1000));
       UserEngagementService.logNonBlocking(
         UserEngagementService.trackSession(
@@ -91,6 +103,50 @@ function AppContent() {
     };
   }, [hasSeenOnboarding, sessionId]);
 
+  const recordSessionAnalytics = () => {
+    if (sessionAnalyticsRecordedRef.current || !hasSeenOnboarding || !analyticsOptIn) {
+      return;
+    }
+
+    sessionAnalyticsRecordedRef.current = true;
+
+    const durationSeconds = Math.max(0, Math.round((Date.now() - sessionStartedAtRef.current) / 1000));
+    const chatStorageKey = `room1221_chat_${sessionId}`;
+    const storedMessagesRaw = safeStorage.getItem(chatStorageKey, '[]');
+
+    let messagesExchanged = 0;
+    try {
+      const storedMessages = storedMessagesRaw ? JSON.parse(storedMessagesRaw) : [];
+      messagesExchanged = Array.isArray(storedMessages) ? storedMessages.length : 0;
+    } catch {
+      messagesExchanged = 0;
+    }
+
+    const panicTriggered = safeStorage.getItem('room1221_panic_triggered') === 'true';
+
+    void RealAnalyticsService.recordSessionAnalytics({
+      session_id: sessionId,
+      user_id: nickname || undefined,
+      age_range: ageRange,
+      gender_identity: genderIdentity,
+      region,
+      language: (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0],
+      start_time: new Date(sessionStartedAtRef.current).toISOString(),
+      end_time: new Date().toISOString(),
+      duration_seconds: durationSeconds,
+      messages_exchanged: messagesExchanged,
+      topics_discussed: [],
+      panic_button_used: panicTriggered,
+      crisis_support_accessed: false,
+      story_modules_started: 0,
+      story_modules_completed: 0,
+      pharmacy_searches: 0,
+      satisfaction_rating: undefined,
+      would_return: true,
+      safety_flags: panicTriggered ? ['panic-button'] : [],
+    });
+  };
+
   const handleClearChat = () => {
     localStorage.removeItem(`room1221_chat_${sessionId}`);
     setSessionId(Date.now().toString());
@@ -99,8 +155,52 @@ function AppContent() {
     toast.success(t('chat.clearChatMsg', 'Chat history cleared'));
   };
 
+  const handlePanicClick = () => {
+    safeStorage.setItem('room1221_panic_triggered', 'true');
+    setShowPanicScreen(true);
+    // Post an immediate analytics snapshot so panic events are recorded instantly
+    try {
+      const panicTriggered = true;
+      const chatStorageKey = `room1221_chat_${sessionId}`;
+      const storedMessagesRaw = safeStorage.getItem(chatStorageKey, '[]');
+      let messagesExchanged = 0;
+      try {
+        const storedMessages = storedMessagesRaw ? JSON.parse(storedMessagesRaw) : [];
+        messagesExchanged = Array.isArray(storedMessages) ? storedMessages.length : 0;
+      } catch {}
+
+      const startTs = Number(safeStorage.getItem('room1221_session_started_at')) || Date.now();
+      const durationSeconds = Math.max(0, Math.round((Date.now() - startTs) / 1000));
+
+      void RealAnalyticsService.recordSessionAnalytics({
+        session_id: sessionId,
+        user_id: nickname || undefined,
+        age_range: ageRange,
+        gender_identity: genderIdentity,
+        region,
+        language: (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0],
+        start_time: new Date(startTs).toISOString(),
+        end_time: new Date().toISOString(),
+        duration_seconds: durationSeconds,
+        messages_exchanged: messagesExchanged,
+        topics_discussed: [],
+        panic_button_used: panicTriggered,
+        crisis_support_accessed: false,
+        story_modules_started: 0,
+        story_modules_completed: 0,
+        pharmacy_searches: 0,
+        satisfaction_rating: undefined,
+        would_return: true,
+        safety_flags: panicTriggered ? ['panic-button'] : [],
+      });
+    } catch (e) {
+      // swallow analytics errors
+    }
+  };
+
   const handleLogout = () => {
     sessionEndedRef.current = true;
+    recordSessionAnalytics();
     const durationSeconds = Math.max(0, Math.round((Date.now() - sessionStartedAtRef.current) / 1000));
     UserEngagementService.logNonBlocking(
       UserEngagementService.trackSession(
@@ -123,7 +223,13 @@ function AppContent() {
           setAgeRange(nextAgeRange);
           setGenderIdentity(nextGenderIdentity);
           setRegion(nextRegion);
+          // mark onboarding complete and record session start
           setHasSeenOnboarding(true);
+          try {
+            sessionStartedAtRef.current = Date.now();
+            safeStorage.setItem('room1221_session_started_at', String(sessionStartedAtRef.current));
+          } catch {}
+
           UserEngagementService.logNonBlocking(
             UserEngagementService.captureDemographics({
               session_id: sessionId,
@@ -146,6 +252,45 @@ function AppContent() {
             }),
             'Failed to initialize user settings',
           );
+
+          // Post an immediate session analytics snapshot for onboarding completion
+          try {
+            if (analyticsOptIn) {
+              const chatStorageKey = `room1221_chat_${sessionId}`;
+              const storedMessagesRaw = safeStorage.getItem(chatStorageKey, '[]');
+              let messagesExchanged = 0;
+              try {
+                const storedMessages = storedMessagesRaw ? JSON.parse(storedMessagesRaw) : [];
+                messagesExchanged = Array.isArray(storedMessages) ? storedMessages.length : 0;
+              } catch {}
+
+              const startTs = Number(safeStorage.getItem('room1221_session_started_at')) || sessionStartedAtRef.current || Date.now();
+
+              void RealAnalyticsService.recordSessionAnalytics({
+                session_id: sessionId,
+                user_id: nickname || undefined,
+                age_range: nextAgeRange,
+                gender_identity: nextGenderIdentity,
+                region: nextRegion,
+                language: languageCode,
+                start_time: new Date(startTs).toISOString(),
+                end_time: new Date().toISOString(),
+                duration_seconds: 0,
+                messages_exchanged: messagesExchanged,
+                topics_discussed: [],
+                panic_button_used: safeStorage.getItem('room1221_panic_triggered') === 'true',
+                crisis_support_accessed: false,
+                story_modules_started: 0,
+                story_modules_completed: 0,
+                pharmacy_searches: 0,
+                satisfaction_rating: undefined,
+                would_return: true,
+                safety_flags: safeStorage.getItem('room1221_panic_triggered') === 'true' ? ['panic-button'] : [],
+              });
+            }
+          } catch (err) {
+            // ignore analytics errors
+          }
         }}
       />
     );
@@ -194,7 +339,7 @@ function AppContent() {
       <div className="flex min-w-0 flex-col flex-1 h-dvh min-h-dvh overflow-hidden">
         <Header 
           onMenuClick={() => setSidebarOpen(true)}
-          onPanicClick={() => setShowPanicScreen(true)}
+          onPanicClick={handlePanicClick}
         />
 
         <main className="relative flex-1 min-w-0 overflow-hidden">
