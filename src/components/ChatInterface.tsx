@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Send, Mic, Clock, User, ShieldCheck, Volume2, Pause, ThumbsUp, ThumbsDown, Flag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
@@ -9,7 +9,10 @@ import fetchSpeechAudio from '@/services/ttsService';
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useApp } from "@/providers/AppProvider";
-import { ChatCitation, requestChatCompletion, FeedbackService, ReportService, SuggestionsService } from "@/services/chatbotService";
+import { ChatCitation, requestChatCompletion } from "@/services/chatbotService";
+import { FeedbackService } from "@/services/feedbackService";
+import { ReportService } from "@/services/reportService";
+import { SuggestionsService } from "@/services/suggestionsService";
 import { UserEngagementService } from "@/services/userEngagementService";
 import { RealAnalyticsService } from "@/services/realAnalyticsService";
 import { safeStorage } from "@/utils/safeStorage";
@@ -22,6 +25,7 @@ interface Message {
   sender: 'bot' | 'user';
   timestamp: Date;
   options?: string[];
+  followUpSuggestions?: string[];
   mode?: 'chatbot' | 'consultant';
   citations?: ChatCitation[];
   languageDetected?: string;
@@ -34,7 +38,7 @@ interface ChatInterfaceProps {
   clearTrigger?: number;
 }
 
-const CHATBOT_AVATAR_SRC = "/chatbot.jpg";
+const CHATBOT_AVATAR_SRC = "/logo/3.png";
 
 export function ChatInterface({ 
   clearTrigger = 0 
@@ -59,41 +63,6 @@ export function ChatInterface({
   const [playingId, setPlayingId] = useState<string | undefined>(undefined);
 
   const langMap: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
-
-  const speakText = (text: string, langCode?: string) => {
-    // If remote TTS proxy is enabled, fetch audio and play it (better quality)
-    const useRemote = import.meta.env.VITE_USE_REMOTE_TTS === 'true';
-    if (useRemote) {
-      fetchSpeechAudio(text, import.meta.env.VITE_TTS_VOICE || 'alloy')
-        .then((url) => {
-          const audio = new Audio(url);
-          audio.play().catch((e) => logger.error('Audio play failed', e));
-        })
-        .catch((err) => {
-          logger.error('Remote TTS failed, falling back to SpeechSynthesis', err);
-          // fallback
-          try {
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = langMap[langCode || chatLanguage] || 'en-US';
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utter);
-          } catch (e) {
-            logger.error('Speech synthesis failed', e);
-          }
-        });
-      return;
-    }
-
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    try {
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = langMap[langCode || chatLanguage] || (langCode || chatLanguage) || 'en-US';
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utter);
-    } catch (err) {
-      logger.error('Speech synthesis failed', err);
-    }
-  };
 
   const togglePlay = async (id: string, text: string, langCode?: string) => {
     if (playingId === id) {
@@ -213,21 +182,30 @@ export function ChatInterface({
 
         if (retainedMessages.length > 0) {
           setMessages(retainedMessages);
+          setCompletedBotMessages(
+            new Set(retainedMessages.filter((message) => message.sender === 'bot').map((message) => message.id))
+          );
           if (retainedMessages.length !== hydratedMessages.length) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(retainedMessages));
           }
         } else {
           localStorage.removeItem(STORAGE_KEY);
-          setMessages([getInitialMessage()]);
+          const initialMessage = getInitialMessage();
+          setMessages([initialMessage]);
+          setCompletedBotMessages(new Set([initialMessage.id]));
         }
       } else {
-        setMessages([getInitialMessage()]);
+        const initialMessage = getInitialMessage();
+        setMessages([initialMessage]);
+        setCompletedBotMessages(new Set([initialMessage.id]));
       }
       setIsLoaded(true);
       setChatLanguage((i18n.resolvedLanguage || i18n.language || 'en').split('-')[0]);
     } catch (error) {
       logger.error('Error loading chat history:', error);
-      setMessages([getInitialMessage()]);
+      const initialMessage = getInitialMessage();
+      setMessages([initialMessage]);
+      setCompletedBotMessages(new Set([initialMessage.id]));
       setIsLoaded(true);
     }
 
@@ -235,7 +213,7 @@ export function ChatInterface({
     const fetchSuggestions = async () => {
       try {
         const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
-        const response = await SuggestionsService.getSuggestions(languageCode);
+        const response = await SuggestionsService.getSuggestions({ language: languageCode });
         setSuggestions(response.suggestions || []);
       } catch (error) {
         logger.error('Failed to fetch suggestions', error);
@@ -329,6 +307,28 @@ export function ChatInterface({
         };
 
         setMessages(prev => [...prev, botMsg]);
+
+        // // Fetch follow-up suggestions for this bot message
+        // try {
+        //   const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+        //   const suggestionsResponse = await SuggestionsService.getSuggestions({ 
+        //     language: languageCode,
+        //     context: answerText
+        //   });
+          
+        //   if (suggestionsResponse.suggestions && suggestionsResponse.suggestions.length > 0) {
+        //     setMessages(prev => 
+        //       prev.map(msg => 
+        //         msg.id === botMsg.id 
+        //           ? { ...msg, followUpSuggestions: suggestionsResponse.suggestions.slice(0, 3) }
+        //           : msg
+        //       )
+        //     );
+        //   }
+        // } catch (err) {
+        //   logger.error('Failed to fetch follow-up suggestions', err);
+        // }
+
         UserEngagementService.logNonBlocking(
           UserEngagementService.logChatEvent({
             session_id: sessionId,
@@ -458,39 +458,16 @@ export function ChatInterface({
               </div>
            </div>
 
-          {messages.length <= 3 && suggestions.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-2"
-            >
-              <p className="text-xs text-slate-500 font-medium px-1">
-                {t('chat.suggestionsLabel', 'Conversation starters:')}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {suggestions.slice(0, 4).map((suggestion, idx) => (
-                  <Button
-                    key={idx}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSend(suggestion)}
-                    className="rounded-xl border-blue-100 text-blue-600 bg-white hover:bg-blue-50 text-xs py-2 h-auto"
-                  >
-                    {suggestion}
-                  </Button>
-                ))}
-              </div>
-            </motion.div>
-          )}
+          {/* Conversation starters moved to render below the welcome message */}
 
           <AnimatePresence initial={false}>
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                className={`flex gap-3 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-              >
+            {messages.map((message, idx) => (
+              <React.Fragment key={message.id}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className={`flex gap-3 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                >
                 <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden shadow-sm ${
                     message.sender === 'bot' 
                         ? (message.mode === 'consultant' ? 'bg-emerald-600' : 'bg-blue-600') 
@@ -617,8 +594,51 @@ export function ChatInterface({
                       ))}
                     </div>
                   )}
+
+                  {message.sender === 'bot' && message.followUpSuggestions && message.followUpSuggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {message.followUpSuggestions.map((suggestion, idx) => (
+                        <Button
+                          key={idx}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { handleSend(suggestion); }}
+                          className="rounded-xl border-emerald-100 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 text-xs py-1 h-9"
+                        >
+                          {suggestion}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </motion.div>
+                </motion.div>
+
+                {/* Show conversation starters directly below the welcome message */}
+                {/* {idx === 0 && messages.length <= 3 && suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-2 w-full"
+                  >
+                    <p className="text-xs text-slate-500 font-medium px-1">
+                      {t('chat.suggestionsLabel', 'Conversation starters:')}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestions.slice(0, 4).map((suggestion, sidx) => (
+                        <Button
+                          key={sidx}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSend(suggestion)}
+                          className="rounded-xl border-blue-100 text-blue-600 bg-white hover:bg-blue-50 text-xs py-2 h-auto"
+                        >
+                          {suggestion}
+                        </Button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )} */}
+              </React.Fragment>
             ))}
           </AnimatePresence>
 

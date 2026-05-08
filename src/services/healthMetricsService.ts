@@ -7,7 +7,12 @@
 import { logger } from '@/utils/logger';
 
 const HEALTH_BASE_PATH = '/api/admin/health';
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
+const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_ADMIN_API_BASE_URL ||
+  DEFAULT_API_BASE_URL
+).trim();
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) return path;

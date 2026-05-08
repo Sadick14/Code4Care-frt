@@ -33,16 +33,26 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { RealAnalyticsService } from '@/services/realAnalyticsService';
-import { ReportOrchestrationService } from '@/services';
 import { generateAnalyticsExcelReport } from '@/utils/excelExporter';
 import { logger } from '@/utils/logger';
 import { generateReportFromAnalytics } from '@/utils/pdfReportGenerator';
+import { getNumber, getString } from '@/utils/analyticsUtils';
+import { formatLocaleLabel } from '@/utils/labelUtils';
 
 interface AdminReportsProps {
   selectedLanguage: string;
 }
 
 type ReportType = 'overview' | 'activity' | 'demographics' | 'safety' | 'performance' | 'full';
+type TrendRow = {
+  date?: string;
+  engagements?: number;
+  totalMessages?: number;
+  satisfactionAverage?: number;
+  uniqueUsers?: number;
+};
+
+type TableRow = Record<string, string | number>;
 
 const CHART_COLORS = ['#0048ff', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'];
 
@@ -93,6 +103,7 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
   const [reportType, setReportType] = useState<ReportType>('overview');
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  void isLoading;
 
   useEffect(() => {
     let mounted = true;
@@ -100,19 +111,12 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
     const loadAnalytics = async () => {
       setIsLoading(true);
       try {
-        const data = await RealAnalyticsService.getDashboardSummary(
-          { period: 'month' },
-          accessToken
-        );
-        if (mounted) {
-          setAnalyticsData(data);
-        }
+        const data = await RealAnalyticsService.getAggregatedReportData({ period: 'month' }, accessToken);
+        if (mounted) setAnalyticsData(data);
       } catch (error) {
         logger.error('Failed to load analytics for report', error);
       } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
+        if (mounted) setIsLoading(false);
       }
     };
 
@@ -174,77 +178,107 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
     },
   ];
 
+  const safetyTotal = useMemo(() => {
+    if (!analyticsData) return 0;
+
+    return (
+      getNumber(analyticsData?.safety, 'panic_exits_total', 'panicExitsTotal', 'panic_exits') +
+      getNumber(analyticsData?.safety, 'crisis_interventions', 'crisisInterventions', 'crisisInterventionsTriggered', 'crisis_interventions_triggered') +
+      getNumber(analyticsData?.safety, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected') +
+      getNumber(analyticsData?.safety, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation') +
+      getNumber(analyticsData?.safety, 'abuse_mentions', 'abuseMentionsDetected', 'abuse_mentions_detected') +
+      getNumber(analyticsData?.safety, 'risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated') +
+      getNumber(analyticsData?.safety, 'concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up')
+    );
+  }, [analyticsData]);
+
   const kpis = useMemo(() => {
     if (!analyticsData) return [];
     
-    const totalEngagements = analyticsData.summary?.conversations_in_period ?? 0;
-    const totalMessages = analyticsData.summary?.messages_in_period ?? 0;
-    const avgSatisfaction = '4.2';
+    let totalEngagements = getNumber(analyticsData?.summary, 'conversations_in_period', 'conversationsInPeriod');
+    let totalMessages = getNumber(analyticsData?.summary, 'messages_in_period', 'messagesInPeriod');
+    let avgSatisfaction = '0.0';
+
+    // Fallback to trends aggregation when summary fields are missing
+    const trends = analyticsData.trends || [];
+    if (!totalEngagements && trends.length > 0) {
+      totalEngagements = trends.reduce((sum: number, item: any) => sum + (item.engagements ?? item.engagement_count ?? 0), 0);
+    }
+    if (!totalMessages && trends.length > 0) {
+      totalMessages = trends.reduce((sum: number, item: any) => sum + (item.totalMessages ?? item.total_messages ?? 0), 0);
+    }
+    if (trends.length > 0) {
+      const satSum = trends.reduce((sum: number, item: any) => sum + (item.satisfactionAverage ?? item.satisfaction_average ?? 0), 0);
+      avgSatisfaction = ((satSum / trends.length) || 0).toFixed(1);
+    } else {
+      avgSatisfaction = (getNumber(analyticsData?.summary, 'avg_satisfaction', 'averageSatisfaction') || 0).toFixed(1);
+    }
 
     if (reportType === 'overview' || reportType === 'full') {
-      return [
-        { label: 'Active Users', value: analyticsData.demographics.totalActiveUsers, icon: Users, color: 'text-blue-600' },
-        { label: 'Total Engagements', value: totalEngagements, icon: Activity, color: 'text-purple-600' },
-        { label: 'System Uptime', value: `${analyticsData.performance.systemUptime}%`, icon: TrendingUp, color: 'text-green-600' },
-        { label: 'Safety Alerts', value: analyticsData.safety.panicExitsTotal + analyticsData.safety.crisisInterventionsTriggered, icon: ShieldAlert, color: 'text-red-600' },
-      ];
+        return [
+            { label: 'Active Users', value: getNumber(analyticsData?.demographics, 'totalActiveUsers', 'total_active_users', 'activeUsers', 'active_users'), icon: Users, color: 'text-blue-600' },
+            { label: 'Total Engagements', value: totalEngagements, icon: Activity, color: 'text-purple-600' },
+            { label: 'System Uptime', value: `${getNumber(analyticsData?.performance, 'systemUptime', 'system_uptime_percent', 'uptime_percent')}%`, icon: TrendingUp, color: 'text-green-600' },
+            { label: 'Safety Alerts', value: safetyTotal, icon: ShieldAlert, color: 'text-red-600' },
+          ];
     }
 
     if (reportType === 'activity') {
-      return [
+        return [
         { label: 'Total Engagements', value: totalEngagements, icon: Activity, color: 'text-blue-600' },
         { label: 'Total Messages', value: totalMessages, icon: MessageSquare, color: 'text-purple-600' },
-        { label: 'New Users Today', value: analyticsData.demographics.newUsersToday, icon: TrendingUp, color: 'text-green-600' },
+        { label: 'New Users Today', value: getNumber(analyticsData?.demographics, 'newUsersToday', 'new_users_today', 'new_users_total'), icon: TrendingUp, color: 'text-green-600' },
         { label: 'Avg Satisfaction', value: `${avgSatisfaction}/5`, icon: HeartPulse, color: 'text-pink-600' },
       ];
     }
 
     if (reportType === 'demographics') {
-      return [
-        { label: 'Active Users', value: analyticsData.demographics.totalActiveUsers, icon: Users, color: 'text-blue-600' },
-        { label: 'Returning Users', value: analyticsData.demographics.returningUsers, icon: TrendingUp, color: 'text-green-600' },
-        { label: 'Top Age Segment', value: '15-19', icon: BarChart3, color: 'text-indigo-600' },
-        { label: 'Top Language', value: 'English', icon: FileText, color: 'text-cyan-600' },
+        return [
+        { label: 'Active Users', value: getNumber(analyticsData?.demographics, 'totalActiveUsers', 'total_active_users', 'activeUsers', 'active_users'), icon: Users, color: 'text-blue-600' },
+        { label: 'Returning Users', value: getNumber(analyticsData?.demographics, 'returningUsers', 'returning_users'), icon: TrendingUp, color: 'text-green-600' },
+        { label: 'Top Age Segment', value: getString(analyticsData?.demographics, 'topAgeSegment', 'top_age_segment') || '15-19', icon: BarChart3, color: 'text-indigo-600' },
+        { label: 'Top Language', value: getString(analyticsData?.demographics, 'topLanguage', 'top_language') || 'English', icon: FileText, color: 'text-cyan-600' },
       ];
     }
 
     if (reportType === 'performance') {
       return [
-        { label: 'Response Time', value: `${analyticsData.performance.avgResponseTime} ms`, icon: TrendingUp, color: 'text-blue-600' },
-        { label: 'System Uptime', value: `${analyticsData.performance.systemUptime}%`, icon: Activity, color: 'text-green-600' },
-        { label: 'Success Rate', value: `${analyticsData.performance.messageProcessingSuccess}%`, icon: MessageSquare, color: 'text-purple-600' },
-        { label: 'Errors', value: analyticsData.performance.crashesOrErrors, icon: TriangleAlert, color: 'text-red-600' },
+        { label: 'Response Time', value: `${getNumber(analyticsData?.performance, 'avgResponseTime', 'avg_response_time_ms', 'response_time_ms')} ms`, icon: TrendingUp, color: 'text-blue-600' },
+        { label: 'System Uptime', value: `${getNumber(analyticsData?.performance, 'systemUptime', 'system_uptime_percent', 'uptime_percent')}%`, icon: Activity, color: 'text-green-600' },
+        { label: 'Success Rate', value: `${getNumber(analyticsData?.performance, 'messageProcessingSuccess', 'message_processing_success_percent', 'success_rate')}%`, icon: MessageSquare, color: 'text-purple-600' },
+        { label: 'Errors', value: getNumber(analyticsData?.performance, 'crashesOrErrors', 'crashes_or_errors'), icon: TriangleAlert, color: 'text-red-600' },
       ];
     }
 
     return [
-      { label: 'Panic Exits', value: analyticsData.safety.panicExitsTotal, icon: TriangleAlert, color: 'text-yellow-600' },
-      { label: 'Crisis Interventions', value: analyticsData.safety.crisisInterventionsTriggered, icon: ShieldAlert, color: 'text-red-600' },
-      { label: 'Escalated Risks', value: analyticsData.safety.risksEscalatedToHuman, icon: TriangleAlert, color: 'text-orange-600' },
-      { label: 'Users Followed Up', value: analyticsData.safety.concernedUsersFollowedUp, icon: HeartPulse, color: 'text-blue-600' },
+      { label: 'Panic Exits', value: getNumber(analyticsData?.safety, 'panicExitsTotal', 'panic_exits_total', 'panic_exits'), icon: TriangleAlert, color: 'text-yellow-600' },
+      { label: 'Crisis Interventions', value: getNumber(analyticsData?.safety, 'crisisInterventionsTriggered', 'crisis_interventions_triggered', 'crisis_interventions'), icon: ShieldAlert, color: 'text-red-600' },
+      { label: 'Escalated Risks', value: getNumber(analyticsData?.safety, 'risksEscalatedToHuman', 'risks_escalated_to_human'), icon: TriangleAlert, color: 'text-orange-600' },
+      { label: 'Users Followed Up', value: getNumber(analyticsData?.safety, 'concernedUsersFollowedUp', 'concerned_users_followed_up'), icon: HeartPulse, color: 'text-blue-600' },
     ];
   }, [analyticsData, reportType]);
 
   const tableRows = useMemo(() => {
     if (!analyticsData) return [];
 
-    const totalEngagements = analyticsData.trends?.reduce((sum, item) => sum + item.engagements, 0) ?? 0;
-    const totalMessages = analyticsData.trends?.reduce((sum, item) => sum + item.totalMessages, 0) ?? 0;
-    const avgSatisfaction = analyticsData.trends?.length
+    const trends = (analyticsData.trends ?? []) as TrendRow[];
+    const totalEngagements = trends.reduce((sum: number, item: TrendRow) => sum + (item.engagements ?? 0), 0);
+    const totalMessages = trends.reduce((sum: number, item: TrendRow) => sum + (item.totalMessages ?? 0), 0);
+    const avgSatisfaction = trends.length
       ? (
-          (analyticsData.trends?.reduce((sum, item) => sum + item.satisfactionAverage, 0) ?? 0) /
-          (analyticsData.trends?.length ?? 1)
+          trends.reduce((sum: number, item: TrendRow) => sum + (item.satisfactionAverage ?? 0), 0) /
+          trends.length
         ).toFixed(1)
       : '0.0';
 
     if (reportType === 'activity') {
-      return analyticsData.trends?.map((item) => ({
-        Date: item.date,
-        Engagements: item.engagements,
-        Users: item.uniqueUsers,
-        Messages: item.totalMessages,
-        Satisfaction: item.satisfactionAverage,
-      })) ?? [];
+      return trends.map((item: TrendRow) => ({
+        Date: item.date ?? '',
+        Engagements: item.engagements ?? 0,
+        Users: item.uniqueUsers ?? 0,
+        Messages: item.totalMessages ?? 0,
+        Satisfaction: item.satisfactionAverage ?? 0,
+      })) as TableRow[];
     }
 
     if (reportType === 'demographics') {
@@ -256,9 +290,9 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
       }));
       const regionData = Object.entries(analyticsData.demographics?.regions ?? {}).map(([region, total]: [string, any]) => ({
         'Type': 'Region',
-        'Category': region,
-        Users: total,
-        Percentage: `${Math.round((total / (analyticsData.demographics?.totalActiveUsers ?? 1)) * 100)}%`,
+        'Category': formatLocaleLabel(region, 'en'),
+        Users: typeof total === 'object' ? ((total.count ?? total.value ?? Number(total)) || 0) : total,
+        Percentage: `${Math.round(((typeof total === 'object' ? ((total.count ?? total.value ?? Number(total)) || 0) : total) / (analyticsData.demographics?.totalActiveUsers ?? 1)) * 100)}%`,
       }));
       return [...ageData, ...regionData];
     }
@@ -278,7 +312,7 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
         { Section: 'Overview', Metric: 'Active Users', Value: analyticsData.demographics?.totalActiveUsers ?? 0, Details: 'Summary user base' },
         { Section: 'Activity', Metric: 'Total Engagements', Value: totalEngagements, Details: `${totalMessages} messages, avg satisfaction ${avgSatisfaction}/5` },
         { Section: 'Demographics', Metric: 'Returning Users', Value: analyticsData.demographics?.returningUsers ?? 0, Details: 'Selected user retention snapshot' },
-        { Section: 'Safety', Metric: 'Panic Exits', Value: analyticsData.safety?.panicExitsTotal ?? 0, Details: 'Escalations and follow-ups included in JSON export' },
+        { Section: 'Safety', Metric: 'Total Safety Events', Value: safetyTotal, Details: 'Panic exits, crisis interventions, mentions, escalations, and follow-ups included in JSON export' },
         { Section: 'Performance', Metric: 'System Uptime', Value: `${analyticsData.performance?.systemUptime ?? 0}%`, Details: `Response time ${analyticsData.performance?.avgResponseTime ?? 0} ms` },
         { Section: 'Insights', Metric: 'Top Insight', Value: analyticsData.adminInsights?.[0]?.title ?? 'No insight available', Details: analyticsData.adminInsights?.[0]?.description ?? 'No insight available' },
       ];
@@ -362,29 +396,6 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
     logger.info(`Excel report exported: ${filename}`);
   };
 
-  const handleGenerateTemplateReport = async (templateId: string) => {
-    try {
-      const template = ReportOrchestrationService.getReportTemplate(templateId);
-      if (!template) {
-        logger.error(`Template not found: ${templateId}`);
-        return;
-      }
-
-      await ReportOrchestrationService.generateAndExport(
-        {
-          type: template.type,
-          period: 'month',
-          format: template.defaultFormat,
-        },
-        accessToken
-      );
-
-      logger.info(`Generated report from template: ${template.name}`);
-    } catch (error) {
-      logger.error('Failed to generate template report', error);
-    }
-  };
-
   const ageChartData = analyticsData ? Object.entries(analyticsData.demographics?.ageRange ?? {}).map(([name, value]: [string, any]) => ({
     name,
     value,
@@ -396,7 +407,7 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
   })) : [];
 
   const overviewChartData = analyticsData ? [
-    { name: 'Engagements', value: analyticsData.trends?.reduce((sum, item) => sum + item.engagements, 0) ?? 0 },
+    { name: 'Engagements', value: (analyticsData.trends ?? []).reduce((sum: number, item: TrendRow) => sum + (item.engagements ?? 0), 0) },
     { name: 'Active Users', value: analyticsData.demographics?.totalActiveUsers ?? 0 },
     { name: 'Safety Events', value: (analyticsData.safety?.panicExitsTotal ?? 0) + (analyticsData.safety?.crisisInterventionsTriggered ?? 0) },
     { name: 'Uptime', value: Math.round(analyticsData.performance?.systemUptime ?? 0) },
@@ -675,11 +686,11 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
               </tr>
             </thead>
             <tbody>
-              {tableRows.map((row, idx) => (
+              {(tableRows as TableRow[]).map((row: TableRow, idx: number) => (
                 <tr key={idx} className="border-b border-[#E8ECFF] last:border-0 hover:bg-gray-50">
                   {Object.values(row).map((value, valueIdx) => (
                     <td key={valueIdx} className="py-2 px-3 text-gray-700">
-                      {value}
+                      {String(value)}
                     </td>
                   ))}
                 </tr>
@@ -692,7 +703,7 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
       <Card className="p-6 bg-white border-[#E8ECFF]">
         <h3 className="font-semibold text-gray-900 mb-4">Recommended Insights</h3>
         <div className="grid grid-cols-2 gap-4">
-          {analyticsData.adminInsights.slice(0, 4).map((insight) => (
+          {(analyticsData?.adminInsights ?? []).slice(0, 4).map((insight: any) => (
             <div key={insight.id} className="rounded-xl border border-[#E8ECFF] bg-[#f8fbff] p-4">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <p className="font-semibold text-gray-900 text-sm">{insight.title}</p>

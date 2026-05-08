@@ -1,0 +1,10 @@
+{
+  "name": "get-started-screen",
+  "version": "1.0.0",
+  "description": "Mobile onboarding screen for confidential support app",
+  "type": "module",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "build": "echo 'Ready to serve'"
+  }
+}

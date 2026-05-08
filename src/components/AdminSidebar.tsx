@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { BarChart3, Users, BookOpen, Shield, LogOut, Menu, X, TrendingUp, AlertCircle, FileText, Database } from 'lucide-react';
+import { BarChart3, Users, LogOut, X, AlertCircle, FileText, Database } from 'lucide-react';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
@@ -26,7 +25,7 @@ export function AdminSidebar({
     { id: 'dashboard' as AdminSection, label: 'Analytics Dashboard', icon: BarChart3, desc: 'View metrics & insights' },
     { id: 'users' as AdminSection, label: 'User Management', icon: Users, desc: 'Manage user accounts' },
     { id: 'safety' as AdminSection, label: 'Safety & Crisis', icon: AlertCircle, desc: 'Monitor incidents' },
-    { id: 'reports' as AdminSection, label: 'Reports', icon: FileText, desc: 'Generate reports' },
+    //{ id: 'reports' as AdminSection, label: 'Reports', icon: FileText, desc: 'Generate reports' },
     { id: 'health' as AdminSection, label: 'System Health', icon: Database, desc: 'Technical metrics' },
   ];
 

@@ -15,7 +15,7 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
-const CHATBOT_AVATAR_SRC = "/chatbot.jpg";
+const CHATBOT_AVATAR_SRC = "/logo/3.png";
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   currentSection, 
@@ -71,11 +71,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                </div>
             </div>
           </div>
-          {onClose && (
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 rounded-xl" onClick={onClose}>
-              <X className="w-5 h-5" />
-            </Button>
-          )}
         </div>
       </div>
 
@@ -171,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-6 bg-sidebar-accent/60 mt-auto border-t border-sidebar-border">
         <div className="flex items-center gap-2 text-sidebar-foreground/60 text-[10px] font-bold uppercase tracking-widest">
           <Sparkles className="w-3 h-3 text-sidebar-primary" />
-            Powered by PPAG
+            Powered by DKT Ghana
          </div>
       </div>
     </div>

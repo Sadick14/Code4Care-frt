@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
-import { Heart, Shield, MessageCircle, Sparkles, ChevronRight, ChevronLeft, Bot } from "lucide-react";
+import { Sparkles, ChevronLeft, Bot } from "lucide-react";
 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -17,19 +17,14 @@ interface OnboardingScreenProps {
 
 export default function OnboardingScreen({ onComplete, sessionId, language = 'en' }: OnboardingScreenProps) {
   const { t, i18n } = useTranslation();
-  // Welcome screen is intentionally disabled for now.
-  const [currentPage, setCurrentPage] = useState(1);
+  // Start at bot-name step.
+  const [currentPage, setCurrentPage] = useState(2);
   const [botName, setBotName] = useState("");
   const [ageRange, setAgeRange] = useState("");
   const [genderIdentity, setGenderIdentity] = useState("");
   const [region, setRegion] = useState("");
 
   const handleContinue = async () => {
-    if (currentPage === 1) {
-      setCurrentPage(2);
-      return;
-    }
-
     if (currentPage === 2) {
       setCurrentPage(3);
       return;
@@ -73,7 +68,7 @@ export default function OnboardingScreen({ onComplete, sessionId, language = 'en
   };
 
   const handleBack = () => {
-    if (currentPage > 1) {
+    if (currentPage > 2) {
       setCurrentPage((prev) => prev - 1);
     }
   };
@@ -113,94 +108,10 @@ export default function OnboardingScreen({ onComplete, sessionId, language = 'en
 
   const canSubmitDemographics = Boolean(ageRange && genderIdentity && region);
 
-  const features = [
-    { icon: Shield, title: t("onboarding.page1.features.anonymous.title"), desc: t("onboarding.page1.features.anonymous.desc") },
-    { icon: MessageCircle, title: t("onboarding.page1.features.expert.title"), desc: t("onboarding.page1.features.expert.desc") },
-    { icon: Heart, title: t("onboarding.page1.features.youth.title"), desc: t("onboarding.page1.features.youth.desc") },
-  ];
-
   return (
     <div className="h-[100dvh] sm:min-h-screen flex items-center justify-center px-3 py-3 sm:px-3 sm:py-4 sm:p-4 overflow-y-auto">
       <AnimatePresence mode="wait">
-        {currentPage === 0 ? (
-          <motion.div
-            key="page0"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none sm:min-h-[680px] bg-white rounded-3xl shadow-2xl p-5 sm:p-8 flex flex-col overflow-y-auto"
-          >
-            <div className="relative z-20 text-center mb-6">
-              <p className="text-sm font-semibold tracking-wide uppercase text-blue-500 mb-3">
-                {t("onboarding.welcome.tag", "Room 1221")}
-              </p>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-                {t("onboarding.welcome.title", "Your safe space starts here")}
-              </h1>
-              <p className="text-gray-500">
-                {t("onboarding.welcome.subtitle", "Private, supportive guidance made for you.")}
-              </p>
-            </div>
-
-            <div className="relative z-10 mb-8 sm:mb-10 flex-1 flex items-center">
-              <div className="mx-auto w-full max-w-sm h-64 sm:h-72 rounded-3xl bg-gradient-to-b from-blue-50 to-white border border-blue-100 flex items-center justify-center relative overflow-visible">
-                <div className="absolute -top-4 -left-4 sm:-top-6 sm:-left-6 w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-blue-100/70" />
-                <div className="absolute -bottom-5 -right-5 sm:-bottom-8 sm:-right-8 w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-emerald-100/70" />
-                <img
-                  src="/chatbot.jpg"
-                  alt={t("onboarding.welcome.imageAlt", "Welcome illustration")}
-                  className="absolute z-0 left-1/2 -translate-x-1/2 -bottom-6 sm:-bottom-10 w-[min(85vw,24rem)] sm:w-[30rem] h-auto max-h-[14rem] sm:max-h-[19rem] object-contain drop-shadow-2xl"
-                />
-                <Sparkles className="absolute top-4 right-4 sm:top-5 sm:right-5 w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
-              </div>
-            </div>
-
-            <Button onClick={handleContinue} className="relative z-20 w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg">
-              {t("onboarding.welcome.cta", "Get Started")}
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1" />
-            </Button>
-          </motion.div>
-        ) : currentPage === 1 ? (
-          <motion.div
-            key="page1"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, x: -50 }}
-            className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none bg-white rounded-3xl shadow-2xl p-5 sm:p-8 overflow-y-auto"
-          >
-            {/* <Button onClick={handleBack} variant="ghost" className="mb-4 h-10 rounded-xl text-gray-600 hover:text-gray-900 w-fit px-3">
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              {t("common.back", "Back")}
-            </Button> */}
-
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
-                <Shield className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">{t("onboarding.page1.title")}</h1>
-              <p className="text-gray-500">{t("onboarding.page1.subtitle")}</p>
-            </div>
-
-            <div className="space-y-6 mb-8">
-              {features.map((f, i) => (
-                <div key={i} className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <f.icon className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{f.title}</h3>
-                    <p className="text-sm text-gray-500">{f.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg">
-              {t("onboarding.page1.next")}
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1" />
-            </Button>
-          </motion.div>
-        ) : currentPage === 2 ? (
+        {currentPage === 2 ? (
           <motion.div
             key="page2"
             initial={{ opacity: 0, x: 50 }}
@@ -208,11 +119,6 @@ export default function OnboardingScreen({ onComplete, sessionId, language = 'en
             exit={{ opacity: 0, scale: 0.9 }}
             className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none bg-white rounded-3xl shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
-            <Button onClick={handleBack} variant="ghost" className="mb-4 h-10 rounded-xl text-gray-600 hover:text-gray-900 w-fit px-3">
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              {t("common.back", "Back")}
-            </Button>
-
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-100 relative">
                 <Bot className="w-8 h-8 text-white" />

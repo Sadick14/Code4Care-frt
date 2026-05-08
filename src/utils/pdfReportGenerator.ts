@@ -4,6 +4,7 @@
  */
 
 import jsPDF from 'jspdf';
+import { getNumber, getNested } from '@/utils/analyticsUtils';
 
 export interface PDFReportData {
   title: string;
@@ -193,24 +194,24 @@ export function generateReportFromAnalytics(
 
   // Activity section
   if (reportType === 'activity' || reportType === 'overview' || reportType === 'full') {
-    const totalEngagements = analyticsData.trends?.reduce(
-      (sum: number, item: any) => sum + (item.engagements || 0),
+    const totalEngagements = (analyticsData.trends || []).reduce(
+      (sum: number, item: any) => sum + (item.engagements ?? item.engagement_count ?? 0),
       0
-    ) || 0;
-    const totalMessages = analyticsData.trends?.reduce(
-      (sum: number, item: any) => sum + (item.totalMessages || 0),
+    );
+    const totalMessages = (analyticsData.trends || []).reduce(
+      (sum: number, item: any) => sum + (item.totalMessages ?? item.total_messages ?? 0),
       0
-    ) || 0;
+    );
 
     sections.push({
       title: 'User Activity',
       content: `During the reporting period, the system processed ${totalEngagements} user engagements with a total of ${totalMessages} messages exchanged. The platform demonstrated consistent engagement patterns with growing user retention rates.`,
-      data: analyticsData.trends?.slice(0, 7).map((trend: any) => ({
+        data: (analyticsData.trends || []).slice(0, 7).map((trend: any) => ({
         Date: trend.date,
-        Engagements: trend.engagements,
-        Users: trend.uniqueUsers,
-        Messages: trend.totalMessages,
-        Satisfaction: (trend.satisfactionAverage || 0).toFixed(2),
+        Engagements: trend.engagements ?? trend.engagement_count ?? 0,
+        Users: trend.uniqueUsers ?? trend.unique_users ?? 0,
+        Messages: trend.totalMessages ?? trend.total_messages ?? 0,
+        Satisfaction: String((trend.satisfactionAverage ?? trend.satisfaction_average ?? 0).toFixed ? (trend.satisfactionAverage ?? trend.satisfaction_average ?? 0).toFixed(2) : Number(trend.satisfactionAverage ?? trend.satisfaction_average ?? 0).toFixed(2)),
       })),
     });
   }
@@ -220,12 +221,12 @@ export function generateReportFromAnalytics(
     sections.push({
       title: 'User Demographics',
       content: `User base analysis shows diverse demographic distribution. The system serves users across multiple age ranges and geographic regions, with strong representation from key demographic segments.`,
-      data: Object.entries(analyticsData.demographics?.ageRange || {})
+      data: Object.entries(getNested(analyticsData, 'demographics', 'ageRange') || {})
         .slice(0, 5)
         .map(([ageRange, total]: [string, any]) => ({
           Category: ageRange,
           Users: total,
-          Percentage: `${Math.round((total / (analyticsData.demographics?.totalActiveUsers || 1)) * 100)}%`,
+          Percentage: `${Math.round((Number(total) / (getNumber(getNested(analyticsData, 'demographics') as Record<string, any>, 'totalActiveUsers', 'total_active_users') || 1)) * 100)}%`,
         })),
     });
   }
@@ -233,17 +234,17 @@ export function generateReportFromAnalytics(
   // Safety section
   if (reportType === 'safety' || reportType === 'overview' || reportType === 'full') {
     const totalSafetyEvents =
-      (analyticsData.safety?.panicExitsTotal || 0) +
-      (analyticsData.safety?.crisisInterventionsTriggered || 0);
+      (getNumber(getNested(analyticsData, 'safety') as Record<string, any>, 'panicExitsTotal', 'panic_exits_total', 'panic_exits') || 0) +
+      (getNumber(getNested(analyticsData, 'safety') as Record<string, any>, 'crisisInterventionsTriggered', 'crisis_interventions_triggered', 'crisis_interventions') || 0);
 
     sections.push({
       title: 'Safety & Incidents',
       content: `The platform recorded ${totalSafetyEvents} safety-related events requiring intervention. All incidents were handled according to established safety protocols with appropriate escalations and follow-ups.`,
-      data: [
-        { Metric: 'Panic Exits', Value: analyticsData.safety?.panicExitsTotal || 0 },
-        { Metric: 'Crisis Interventions', Value: analyticsData.safety?.crisisInterventionsTriggered || 0 },
-        { Metric: 'Escalated Risks', Value: analyticsData.safety?.risksEscalatedToHuman || 0 },
-        { Metric: 'Followed Up', Value: analyticsData.safety?.concernedUsersFollowedUp || 0 },
+        data: [
+        { Metric: 'Panic Exits', Value: getNumber(getNested(analyticsData, 'safety') as Record<string, any>, 'panicExitsTotal', 'panic_exits_total', 'panic_exits') },
+        { Metric: 'Crisis Interventions', Value: getNumber(getNested(analyticsData, 'safety') as Record<string, any>, 'crisisInterventionsTriggered', 'crisis_interventions_triggered', 'crisis_interventions') },
+        { Metric: 'Escalated Risks', Value: getNumber(getNested(analyticsData, 'safety') as Record<string, any>, 'risksEscalatedToHuman', 'risks_escalated_to_human') },
+        { Metric: 'Followed Up', Value: getNumber(getNested(analyticsData, 'safety') as Record<string, any>, 'concernedUsersFollowedUp', 'concerned_users_followed_up') },
       ],
     });
   }
@@ -254,24 +255,24 @@ export function generateReportFromAnalytics(
       title: 'System Performance',
       content: `System performance metrics indicate stable and reliable operations. Response times remained consistently low with high uptime percentages ensuring uninterrupted user access.`,
       data: [
-        { Metric: 'Response Time', Value: `${analyticsData.performance?.avgResponseTime || 150} ms` },
-        { Metric: 'System Uptime', Value: `${analyticsData.performance?.systemUptime || 99.9}%` },
-        { Metric: 'Success Rate', Value: `${analyticsData.performance?.messageProcessingSuccess || 99.8}%` },
-        { Metric: 'Total Errors', Value: analyticsData.performance?.crashesOrErrors || 0 },
+        { Metric: 'Response Time', Value: `${getNumber(analyticsData?.performance, 'avgResponseTime', 'avg_response_time_ms', 'response_time_ms') || 150} ms` },
+        { Metric: 'System Uptime', Value: `${getNumber(analyticsData?.performance, 'systemUptime', 'system_uptime_percent', 'uptime_percent') || 99.9}%` },
+        { Metric: 'Success Rate', Value: `${getNumber(analyticsData?.performance, 'messageProcessingSuccess', 'message_processing_success_percent', 'success_rate') || 99.8}%` },
+        { Metric: 'Total Errors', Value: getNumber(analyticsData?.performance, 'crashesOrErrors', 'crashes_or_errors') || 0 },
       ],
     });
   }
 
   // Generate KPIs
   const kpis = [];
-  if (analyticsData.demographics?.totalActiveUsers) {
-    kpis.push({ label: 'Active Users', value: analyticsData.demographics.totalActiveUsers });
+  if (getNumber(getNested(analyticsData, 'demographics') as Record<string, any>, 'totalActiveUsers', 'total_active_users') > 0) {
+    kpis.push({ label: 'Active Users', value: getNumber(getNested(analyticsData, 'demographics') as Record<string, any>, 'totalActiveUsers', 'total_active_users') });
   }
-  if (analyticsData.summary?.conversations_in_period) {
-    kpis.push({ label: 'Total Engagements', value: analyticsData.summary.conversations_in_period });
+  if (getNumber(getNested(analyticsData, 'summary') as Record<string, any>, 'conversations_in_period', 'conversationsInPeriod') > 0) {
+    kpis.push({ label: 'Total Engagements', value: getNumber(getNested(analyticsData, 'summary') as Record<string, any>, 'conversations_in_period', 'conversationsInPeriod') });
   }
-  if (analyticsData.performance?.systemUptime) {
-    kpis.push({ label: 'System Uptime', value: `${analyticsData.performance.systemUptime}%` });
+  if (getNumber(analyticsData?.performance, 'systemUptime', 'system_uptime_percent') > 0) {
+    kpis.push({ label: 'System Uptime', value: `${getNumber(analyticsData?.performance, 'systemUptime', 'system_uptime_percent')}%` });
   }
 
   generatePDFReport(

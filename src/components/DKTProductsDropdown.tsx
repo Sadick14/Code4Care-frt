@@ -4,6 +4,7 @@ import {
   Droplets,
   HeartPulse,
   MapPin,
+  PhoneCall,
   Pill,
   Search,
   ShieldCheck,
@@ -60,24 +61,30 @@ export function DKTProducts() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-4 sm:space-y-6">
     
 
       {/* Search and Filter */}
-      <Card className="p-4 md:p-5 border-[#D8E7FF] rounded-2xl bg-white shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mb-4">
+      <Card className="p-4 sm:p-5 border-[#D8E7FF] rounded-2xl bg-white shadow-sm">
+        <div className="space-y-3 sm:space-y-4 mb-4">
+          <div>
+            <h3 className="text-base font-semibold text-[#1D3D79]">Search DKT products</h3>
+            <p className="text-xs sm:text-sm text-[#5F7CB3] mt-1">
+              Filter products by name, use, or category to find the right option faster.
+            </p>
+          </div>
           <div className="relative">
-            <Search className="w-4 h-4 text-[#6C88BE] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#6C88BE] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products, uses, or benefits..."
-              className="h-11 rounded-xl border-[#CFE0FF] pl-9"
+              className="h-11 rounded-xl border-[#CFE0FF] pl-12 pr-3 bg-white"
             />
           </div>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex flex-wrap gap-2">
           {categories.map((category) => {
             const active = selectedCategory === category;
             const meta = category === "all" ? null : CATEGORY_META[category];
@@ -87,13 +94,13 @@ export function DKTProducts() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
+                className={`inline-flex items-center whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
                   active
                     ? "border-[#0048ff] bg-[#0048ff] text-white"
                     : "border-[#D1E3FF] bg-[#F7FAFF] text-[#45639E] hover:border-[#90B3FF]"
                 }`}
               >
-                <span className="inline-flex items-center gap-2">
+                <span className="inline-flex items-center gap-2 leading-none">
                   <CategoryIcon className="h-4 w-4" />
                   {category === "all" ? "All Products" : meta?.label || category}
                 </span>
@@ -120,11 +127,11 @@ export function DKTProducts() {
                   onClick={() => toggleProduct(product.id)}
                   className="cursor-pointer border-[#D8E7FF] hover:border-[#0048ff] transition-all rounded-2xl overflow-hidden group"
                 >
-                  <div className="p-4 md:p-5">
+                  <div className="p-4 sm:p-5">
                     {/* Product Header */}
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                           <Badge className="inline-flex items-center gap-1.5 bg-blue-100 text-blue-700 border-blue-200">
                             {(() => {
                               const BadgeIcon = CATEGORY_META[product.category]?.icon ?? ShoppingBag;
@@ -136,15 +143,15 @@ export function DKTProducts() {
                             {product.availability}
                           </span>
                         </div>
-                        <h3 className="text-lg font-bold text-[#0F2A6B] group-hover:text-[#0048ff] transition-colors">
+                        <h3 className="text-base sm:text-lg font-bold text-[#0F2A6B] group-hover:text-[#0048ff] transition-colors break-words">
                           {product.name}
                         </h3>
-                        <p className="text-sm text-gray-600 mt-1">{product.description}</p>
+                        <p className="text-sm text-gray-600 mt-1 leading-relaxed">{product.description}</p>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="text-right">
+                      <div className="flex flex-row sm:flex-col items-start sm:items-end justify-between sm:justify-start gap-3 sm:gap-2">
+                        <div className="text-left sm:text-right">
                           <p className="text-xs text-gray-500">Price Range</p>
-                          <p className="text-sm font-bold text-emerald-600">{product.priceRange}</p>
+                          <p className="text-sm font-bold text-emerald-600 break-words">{product.priceRange}</p>
                         </div>
                         <ChevronDown
                           className={`w-5 h-5 text-gray-400 transition-transform ${
@@ -171,7 +178,7 @@ export function DKTProducts() {
                               {product.uses.map((use, idx) => (
                                 <span
                                   key={idx}
-                                  className="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100"
+                                  className="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100 max-w-full break-words"
                                 >
                                   ✓ {use}
                                 </span>
@@ -189,27 +196,28 @@ export function DKTProducts() {
                               {product.whereToGet.map((location, idx) => (
                                 <div
                                   key={idx}
-                                  className="flex items-center gap-2 text-sm text-gray-700 bg-orange-50 px-3 py-2 rounded-lg border border-orange-100"
+                                  className="flex items-start gap-2 text-sm text-gray-700 bg-orange-50 px-3 py-2 rounded-lg border border-orange-100"
                                 >
-                                  <MapPin className="h-4 w-4 text-orange-600" />
-                                  {location}
+                                  <MapPin className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                                  <span className="min-w-0 break-words">{location}</span>
                                 </div>
                               ))}
                             </div>
                           </div>
 
                           {/* Action Buttons */}
-                          <div className="flex gap-2 pt-2">
-                            <Button className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                            <Button className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold w-full">
                               <ShoppingBag className="w-4 h-4 mr-2" />
                               Order Now
                             </Button>
                             <Button
                               asChild
                               variant="outline"
-                              className="flex-1 h-10 rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50"
+                              className="h-10 rounded-full border-blue-200 text-blue-600 hover:bg-blue-50 w-full inline-flex items-center justify-center"
                             >
                               <a href={`tel:${supportTel}`}>
+                                <PhoneCall className="w-4 h-4 mr-2" />
                                 Call to Order
                               </a>
                             </Button>
@@ -239,34 +247,34 @@ export function DKTProducts() {
       </div>
 
       {/* Product Count */}
-      <div className="text-center py-4">
+      <div className="text-center py-2 sm:py-4">
         <p className="text-sm text-gray-600">
           Showing {filteredProducts.length} of {dktProducts.length} products
         </p>
       </div>
 
       {/* Info Banner */}
-      <Card className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 rounded-2xl">
-        <p className="text-sm text-blue-900">
+      <Card className="p-4 sm:p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 rounded-2xl">
+        <p className="text-sm text-blue-900 leading-relaxed">
           <strong>About DKT International:</strong> DKT International is a leading non-profit organization providing
           high-quality, affordable family planning and reproductive health products across Ghana and Africa.
           All products are sourced through verified channels and meet international quality standards.
         </p>
-        <p className="text-sm text-blue-900 mt-2">
+        <p className="text-sm text-blue-900 mt-2 leading-relaxed">
           <strong>Support line:</strong> {primarySupportLine?.region || "Head Office"} - {primarySupportLine?.phone || "0302772799"}
         </p>
-        <p className="text-sm text-blue-900 mt-1">
+        <p className="text-sm text-blue-900 mt-1 leading-relaxed">
           <strong>Location:</strong> {primarySupportLine?.location || "Dzorwulu, Accra"}
         </p>
-        <p className="text-sm text-blue-900 mt-1">
+        <p className="text-sm text-blue-900 mt-1 leading-relaxed">
           <strong>Email:</strong> {primarySupportLine?.email || "info@dktghana.org"}
         </p>
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {regionalSupportLines.map((line) => (
             <a
               key={`${line.region}-${line.phone}`}
               href={`tel:${line.phone}`}
-              className="text-xs text-blue-900 bg-white/70 border border-blue-200 rounded-lg px-3 py-2 hover:bg-white"
+              className="text-xs text-blue-900 bg-white/70 border border-blue-200 rounded-lg px-3 py-2 hover:bg-white break-words"
             >
               <strong>{line.region}:</strong> {line.phone}
             </a>

@@ -13,8 +13,9 @@ import {
   TableRow,
 } from './ui/table';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { SafetyIncidentService, SafetyAnalyticsResponse, SafetyTrendDataPoint, IncidentListItem } from '@/services/safetyIncidentService';
 import { RealAnalyticsService } from '@/services/realAnalyticsService';
+import { getNumber } from '@/utils/analyticsUtils';
+import { buildAdminExportFilename, downloadJsonFile } from '@/utils/adminExport';
 import { logger } from '@/utils/logger';
 
 interface AdminSafetyManagementProps {
@@ -26,66 +27,60 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
   void selectedLanguage;
   const [filterStatus, setFilterStatus] = useState<'all' | 'open' | 'in-review' | 'escalated' | 'resolved'>('all');
   const [filterSeverity, setFilterSeverity] = useState<'all' | 'low' | 'medium' | 'high' | 'critical'>('all');
-  const [incidents, setIncidents] = useState<IncidentListItem[]>([]);
-  const [safetyAnalytics, setSafetyAnalytics] = useState<SafetyAnalyticsResponse | null>(null);
-  const [trendData, setTrendData] = useState<SafetyTrendDataPoint[]>([]);
+  const [safetyAnalytics, setSafetyAnalytics] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load incidents and analytics on mount
+  // Load the same normalized analytics summary used by the reports page.
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Load from both admin incidents API and public analytics API in parallel
-        const [incidentsResponse, trendsResponse, analyticsResponse] = await Promise.all([
-          SafetyIncidentService.listIncidents({ page: 1, limit: 100 }, accessToken).catch(err => {
-            logger.warn('Failed to load admin incidents', err);
-            return { incidents: [], total: 0, page: 1, limit: 100 };
-          }),
-          SafetyIncidentService.getSafetyTrends({ period: 'week' }, accessToken).catch(err => {
-            logger.warn('Failed to load safety trends', err);
-            return [];
-          }),
-          RealAnalyticsService.getSafetyAnalytics({ period: 'week', by_region: true, by_age_group: true }, accessToken).catch(err => {
-            logger.warn('Failed to load public safety analytics', err);
-            return null;
-          }),
-        ]);
-
-        setIncidents(incidentsResponse.incidents);
-        setTrendData(trendsResponse);
+        const analyticsResponse = await RealAnalyticsService.getAggregatedReportData(
+          { period: 'week' },
+          accessToken,
+        );
         setSafetyAnalytics(analyticsResponse);
       } catch (err) {
-        logger.error('Failed to load safety data', err);
-        setError(err instanceof Error ? err.message : 'Failed to load safety data');
-        // Set empty defaults on error
-        setIncidents([]);
-        setTrendData([]);
+        logger.error('Failed to load safety summary analytics', err);
+        setError(err instanceof Error ? err.message : 'Failed to load safety analytics');
         setSafetyAnalytics(null);
       } finally {
         setIsLoading(false);
-        setIsLoadingAnalytics(false);
       }
     };
 
     void loadData();
   }, [accessToken]);
 
-  const filteredIncidents = incidents.filter(incident => {
-    const matchesStatus = filterStatus === 'all' || incident.status === filterStatus;
-    const matchesSeverity = filterSeverity === 'all' || incident.severity === filterSeverity;
-    return matchesStatus && matchesSeverity;
-  });
+  // Extract stats from analytics response
+  const safetyData = safetyAnalytics?.safety ?? safetyAnalytics?.safetyMetrics ?? {};
+  const indicatorChartData = [
+    { indicator: 'Panic Exits', count: getNumber(safetyData, 'panic_exits_total', 'panicExitsTotal', 'panic_exits') },
+    { indicator: 'Crisis Interventions', count: getNumber(safetyData, 'crisis_interventions', 'crisisInterventions', 'crisisInterventionsTriggered', 'crisis_interventions_triggered') },
+    { indicator: 'Self-Harm Mentions', count: getNumber(safetyData, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected') },
+    { indicator: 'Suicidal Ideation', count: getNumber(safetyData, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation') },
+    { indicator: 'Escalated Risks', count: getNumber(safetyData, 'risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated') },
+    { indicator: 'Follow-ups Pending', count: getNumber(safetyData, 'concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up') },
+  ];
+
+  const totalSafetyEvents = indicatorChartData.reduce((sum, item) => sum + item.count, 0);
 
   const stats = {
-    total: safetyAnalytics?.incidents.total ?? incidents.length,
-    open: incidents.filter(i => i.status === 'open').length,
-    escalated: incidents.filter(i => i.status === 'escalated').length,
-    resolved: incidents.filter(i => i.status === 'resolved').length,
-    followUpNeeded: incidents.filter(i => i.follow_up_required && i.status !== 'resolved').length,
+    total: totalSafetyEvents,
+    crisisInterventions: getNumber(safetyData, 'crisis_interventions', 'crisisInterventions', 'crisisInterventionsTriggered', 'crisis_interventions_triggered'),
+    selfHarmMentions: getNumber(safetyData, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'),
+    suicidalIdeation: getNumber(safetyData, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'),
+    escalations: getNumber(safetyData, 'risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated'),
+    followUpPending: getNumber(safetyData, 'concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up'),
+  };
+
+  const severityStats = safetyAnalytics?.severity_distribution ?? {
+    low: stats.selfHarmMentions,
+    medium: stats.crisisInterventions,
+    high: stats.escalations,
+    critical: stats.suicidalIdeation,
   };
 
   const getSeverityColor = (severity: string) => {
@@ -133,16 +128,34 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
     }
   };
 
+  const handleExport = () => {
+    downloadJsonFile(buildAdminExportFilename('safety-management'), {
+      section: 'safety-management',
+      generatedAt: new Date().toISOString(),
+      stats,
+      totalSafetyEvents,
+      severityDistribution: severityStats,
+      analytics: safetyAnalytics,
+      safetyData,
+    });
+  };
+
   return (
     <div className="space-y-6 p-6 bg-white min-h-screen">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Safety & Crisis Management</h1>
-        <p className="text-gray-500">Monitor and respond to user safety concerns and mental health crises</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">Safety & Crisis Management</h1>
+          <p className="text-gray-500">Monitor and respond to user safety concerns and mental health crises</p>
+        </div>
+        <Button variant="outline" className="gap-2 border-[#E8ECFF] hover:bg-gray-50" onClick={handleExport}>
+          <BarChart3 className="w-4 h-4" />
+          Export
+        </Button>
       </div>
 
       {/* Alert */}
-      {stats.open > 0 && (
+      {stats.crisisInterventions > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -150,7 +163,7 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
         >
           <div className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5" />
-            <span className="font-semibold">{stats.open} open incident(s) requiring immediate attention</span>
+            <span className="font-semibold">{stats.crisisInterventions} crisis intervention(s) this period</span>
           </div>
         </motion.div>
       )}
@@ -159,9 +172,9 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: 'Total Reports', value: stats.total, icon: BarChart3, iconClass: 'text-slate-600' },
-          { label: 'Open Cases', value: stats.open, icon: AlertTriangle, iconClass: 'text-red-600' },
-          { label: 'Escalated', value: stats.escalated, icon: Siren, iconClass: 'text-purple-600' },
-          { label: 'Follow-ups', value: stats.followUpNeeded, icon: BadgeCheck, iconClass: 'text-blue-600' },
+          { label: 'Crisis Interventions', value: stats.crisisInterventions, icon: Heart, iconClass: 'text-red-600' },
+          { label: 'Escalations', value: stats.escalations, icon: Siren, iconClass: 'text-purple-600' },
+          { label: 'Follow-ups Pending', value: stats.followUpPending, icon: BadgeCheck, iconClass: 'text-blue-600' },
         ].map((stat, idx) => (
           <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
             <Card className="p-4 bg-white border-[#E8ECFF]">
@@ -177,121 +190,54 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
         ))}
       </div>
 
-      {/* Trending Chart */}
+      {/* Severity Distribution Chart */}
       <Card className="p-6 bg-white border-[#E8ECFF]">
         <h3 className="text-gray-900 font-semibold mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-blue-600" />
-          Weekly Trend
+          Safety Indicators
         </h3>
         <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={trendData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-            <XAxis dataKey="day" stroke="#9CA3AF" style={{ fontSize: 12 }} />
-            <YAxis stroke="#9CA3AF" style={{ fontSize: 12 }} />
+          <BarChart data={indicatorChartData}>
+            <XAxis dataKey="indicator" stroke="#9CA3AF" style={{ fontSize: 12 }} />
             <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-            <Bar dataKey="reports" fill="#3B82F6" name="Reports" />
+            <Bar dataKey="count" fill="#EF4444" name="Count" />
           </BarChart>
         </ResponsiveContainer>
       </Card>
 
-      {/* Filters */}
-      <div className="flex gap-3">
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value as any)}
-          className="px-4 py-2 rounded-lg bg-white border border-[#E8ECFF] text-gray-900 cursor-pointer hover:border-blue-300 transition-colors"
-        >
-          <option value="all">All Status</option>
-          <option value="open">Open</option>
-          <option value="escalated">Escalated</option>
-          <option value="resolved">Resolved</option>
-        </select>
-
-        <select
-          value={filterSeverity}
-          onChange={(e) => setFilterSeverity(e.target.value as any)}
-          className="px-4 py-2 rounded-lg bg-white border border-[#E8ECFF] text-gray-900 cursor-pointer hover:border-blue-300 transition-colors"
-        >
-          <option value="all">All Severity</option>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="critical">Critical</option>
-        </select>
-
-        <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
-          <PhoneCall className="w-4 h-4" />
-          Contact Crisis Line
-        </Button>
-      </div>
-
-      {/* Incidents Table */}
-      <Card className="border-[#E8ECFF] bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-          {isLoading ? (
-            <div className="p-8 text-center text-gray-500">
-              <p>Loading incidents...</p>
-            </div>
-          ) : error ? (
-            <div className="p-8 text-center text-red-600">
-              <p>Error: {error}</p>
-            </div>
-          ) : filteredIncidents.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <p>No incidents found</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-[#E8ECFF] hover:bg-transparent">
-                  <TableHead className="text-gray-600">User</TableHead>
-                  <TableHead className="text-gray-600">Type</TableHead>
-                  <TableHead className="text-gray-600">Severity</TableHead>
-                  <TableHead className="text-gray-600">Status</TableHead>
-                  <TableHead className="text-gray-600">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredIncidents.slice(0, 8).map((incident) => (
-                  <motion.tr
-                    key={incident.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="border-[#E8ECFF] hover:bg-gray-50 transition-colors"
-                  >
-                    <TableCell className="text-gray-900 font-medium">{incident.user_name || 'Unknown'}</TableCell>
-                    <TableCell className="text-gray-900 font-medium">
-                      <div className="flex items-center gap-2">
-                        {getTypeIcon(incident.type)}
-                        <span className="text-sm">{getTypeLabel(incident.type)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`capitalize ${getSeverityColor(incident.severity)}`}>
-                        {incident.severity}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`capitalize ${getStatusColor(incident.status)}`}>
-                        {incident.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                      >
-                        Review
-                      </Button>
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+      {/* Safety Summary Card */}
+      <Card className="p-6 bg-white border-[#E8ECFF]">
+        <h3 className="text-gray-900 font-semibold mb-6 flex items-center gap-2">
+          <Shield className="w-5 h-5 text-blue-600" />
+          Safety Summary
+        </h3>
+        <div className="grid grid-cols-3 gap-6">
+          <div>
+            <div className="text-sm text-gray-600 mb-2">Self-Harm Mentions</div>
+            <div className="text-3xl font-bold text-red-600">{stats.selfHarmMentions}</div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-600 mb-2">Suicidal Ideation</div>
+            <div className="text-3xl font-bold text-orange-600">{stats.suicidalIdeation}</div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-600 mb-2">To Consultant</div>
+            <div className="text-3xl font-bold text-purple-600">{safetyAnalytics?.escalations?.to_human_consultant ?? 0}</div>
+          </div>
         </div>
       </Card>
+
+      {/* Data Status */}
+      {isLoading && (
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700">
+          <p className="text-sm">Loading safety analytics...</p>
+        </div>
+      )}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <p className="text-sm">Error loading data: {error}</p>
+        </div>
+      )}
     </div>
   );
 }

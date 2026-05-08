@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Server, Zap, AlertTriangle, CheckCircle2, TrendingUp, Database, ShieldAlert, FileText, Clock3 } from 'lucide-react';
+import { Activity, Server, Zap, AlertTriangle, CheckCircle2, TrendingUp, Database, FileText, Clock3, Download } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { motion } from 'motion/react';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
+  Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
 } from 'recharts';
 import { HealthMetricsService } from '@/services/healthMetricsService';
 import { AuditLogService } from '@/services/auditLogService';
+import { getNumber } from '@/utils/analyticsUtils';
+import { buildAdminExportFilename, downloadJsonFile } from '@/utils/adminExport';
 import { logger } from '@/utils/logger';
 
 interface SystemMetric {
@@ -22,6 +24,7 @@ interface SystemMetric {
 
 interface AdminSystemHealthProps {
   selectedLanguage: string;
+  accessToken?: string;
 }
 
 interface AuditLog {
@@ -38,7 +41,7 @@ interface PerformanceData {
   uptime: number;
 }
 
-export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) {
+export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystemHealthProps) {
   void selectedLanguage;
   const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h'>('1h');
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
@@ -55,7 +58,7 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
     const loadMetrics = async () => {
       setIsLoadingMetrics(true);
       try {
-        const metrics = await HealthMetricsService.getHealthMetrics();
+        const metrics = await HealthMetricsService.getHealthMetrics(accessToken);
         if (mounted) {
           setHealthMetrics(metrics);
         }
@@ -80,7 +83,7 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
     const loadPerformance = async () => {
       setIsLoadingPerformance(true);
       try {
-        const response = await HealthMetricsService.getPerformanceHistory(timeRange);
+        const response = await HealthMetricsService.getPerformanceHistory(timeRange, accessToken);
         if (mounted) {
           // Transform api response to chart format
           const transformed = response.data.map((point) => ({
@@ -115,7 +118,7 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
         const response = await AuditLogService.listAuditLogs({
           limit: 4,
           page: 1,
-        });
+        }, accessToken);
         if (mounted) {
           // Transform audit logs to display format
           const transformed = response.logs.map((log) => ({
@@ -147,31 +150,31 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
   const metrics: SystemMetric[] = healthMetrics ? [
     {
       name: 'API Response Time',
-      value: healthMetrics.metrics?.api_response_time ?? 156,
+      value: getNumber(healthMetrics?.metrics, 'api_response_time', 'apiResponseTime', 'response_time_ms') || 156,
       unit: 'ms',
-      status: healthMetrics.metrics?.api_response_time > 200 ? 'warning' : 'healthy',
+      status: getNumber(healthMetrics?.metrics, 'api_response_time', 'apiResponseTime', 'response_time_ms') > 200 ? 'warning' : 'healthy',
       trend: -2.5,
       icon: <Zap className="w-5 h-5 text-blue-400" />,
     },
     {
       name: 'System Uptime',
-      value: healthMetrics.metrics?.system_uptime ?? 99.92,
+      value: getNumber(healthMetrics?.metrics, 'system_uptime', 'systemUptime', 'uptime_percent') || 99.92,
       unit: '%',
-      status: healthMetrics.metrics?.system_uptime < 99 ? 'warning' : 'healthy',
+      status: getNumber(healthMetrics?.metrics, 'system_uptime', 'systemUptime', 'uptime_percent') < 99 ? 'warning' : 'healthy',
       trend: 0,
       icon: <Activity className="w-5 h-5 text-green-400" />,
     },
     {
       name: 'Error Rate',
-      value: (healthMetrics.metrics?.error_rate ?? 0).toFixed(2),
+      value: getNumber(healthMetrics?.metrics, 'error_rate', 'errorRate').toFixed(2),
       unit: '/minute',
-      status: (healthMetrics.metrics?.error_rate ?? 0) > 1 ? 'warning' : 'healthy',
+      status: getNumber(healthMetrics?.metrics, 'error_rate', 'errorRate') > 1 ? 'warning' : 'healthy',
       trend: 12,
       icon: <AlertTriangle className="w-5 h-5 text-yellow-400" />,
     },
     {
       name: 'Active Engagements',
-      value: healthMetrics.metrics?.active_engagements ?? 847,
+      value: getNumber(healthMetrics?.metrics, 'active_engagements', 'activeEngagements', 'active_engagements') || 847,
       unit: 'users',
       status: 'healthy',
       trend: 8.3,
@@ -179,15 +182,15 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
     },
     {
       name: 'Memory Usage',
-      value: healthMetrics.metrics?.memory_usage ?? 68,
+      value: getNumber(healthMetrics?.metrics, 'memory_usage', 'memoryUsage', 'memory_usage') || 68,
       unit: '%',
-      status: (healthMetrics.metrics?.memory_usage ?? 68) > 85 ? 'warning' : 'healthy',
+      status: getNumber(healthMetrics?.metrics, 'memory_usage', 'memoryUsage', 'memory_usage') > 85 ? 'warning' : 'healthy',
       trend: -1.2,
       icon: <Database className="w-5 h-5 text-orange-400" />,
     },
     {
       name: 'Database Queries',
-      value: healthMetrics.metrics?.database_queries ?? 2145,
+      value: getNumber(healthMetrics?.metrics, 'database_queries', 'databaseQueries', 'database_queries') || 2145,
       unit: '/min',
       status: 'healthy',
       trend: 3.5,
@@ -283,12 +286,30 @@ export function AdminSystemHealth({ selectedLanguage }: AdminSystemHealthProps) 
     </div>
   );
 
+  const handleExport = () => {
+    downloadJsonFile(buildAdminExportFilename('system-health'), {
+      section: 'system-health',
+      generatedAt: new Date().toISOString(),
+      timeRange,
+      metrics,
+      performanceData,
+      auditLogs,
+      healthMetrics,
+    });
+  };
+
   return (
     <div className="space-y-6 p-6 bg-white min-h-screen">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">System Health</h1>
-        <p className="text-gray-500">Monitor core service health and review system audit activity.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">System Health</h1>
+          <p className="text-gray-500">Monitor core service health and review system audit activity.</p>
+        </div>
+        <Button variant="outline" className="gap-2 border-[#E8ECFF] hover:bg-gray-50" onClick={handleExport}>
+          <Download className="w-4 h-4" />
+          Export
+        </Button>
       </div>
 
       {/* Time Range Selector */}

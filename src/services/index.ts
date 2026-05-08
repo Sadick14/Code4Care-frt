@@ -168,8 +168,7 @@ export type { ChatMessage as ChatbotMessage, UserDemographics, ChatApiRequest, C
 export { AnalyticsService } from './analyticsService';
 
 // Text-to-Speech Service
-export { requestTextToSpeech } from './ttsService';
-export type { TTSRequest, TTSResponse } from './ttsService';
+export { default as fetchSpeechAudio } from './ttsService';
 
 // Feedback Service
 export { FeedbackService } from './feedbackService';

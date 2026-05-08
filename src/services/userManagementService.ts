@@ -119,10 +119,11 @@ export interface UserDeleteRequest {
   confirmation_code: string;
 }
 
+const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_ADMIN_API_BASE_URL ||
-  ''
+  DEFAULT_API_BASE_URL
 ).trim();
 
 const USERS_BASE_PATH = '/users';
@@ -132,6 +133,10 @@ function buildUrl(path: string): string {
     return path;
   }
   return new URL(path, API_BASE_URL).toString();
+}
+
+function encodePathSegment(value: string): string {
+  return encodeURIComponent(value);
 }
 
 function buildHeaders(accessToken?: string): Record<string, string> {
@@ -189,6 +194,71 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return fallback;
+}
+
+function toStringValue(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function normalizeUserListItem(rawUser: unknown): UserListItem {
+  const user = isRecord(rawUser) ? rawUser : {};
+
+  return {
+    id: toStringValue(user.id),
+    nickname: toStringValue(user.nickname, 'Anonymous'),
+    age_range: toStringValue(user.age_range, 'unknown') as AgeRange,
+    gender_identity: toStringValue(user.gender_identity, 'prefer-not-say') as GenderIdentity,
+    region: toStringValue(user.region, 'Unknown'),
+    language: toStringValue(user.language, 'en'),
+    created_at: toStringValue(user.created_at),
+    last_active: toStringValue(user.last_active),
+    status: toStringValue(user.status, 'active') as UserStatus,
+    total_sessions: toNumber(user.total_sessions),
+    total_messages: toNumber(user.total_messages),
+    engagement_score: Math.max(0, Math.min(100, toNumber(user.engagement_score))),
+    last_message_date: toStringValue(user.last_message_date, toStringValue(user.last_active)),
+  };
+}
+
+function normalizeUserListResponse(payload: unknown): UserListResponse {
+  const root = isRecord(payload) ? payload : {};
+  const nestedData = isRecord(root.data) ? root.data : undefined;
+  const source = nestedData ?? root;
+
+  const usersRaw = Array.isArray(source.users)
+    ? source.users
+    : Array.isArray(source.items)
+      ? source.items
+      : [];
+
+  const users = usersRaw.map(normalizeUserListItem).filter((user) => Boolean(user.id));
+
+  return {
+    users,
+    total: toNumber(source.total, users.length),
+    page: toNumber(source.page, 1),
+    limit: toNumber(source.limit, users.length || 50),
+    pages: toNumber(source.pages, 1),
+  };
+}
+
 export class UserManagementService {
   /**
    * GET /users - List all users with pagination and filtering
@@ -228,10 +298,12 @@ export class UserManagementService {
       });
 
       if (!response.ok) {
-        throw new Error(await readApiError(response));
+        const apiError = await readApiError(response);
+        throw new Error(`GET /users failed (${response.status}): ${apiError}`);
       }
 
-      return await readJsonResponse<UserListResponse>(response);
+      const payload = await readJsonResponse<unknown>(response);
+      return normalizeUserListResponse(payload);
     } catch (error) {
       logger.error('Failed to list users', error);
       throw error;
@@ -246,7 +318,7 @@ export class UserManagementService {
     accessToken?: string,
   ): Promise<UserDetails> {
     try {
-      const response = await fetch(buildUrl(`${USERS_BASE_PATH}/${userId}`), {
+      const response = await fetch(buildUrl(`${USERS_BASE_PATH}/${encodePathSegment(userId)}`), {
         method: 'GET',
         headers: buildHeaders(accessToken),
       });
@@ -284,7 +356,8 @@ export class UserManagementService {
     if (options?.end_date) params.append('end_date', options.end_date);
     if (options?.search) params.append('search', options.search);
 
-    const url = `${buildUrl(`${USERS_BASE_PATH}/${userId}/chat-history`)}${params.toString() ? `?${params.toString()}` : ''}`;
+    const safeUserPath = `${USERS_BASE_PATH}/${encodePathSegment(userId)}/chat-history`;
+    const url = `${buildUrl(safeUserPath)}${params.toString() ? `?${params.toString()}` : ''}`;
 
     try {
       const response = await fetch(url, {
@@ -316,17 +389,28 @@ export class UserManagementService {
     }
 
     try {
-      const response = await fetch(buildUrl(`${USERS_BASE_PATH}/${userId}`), {
+      const response = await fetch(buildUrl(`${USERS_BASE_PATH}/${encodePathSegment(userId)}`), {
         method: 'PUT',
         headers: buildHeaders(accessToken),
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error(await readApiError(response));
+        const apiError = await readApiError(response);
+        throw new Error(`PUT /users/${userId} failed (${response.status}): ${apiError}`);
       }
 
-      return await readJsonResponse(response);
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        return await readJsonResponse(response);
+      }
+
+      return {
+        id: userId,
+        status: (payload.status || 'active') as UserStatus,
+        updated_at: new Date().toISOString(),
+        reason: payload.reason_for_change,
+      };
     } catch (error) {
       logger.error(`Failed to update user ${userId}`, error);
       throw error;
@@ -346,7 +430,7 @@ export class UserManagementService {
     }
 
     try {
-      const response = await fetch(buildUrl(`${USERS_BASE_PATH}/${userId}`), {
+      const response = await fetch(buildUrl(`${USERS_BASE_PATH}/${encodePathSegment(userId)}`), {
         method: 'DELETE',
         headers: buildHeaders(accessToken),
         body: JSON.stringify(payload),

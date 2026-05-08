@@ -7,7 +7,12 @@
 import { logger } from '@/utils/logger';
 
 const ADMIN_BASE_PATH = '/api/admin';
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
+const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_ADMIN_API_BASE_URL ||
+  DEFAULT_API_BASE_URL
+).trim();
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) return path;
@@ -362,7 +367,7 @@ export class SafetyIncidentService {
     payload: { staff_id: string },
     accessToken?: string,
   ): Promise<IncidentListItem> {
-    const url = buildUrl(`${SAFETY_BASE_PATH}/incidents/${incidentId}/assign`);
+    const url = buildUrl(`${ADMIN_BASE_PATH}/incidents/${incidentId}/assign`);
 
     try {
       const response = await fetch(url, {
@@ -390,7 +395,7 @@ export class SafetyIncidentService {
     payload: { resolution_notes: string; follow_up_required: boolean; follow_up_date?: string },
     accessToken?: string,
   ): Promise<IncidentListItem> {
-    const url = buildUrl(`${SAFETY_BASE_PATH}/incidents/${incidentId}/resolve`);
+    const url = buildUrl(`${ADMIN_BASE_PATH}/incidents/${incidentId}/resolve`);
 
     try {
       const response = await fetch(url, {

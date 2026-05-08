@@ -5,6 +5,7 @@
  */
 
 import * as XLSX from 'xlsx';
+import { formatLocaleLabel } from '@/utils/labelUtils';
 
 export interface ExcelSheetData {
   sheetName: string;
@@ -147,9 +148,9 @@ export function generateAnalyticsExcelReport(
 
     const regionData = Object.entries(analyticsData.demographics?.regions || {}).map(
       ([region, total]: [string, any]) => ({
-        Region: region,
-        Users: total,
-        Percentage: `${Math.round((total / (analyticsData.demographics?.totalActiveUsers || 1)) * 100)}%`,
+        Region: formatLocaleLabel(region, 'en'),
+        Users: typeof total === 'object' ? ((total.count ?? total.value ?? Number(total)) || 0) : total,
+        Percentage: `${Math.round(((typeof total === 'object' ? ((total.count ?? total.value ?? Number(total)) || 0) : total) / (analyticsData.demographics?.totalActiveUsers || 1)) * 100)}%`,
       })
     );
 
