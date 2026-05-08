@@ -1,13 +1,43 @@
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Users, MessageSquare, Languages, TrendingUp, AlertTriangle, Clock } from "lucide-react";
+import { Button } from "./ui/button";
+import { Users, MessageSquare, TrendingUp, AlertTriangle, Clock, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { RealAnalyticsService } from "@/services/realAnalyticsService";
+import { formatLocaleLabel } from "@/utils/labelUtils";
+import { buildAdminExportFilename, downloadJsonFile } from "@/utils/adminExport";
 
 interface AdminDashboardProps {
   selectedLanguage: string;
 }
 
 export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
+  const [analyticsData, setAnalyticsData] = useState<any | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAnalytics = async () => {
+      try {
+        const summary = await RealAnalyticsService.getAnalyticsSummary({ period: "week" });
+        if (mounted) {
+          setAnalyticsData(RealAnalyticsService.normalizeAnalyticsSummary(summary));
+        }
+      } catch {
+        if (mounted) {
+          setAnalyticsData(null);
+        }
+      }
+    };
+
+    void loadAnalytics();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const content = {
     en: {
       title: "Admin Dashboard",
@@ -64,39 +94,82 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
 
   const lang = content[selectedLanguage as keyof typeof content] || content.en;
 
-  // Mock data for charts
-  const topicsData = [
-    { name: "Contraception", value: 342 },
-    { name: "STIs", value: 287 },
-    { name: "Pregnancy", value: 213 },
-    { name: "Menstruation", value: 189 },
-    { name: "Relationships", value: 156 }
-  ];
+  const topicsData = useMemo(() => {
+    const topics = analyticsData?.engagement?.topics ?? analyticsData?.engagement?.topicEngagement ?? [];
+    if (!Array.isArray(topics)) {
+      return [];
+    }
 
-  const languageData = [
-    { name: "English", value: 520 },
-    { name: "Twi", value: 312 },
-    { name: "Ewe", value: 155 }
-  ];
+    return topics
+      .map((topic: any) => ({
+        name: String(topic.topic ?? topic.name ?? "Unknown"),
+        value: Number(topic.inquiries ?? topic.count ?? topic.value ?? 0),
+      }))
+      .filter((item: { name: string; value: number }) => item.value > 0)
+      .slice(0, 8);
+  }, [analyticsData]);
 
-  const engagementsData = [
-    { date: "Mon", engagements: 85 },
-    { date: "Tue", engagements: 92 },
-    { date: "Wed", engagements: 78 },
-    { date: "Thu", engagements: 105 },
-    { date: "Fri", engagements: 98 },
-    { date: "Sat", engagements: 72 },
-    { date: "Sun", engagements: 67 }
-  ];
+  const languageData = useMemo(() => {
+    const languages = analyticsData?.demographics?.languages ?? analyticsData?.demographics?.language ?? {};
+    if (!languages || typeof languages !== "object") {
+      return [];
+    }
+
+    return Object.entries(languages)
+      .map(([name, value]) => ({
+        name: formatLocaleLabel(name, selectedLanguage),
+        value: Number(typeof value === "object" ? (value as any)?.count ?? (value as any)?.value ?? Number(value) : value),
+      }))
+      .filter((item) => Number.isFinite(item.value) && item.value > 0);
+  }, [analyticsData, selectedLanguage]);
+
+  const engagementsData = useMemo(() => {
+    const trends = analyticsData?.trends ?? [];
+    if (!Array.isArray(trends)) {
+      return [];
+    }
+
+    return trends
+      .map((item: any) => ({
+        date: String(item.date ?? item.timestamp ?? item.period ?? "-"),
+        engagements: Number(item.engagements ?? item.value ?? item.count ?? 0),
+      }))
+      .filter((item: { date: string; engagements: number }) => item.engagements >= 0);
+  }, [analyticsData]);
 
   const COLORS = ['#006d77', '#ff7b6e', '#83c5be', '#ffddd2', '#e29578'];
+
+  const handleExport = () => {
+    downloadJsonFile(buildAdminExportFilename('admin-dashboard'), {
+      section: 'admin-dashboard',
+      generatedAt: new Date().toISOString(),
+      summary: {
+        totalEngagements: 2847,
+        activeChats: 43,
+        avgResponseTime: 2.3,
+        panicExits: 7,
+      },
+      charts: {
+        topics: topicsData,
+        languages: languageData,
+        engagements: engagementsData,
+      },
+      analytics: analyticsData,
+    });
+  };
 
   return (
     <div className="min-h-screen p-4" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="mb-2" style={{ color: '#006d77' }}>{lang.title}</h1>
-          <p className="text-gray-600">{lang.subtitle}</p>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="mb-2" style={{ color: '#006d77' }}>{lang.title}</h1>
+            <p className="text-gray-600">{lang.subtitle}</p>
+          </div>
+          <Button onClick={handleExport} className="gap-2 bg-[#006d77] hover:bg-[#00535b] text-white">
+            <Download className="w-4 h-4" />
+            Export
+          </Button>
         </div>
 
         {/* Stats Grid */}
@@ -204,7 +277,7 @@ export function AdminDashboard({ selectedLanguage }: AdminDashboardProps) {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {languageData.map((entry, index) => (
+                  {languageData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

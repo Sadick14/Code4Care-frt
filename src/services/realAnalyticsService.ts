@@ -452,24 +452,35 @@ export class RealAnalyticsService {
     },
     accessToken?: string,
   ): Promise<AnalyticsSummary> {
-    const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/dashboard`, {
-      period: options?.period ?? 'week',
-    });
-
     try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: buildHeaders(accessToken),
+      // Primary source for admin analytics sections.
+      const summary = await RealAnalyticsService.getAnalyticsSummary({
+        period: options?.period ?? 'week',
+      }, accessToken);
+
+      return RealAnalyticsService.normalizeAnalyticsSummary(summary);
+    } catch (error) {
+      logger.error('Failed to get analytics summary via /v1/analytics/summary, attempting dashboard fallback', error);
+
+      const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/dashboard`, {
+        period: options?.period ?? 'week',
       });
 
-      if (!response.ok) {
-        throw new Error(await readApiError(response));
-      }
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: buildHeaders(accessToken),
+        });
 
-      return await readJsonResponse<AnalyticsSummary>(response);
-    } catch (error) {
-      logger.error('Failed to get analytics dashboard summary', error);
-      throw error;
+        if (!response.ok) {
+          throw new Error(await readApiError(response));
+        }
+
+        return await readJsonResponse<AnalyticsSummary>(response);
+      } catch (fallbackError) {
+        logger.error('Failed to get analytics dashboard summary from fallback endpoint', fallbackError);
+        throw fallbackError;
+      }
     }
   }
 

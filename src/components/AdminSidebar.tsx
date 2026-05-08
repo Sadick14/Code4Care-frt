@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { BarChart3, Users, BookOpen, Shield, LogOut, Menu, X, TrendingUp, AlertCircle, FileText, Database } from 'lucide-react';
+import { BarChart3, Users, LogOut, X, AlertCircle, FileText, Database } from 'lucide-react';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';

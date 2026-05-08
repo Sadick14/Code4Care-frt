@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Server, Zap, AlertTriangle, CheckCircle2, TrendingUp, Database, ShieldAlert, FileText, Clock3 } from 'lucide-react';
+import { Activity, Server, Zap, AlertTriangle, CheckCircle2, TrendingUp, Database, FileText, Clock3, Download } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { motion } from 'motion/react';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
+  Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
 } from 'recharts';
 import { HealthMetricsService } from '@/services/healthMetricsService';
 import { AuditLogService } from '@/services/auditLogService';
 import { getNumber } from '@/utils/analyticsUtils';
+import { buildAdminExportFilename, downloadJsonFile } from '@/utils/adminExport';
 import { logger } from '@/utils/logger';
 
 interface SystemMetric {
@@ -285,12 +286,30 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
     </div>
   );
 
+  const handleExport = () => {
+    downloadJsonFile(buildAdminExportFilename('system-health'), {
+      section: 'system-health',
+      generatedAt: new Date().toISOString(),
+      timeRange,
+      metrics,
+      performanceData,
+      auditLogs,
+      healthMetrics,
+    });
+  };
+
   return (
     <div className="space-y-6 p-6 bg-white min-h-screen">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">System Health</h1>
-        <p className="text-gray-500">Monitor core service health and review system audit activity.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">System Health</h1>
+          <p className="text-gray-500">Monitor core service health and review system audit activity.</p>
+        </div>
+        <Button variant="outline" className="gap-2 border-[#E8ECFF] hover:bg-gray-50" onClick={handleExport}>
+          <Download className="w-4 h-4" />
+          Export
+        </Button>
       </div>
 
       {/* Time Range Selector */}

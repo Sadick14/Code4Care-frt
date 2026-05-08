@@ -13,7 +13,9 @@ import {
   TableRow,
 } from './ui/table';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { RealAnalyticsService, SafetyAnalyticsResponse } from '@/services/realAnalyticsService';
+import { RealAnalyticsService } from '@/services/realAnalyticsService';
+import { getNumber } from '@/utils/analyticsUtils';
+import { buildAdminExportFilename, downloadJsonFile } from '@/utils/adminExport';
 import { logger } from '@/utils/logger';
 
 interface AdminSafetyManagementProps {
@@ -25,23 +27,23 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
   void selectedLanguage;
   const [filterStatus, setFilterStatus] = useState<'all' | 'open' | 'in-review' | 'escalated' | 'resolved'>('all');
   const [filterSeverity, setFilterSeverity] = useState<'all' | 'low' | 'medium' | 'high' | 'critical'>('all');
-  const [safetyAnalytics, setSafetyAnalytics] = useState<SafetyAnalyticsResponse | null>(null);
+  const [safetyAnalytics, setSafetyAnalytics] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load safety analytics from public API endpoint (/analytics/safety)
+  // Load the same normalized analytics summary used by the reports page.
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const analyticsResponse = await RealAnalyticsService.getSafetyAnalytics(
+        const analyticsResponse = await RealAnalyticsService.getAggregatedReportData(
           { period: 'week' },
           accessToken,
         );
         setSafetyAnalytics(analyticsResponse);
       } catch (err) {
-        logger.error('Failed to load safety analytics', err);
+        logger.error('Failed to load safety summary analytics', err);
         setError(err instanceof Error ? err.message : 'Failed to load safety analytics');
         setSafetyAnalytics(null);
       } finally {
@@ -53,16 +55,33 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
   }, [accessToken]);
 
   // Extract stats from analytics response
+  const safetyData = safetyAnalytics?.safety ?? safetyAnalytics?.safetyMetrics ?? {};
+  const indicatorChartData = [
+    { indicator: 'Panic Exits', count: getNumber(safetyData, 'panic_exits_total', 'panicExitsTotal', 'panic_exits') },
+    { indicator: 'Crisis Interventions', count: getNumber(safetyData, 'crisis_interventions', 'crisisInterventions', 'crisisInterventionsTriggered', 'crisis_interventions_triggered') },
+    { indicator: 'Self-Harm Mentions', count: getNumber(safetyData, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected') },
+    { indicator: 'Suicidal Ideation', count: getNumber(safetyData, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation') },
+    { indicator: 'Escalated Risks', count: getNumber(safetyData, 'risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated') },
+    { indicator: 'Follow-ups Pending', count: getNumber(safetyData, 'concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up') },
+  ];
+
+  const totalSafetyEvents = indicatorChartData.reduce((sum, item) => sum + item.count, 0);
+
   const stats = {
-    total: safetyAnalytics?.incidents?.total ?? 0,
-    crisisInterventions: safetyAnalytics?.incidents?.crisis_interventions ?? 0,
-    selfHarmMentions: safetyAnalytics?.incidents?.self_harm_mentions ?? 0,
-    suicidalIdeation: safetyAnalytics?.incidents?.suicidal_ideation ?? 0,
-    escalations: safetyAnalytics?.escalations?.total_escalated ?? 0,
-    followUpPending: safetyAnalytics?.escalations?.follow_up_pending ?? 0,
+    total: totalSafetyEvents,
+    crisisInterventions: getNumber(safetyData, 'crisis_interventions', 'crisisInterventions', 'crisisInterventionsTriggered', 'crisis_interventions_triggered'),
+    selfHarmMentions: getNumber(safetyData, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'),
+    suicidalIdeation: getNumber(safetyData, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'),
+    escalations: getNumber(safetyData, 'risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated'),
+    followUpPending: getNumber(safetyData, 'concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up'),
   };
 
-  const severityStats = safetyAnalytics?.severity_distribution ?? { low: 0, medium: 0, high: 0, critical: 0 };
+  const severityStats = safetyAnalytics?.severity_distribution ?? {
+    low: stats.selfHarmMentions,
+    medium: stats.crisisInterventions,
+    high: stats.escalations,
+    critical: stats.suicidalIdeation,
+  };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -109,12 +128,30 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
     }
   };
 
+  const handleExport = () => {
+    downloadJsonFile(buildAdminExportFilename('safety-management'), {
+      section: 'safety-management',
+      generatedAt: new Date().toISOString(),
+      stats,
+      totalSafetyEvents,
+      severityDistribution: severityStats,
+      analytics: safetyAnalytics,
+      safetyData,
+    });
+  };
+
   return (
     <div className="space-y-6 p-6 bg-white min-h-screen">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Safety & Crisis Management</h1>
-        <p className="text-gray-500">Monitor and respond to user safety concerns and mental health crises</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">Safety & Crisis Management</h1>
+          <p className="text-gray-500">Monitor and respond to user safety concerns and mental health crises</p>
+        </div>
+        <Button variant="outline" className="gap-2 border-[#E8ECFF] hover:bg-gray-50" onClick={handleExport}>
+          <BarChart3 className="w-4 h-4" />
+          Export
+        </Button>
       </div>
 
       {/* Alert */}
@@ -157,15 +194,13 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
       <Card className="p-6 bg-white border-[#E8ECFF]">
         <h3 className="text-gray-900 font-semibold mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-blue-600" />
-          Severity Distribution
+          Safety Indicators
         </h3>
         <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={Object.entries(severityStats).map(([severity, count]) => ({ severity, count }))}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-            <XAxis dataKey="severity" stroke="#9CA3AF" style={{ fontSize: 12 }} />
-            <YAxis stroke="#9CA3AF" style={{ fontSize: 12 }} />
+          <BarChart data={indicatorChartData}>
+            <XAxis dataKey="indicator" stroke="#9CA3AF" style={{ fontSize: 12 }} />
             <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-            <Bar dataKey="count" fill="#EF4444" name="Incidents" />
+            <Bar dataKey="count" fill="#EF4444" name="Count" />
           </BarChart>
         </ResponsiveContainer>
       </Card>

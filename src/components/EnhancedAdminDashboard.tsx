@@ -38,7 +38,8 @@ import {
   Download,
 } from 'lucide-react';
 import { RealAnalyticsService } from '@/services/realAnalyticsService';
-import { getNumber, getNested } from '@/utils/analyticsUtils';
+import { getNumber } from '@/utils/analyticsUtils';
+import { buildAdminExportFilename, downloadJsonFile } from '@/utils/adminExport';
 import { StaffAccessService, StaffSession } from '@/services/staffAccessService';
 import { HealthService } from '@/services';
 import { logger } from '@/utils/logger';
@@ -50,12 +51,42 @@ interface AdminDashboardProps {
 
 const AGE_COLORS = ['#0f766e', '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4'];
 const GENDER_COLORS = ['#7c3aed', '#f97316', '#e11d48', '#2563eb', '#16a34a', '#ca8a04'];
+const LANGUAGE_COLORS = ['#1d4ed8', '#0ea5e9', '#22c55e', '#f59e0b', '#ef4444'];
+const INVALID_REGION_KEYS = new Set([
+  '',
+  'string',
+  'unknown',
+  'n/a',
+  'na',
+  'none',
+  'null',
+  'undefined',
+  'other',
+]);
+
+function normalizeRegionKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[\s_]+/g, '-');
+}
+
+function prettifyRegionLabel(regionKey: string): string {
+  return regionKey
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function prettifyLabel(value: string): string {
+  return value
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
 
 export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProps) {
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('week');
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
-  const [healthStatus, setHealthStatus] = useState<any>(null);
+  const [, setHealthStatus] = useState<any>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -173,6 +204,112 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
 
   const performanceTrendData = useMemo(() => analyticsData?.trends ?? [], [analyticsData?.trends]);
 
+  const ageDemographicsData = useMemo(() => {
+    const ageRange = analyticsData?.demographics?.ageRange as Record<string, any> | undefined;
+    if (!ageRange || typeof ageRange !== 'object') {
+      return [];
+    }
+
+    return Object.entries(ageRange)
+      .map(([age, value]) => ({
+        age,
+        value: Number(value),
+      }))
+      .filter((item) => Number.isFinite(item.value) && item.value > 0);
+  }, [analyticsData]);
+
+  const genderDemographicsData = useMemo(() => {
+    const gender = analyticsData?.demographics?.gender as Record<string, any> | undefined;
+    if (!gender || typeof gender !== 'object') {
+      return [];
+    }
+
+    return Object.entries(gender)
+      .map(([key, value]) => ({
+        gender: prettifyLabel(key),
+        value: Number(value),
+      }))
+      .filter((item) => Number.isFinite(item.value) && item.value > 0);
+  }, [analyticsData]);
+
+  const languageDemographicsData = useMemo(() => {
+    const languagePreference = analyticsData?.demographics?.languagePreference as Record<string, any> | undefined;
+    if (!languagePreference || typeof languagePreference !== 'object') {
+      return [];
+    }
+
+    const languageNames: Record<string, string> = {
+      en: 'English',
+      twi: 'Twi',
+      ewe: 'Ewe',
+      ga: 'Ga',
+    };
+
+    return Object.entries(languagePreference)
+      .map(([code, value]) => ({
+        language: languageNames[code] ?? prettifyLabel(code),
+        value: Number(value),
+      }))
+      .filter((item) => Number.isFinite(item.value) && item.value > 0);
+  }, [analyticsData]);
+
+  const regionDemographicsData = useMemo(() => {
+    const regions = analyticsData?.demographics?.regions as Record<string, any> | undefined;
+    if (!regions || typeof regions !== 'object') {
+      return [];
+    }
+
+    return Object.entries(regions)
+      .map(([region, value]) => {
+        const normalizedRegion = normalizeRegionKey(region);
+        const rawValue =
+          typeof value === 'object' && value !== null
+            ? value?.count ?? value?.value ?? value?.total ?? value?.users ?? 0
+            : value;
+        const numericValue = Number(rawValue);
+
+        return {
+          normalizedRegion,
+          region: prettifyRegionLabel(normalizedRegion),
+          value: Number.isFinite(numericValue) ? numericValue : 0,
+        };
+      })
+      .filter((item) => !INVALID_REGION_KEYS.has(item.normalizedRegion) && item.region && item.value > 0)
+      .map(({ region, value }) => ({ region, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [analyticsData]);
+
+  function CustomTooltip(props: any) {
+    const { active, payload, label } = props;
+    if (!active || !payload || !Array.isArray(payload) || payload.length === 0) return null;
+
+    return (
+      <div style={{ background: '#fff', padding: 8, border: '1px solid #E8ECFF' }}>
+        {label !== undefined && <div style={{ fontSize: 12, color: '#334155', marginBottom: 6 }}>{String(label)}</div>}
+        <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+          {payload.map((p: any, i: number) => {
+            const raw = p.value;
+            let display = '';
+            if (raw === null || raw === undefined) display = String(raw);
+            else if (typeof raw === 'object') {
+              // Prefer selected language when available
+              display = (raw[selectedLanguage] || raw.en || JSON.stringify(raw));
+            } else {
+              display = String(raw);
+            }
+
+            return (
+              <li key={i} style={{ fontSize: 13, color: '#0f172a' }}>
+                <strong style={{ marginRight: 6 }}>{p.name ?? p.dataKey ?? ''}:</strong>
+                <span>{display}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  }
+
   const averageSatisfaction = useMemo(() => {
     const topics = analyticsData?.engagement?.topics ?? analyticsData?.engagement?.topicEngagement ?? [];
 
@@ -198,6 +335,24 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
     { label: 'Self-Harm Mentions', value: getNumber(analyticsData?.safety, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_count'), icon: AlertTriangle, color: 'text-orange-600' },
     { label: 'Suicidal Ideation', value: getNumber(analyticsData?.safety, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation_count'), icon: AlertTriangle, color: 'text-red-700' },
   ];
+
+  const handleExport = () => {
+    downloadJsonFile(buildAdminExportFilename('analytics-dashboard'), {
+      section: 'analytics-dashboard',
+      generatedAt: new Date().toISOString(),
+      period,
+      summary: analyticsData?.summary ?? {},
+      demographics: {
+        ageRange: ageDemographicsData,
+        gender: genderDemographicsData,
+        languagePreference: languageDemographicsData,
+        regions: regionDemographicsData,
+      },
+      safety: safetyMetrics,
+      performance: performanceTrendData,
+      raw: analyticsData,
+    });
+  };
 
   if (isLoadingAnalytics) {
     return (
@@ -261,36 +416,8 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
             <div>
               <h1 className="text-4xl font-bold text-gray-900 mb-2">{lang.title}</h1>
               <p className="text-gray-500">{lang.subtitle}</p>
-              {healthStatus && (
-                <div className="flex items-center gap-3 mt-2">
-                  <Badge
-                    className={`${
-                      healthStatus.health?.status === 'ok'
-                        ? 'bg-green-100 text-green-700 border-green-200'
-                        : 'bg-red-100 text-red-700 border-red-200'
-                    }`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${
-                      healthStatus.health?.status === 'ok' ? 'bg-green-500' : 'bg-red-500'
-                    } inline-block mr-1.5`}></span>
-                    System {healthStatus.health?.status === 'ok' ? 'Healthy' : 'Down'}
-                  </Badge>
-                  <Badge className="bg-blue-50 text-blue-700 border-blue-200">
-                    API v{healthStatus.version?.version || '1.0.0'}
-                  </Badge>
-                  {healthStatus.ready && (
-                    <Badge className={`${
-                      healthStatus.ready.database === 'connected'
-                        ? 'bg-green-100 text-green-700 border-green-200'
-                        : 'bg-yellow-100 text-yellow-700 border-yellow-200'
-                    }`}>
-                      DB: {healthStatus.ready.database || 'unknown'}
-                    </Badge>
-                  )}
-                </div>
-              )}
             </div>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
               <Download className="w-4 h-4" />
               {lang.exportBtn}
             </Button>
@@ -350,7 +477,7 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
               {/* Demographics - Age & Region */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 <Card className="p-6 bg-white border-[#E8ECFF]">
                   <h3 className="font-semibold text-gray-900 mb-4">{lang.demographicsTitle}</h3>
                   {isLoadingAnalytics ? (
@@ -359,33 +486,18 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
-                          data={getNested(analyticsData, 'demographics', 'ageRange') ? Object.entries(getNested(analyticsData, 'demographics', 'ageRange') as Record<string, number>).map(([k, v]) => ({ age: k, value: v })) : []}
+                          data={ageDemographicsData}
                           dataKey="value"
                           nameKey="age"
                           cx="50%"
                           cy="50%"
                           outerRadius={80}
                         >
-                          {(() => {
-                                const ageRange = getNested(
-                                  analyticsData,
-                                  'demographics',
-                                  'ageRange'
-                                ) as Record<string, number> | undefined;
-
-                                if (!ageRange || typeof ageRange !== 'object') {
-                                  return null;
-                                }
-
-                                return Object.entries(ageRange).map((_, idx) => (
-                                  <Cell
-                                    key={idx}
-                                    fill={AGE_COLORS[idx % AGE_COLORS.length]}
-                                  />
-                                ));
-                              })()}
+                          {ageDemographicsData.map((_, idx) => (
+                            <Cell key={idx} fill={AGE_COLORS[idx % AGE_COLORS.length]} />
+                          ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip content={<CustomTooltip />} />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
@@ -395,13 +507,17 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                   <h3 className="font-semibold text-gray-900 mb-4">{lang.demographicsRegionTitle}</h3>
                   {isLoadingAnalytics ? (
                     <ChartSkeleton />
+                  ) : regionDemographicsData.length === 0 ? (
+                    <div className="h-[250px] flex items-center justify-center text-sm text-gray-500">
+                      No region data available
+                    </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={getNested(analyticsData, 'demographics', 'regions') ? Object.entries(getNested(analyticsData, 'demographics', 'regions') as Record<string, number>).map(([region, value]) => ({ region, value })) : []}>
+                      <BarChart data={regionDemographicsData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
                         <XAxis dataKey="region" stroke="#9CA3AF" style={{ fontSize: 11 }} angle={-45} textAnchor="end" height={70} />
                         <YAxis stroke="#9CA3AF" style={{ fontSize: 12 }} />
-                        <Tooltip />
+                        <Tooltip content={<CustomTooltip />} />
                         <Bar dataKey="value" fill="#06B6D4" radius={[8, 8, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -416,33 +532,43 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
-                          data={getNested(analyticsData, 'demographics', 'gender') ? Object.entries(getNested(analyticsData, 'demographics', 'gender') as Record<string, number>).map(([gender, value]) => ({ gender, value })) : []}
+                          data={genderDemographicsData}
                           dataKey="value"
                           nameKey="gender"
                           cx="50%"
                           cy="50%"
                           outerRadius={80}
                         >
-                          {(() => {
-                            const gender = getNested(
-                              analyticsData,
-                              'demographics',
-                              'gender'
-                            ) as Record<string, number> | undefined;
-
-                            if (!gender || typeof gender !== 'object') {
-                              return null;
-                            }
-
-                            return Object.entries(gender).map((_, idx) => (
-                              <Cell
-                                key={idx}
-                                fill={GENDER_COLORS[idx % GENDER_COLORS.length]}
-                              />
-                            ));
-                          })()}
+                          {genderDemographicsData.map((_, idx) => (
+                            <Cell key={idx} fill={GENDER_COLORS[idx % GENDER_COLORS.length]} />
+                          ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip content={<CustomTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </Card>
+
+                <Card className="p-6 bg-white border-[#E8ECFF]">
+                  <h3 className="font-semibold text-gray-900 mb-4">Language Preference</h3>
+                  {isLoadingAnalytics ? (
+                    <ChartSkeleton />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={languageDemographicsData}
+                          dataKey="value"
+                          nameKey="language"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                        >
+                          {languageDemographicsData.map((_, idx) => (
+                            <Cell key={idx} fill={LANGUAGE_COLORS[idx % LANGUAGE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
@@ -509,7 +635,7 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                   <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
                   <XAxis dataKey="timestamp" stroke="#9CA3AF" style={{ fontSize: 12 }} />
                   <YAxis stroke="#9CA3AF" style={{ fontSize: 12 }} />
-                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
+                  <Tooltip content={<CustomTooltip />} contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
                   <Legend />
                   <Line type="monotone" dataKey="value" stroke="#0048ff" strokeWidth={2} name="Response Time (ms)" />
                 </LineChart>

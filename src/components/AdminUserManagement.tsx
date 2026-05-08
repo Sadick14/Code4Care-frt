@@ -10,6 +10,7 @@ import {
   UserX,
   Briefcase,
   ShieldCheck,
+  Download,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -40,6 +41,7 @@ import {
   UserStatus,
 } from '@/services/userManagementService';
 import { logger } from '@/utils/logger';
+import { buildAdminExportFilename, downloadJsonFile } from '@/utils/adminExport';
 
 interface AdminUserManagementProps {
   selectedLanguage: string;
@@ -410,11 +412,27 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
     }
   };
 
+  const handleExport = () => {
+    downloadJsonFile(buildAdminExportFilename('user-management'), {
+      section: 'user-management',
+      generatedAt: new Date().toISOString(),
+      stats,
+      users: filteredUsers,
+      staff,
+    });
+  };
+
   return (
     <div className="space-y-6 p-6 bg-white min-h-screen">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">User & Staff Management</h1>
-        <p className="text-gray-500">Monitor user accounts and manage staff access.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">User & Staff Management</h1>
+          <p className="text-gray-500">Monitor user accounts and manage staff access.</p>
+        </div>
+        <Button variant="outline" className="gap-2 border-[#E8ECFF] hover:bg-gray-50" onClick={handleExport}>
+          <Download className="w-4 h-4" />
+          Export
+        </Button>
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">

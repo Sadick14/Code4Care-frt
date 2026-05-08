@@ -308,26 +308,26 @@ export function ChatInterface({
 
         setMessages(prev => [...prev, botMsg]);
 
-        // Fetch follow-up suggestions for this bot message
-        try {
-          const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
-          const suggestionsResponse = await SuggestionsService.getSuggestions({ 
-            language: languageCode,
-            context: answerText
-          });
+        // // Fetch follow-up suggestions for this bot message
+        // try {
+        //   const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+        //   const suggestionsResponse = await SuggestionsService.getSuggestions({ 
+        //     language: languageCode,
+        //     context: answerText
+        //   });
           
-          if (suggestionsResponse.suggestions && suggestionsResponse.suggestions.length > 0) {
-            setMessages(prev => 
-              prev.map(msg => 
-                msg.id === botMsg.id 
-                  ? { ...msg, followUpSuggestions: suggestionsResponse.suggestions.slice(0, 3) }
-                  : msg
-              )
-            );
-          }
-        } catch (err) {
-          logger.error('Failed to fetch follow-up suggestions', err);
-        }
+        //   if (suggestionsResponse.suggestions && suggestionsResponse.suggestions.length > 0) {
+        //     setMessages(prev => 
+        //       prev.map(msg => 
+        //         msg.id === botMsg.id 
+        //           ? { ...msg, followUpSuggestions: suggestionsResponse.suggestions.slice(0, 3) }
+        //           : msg
+        //       )
+        //     );
+        //   }
+        // } catch (err) {
+        //   logger.error('Failed to fetch follow-up suggestions', err);
+        // }
 
         UserEngagementService.logNonBlocking(
           UserEngagementService.logChatEvent({
@@ -614,7 +614,7 @@ export function ChatInterface({
                 </motion.div>
 
                 {/* Show conversation starters directly below the welcome message */}
-                {idx === 0 && messages.length <= 3 && suggestions.length > 0 && (
+                {/* {idx === 0 && messages.length <= 3 && suggestions.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -637,7 +637,7 @@ export function ChatInterface({
                       ))}
                     </div>
                   </motion.div>
-                )}
+                )} */}
               </React.Fragment>
             ))}
           </AnimatePresence>
