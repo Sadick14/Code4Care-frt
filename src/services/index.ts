@@ -170,3 +170,77 @@ export { AnalyticsService } from './analyticsService';
 // Text-to-Speech Service
 export { requestTextToSpeech } from './ttsService';
 export type { TTSRequest, TTSResponse } from './ttsService';
+
+// Feedback Service
+export { FeedbackService } from './feedbackService';
+export type { FeedbackRequest, FeedbackResponse } from './feedbackService';
+
+// Report Service
+export { ReportService } from './reportService';
+export type { ReportRequest, ReportResponse } from './reportService';
+
+// User Tracking Service
+export { UserTrackingService } from './userTrackingService';
+export type {
+  UserDemographicsRequest,
+  UserDemographicsResponse,
+  EventLogRequest,
+  EventLogResponse,
+  UserSettingsRequest,
+  UserSettingsResponse,
+  UserSessionRequest,
+  UserSessionResponse,
+} from './userTrackingService';
+
+// Safety Service
+export { SafetyService } from './safetyService';
+export type {
+  PanicEventRequest,
+  PanicEventResponse,
+  CrisisEventRequest,
+  CrisisEventResponse,
+} from './safetyService';
+
+// Follow-up Service
+export { FollowUpService } from './followUpService';
+export type {
+  FollowUpRequestRequest,
+  FollowUpRequestResponse,
+} from './followUpService';
+
+// Feature Analytics Service
+export { FeatureAnalyticsService } from './featureAnalyticsService';
+export type {
+  StoryEventRequest,
+  StoryEventResponse,
+  MythBusterEventRequest,
+  MythBusterEventResponse,
+  ResourceAccessEventRequest,
+  ResourceAccessEventResponse,
+} from './featureAnalyticsService';
+
+// Health Service
+export { HealthService } from './healthService';
+export type {
+  HealthResponse,
+  ReadyResponse,
+  VersionResponse,
+} from './healthService';
+
+// Suggestions Service
+export { SuggestionsService } from './suggestionsService';
+export type {
+  SuggestionsRequest,
+  SuggestionsResponse,
+} from './suggestionsService';
+
+// Report Orchestration Service
+export { ReportOrchestrationService } from './reportOrchestrationService';
+export type {
+  ReportType,
+  ExportFormat,
+  ReportPeriod,
+  ReportConfig,
+  GeneratedReport,
+  ReportTemplate,
+} from './reportOrchestrationService';

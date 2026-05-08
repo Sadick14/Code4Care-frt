@@ -39,7 +39,8 @@ import {
 } from 'lucide-react';
 import { RealAnalyticsService } from '@/services/realAnalyticsService';
 import { getNumber, getNested } from '@/utils/analyticsUtils';
-import { StaffSession } from '@/services/staffAccessService';
+import { StaffAccessService, StaffSession, AdminDashboardStats } from '@/services/staffAccessService';
+import { HealthService } from '@/services';
 import { logger } from '@/utils/logger';
 
 interface AdminDashboardProps {
@@ -52,8 +53,12 @@ const GENDER_COLORS = ['#7c3aed', '#f97316', '#e11d48', '#2563eb', '#16a34a', '#
 
 export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProps) {
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('week');
+  const [remoteStats, setRemoteStats] = useState<AdminDashboardStats | null>(null);
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
+  const [healthStatus, setHealthStatus] = useState<any>(null);
+  const [isLoadingHealth, setIsLoadingHealth] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -85,6 +90,70 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
       mounted = false;
     };
   }, [period, session.accessToken]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadRemoteStats = async () => {
+      setIsLoadingStats(true);
+      try {
+        const stats = await StaffAccessService.getDashboardStats(session.accessToken);
+        if (mounted) {
+          setRemoteStats(stats);
+        }
+      } catch (error) {
+        logger.error('Failed to load dashboard stats', error);
+        setRemoteStats(null);
+      } finally {
+        if (mounted) {
+          setIsLoadingStats(false);
+        }
+      }
+    };
+
+    void loadRemoteStats();
+
+    return () => {
+      mounted = false;
+    };
+  }, [session.accessToken]);
+
+  // Load system health status
+  useEffect(() => {
+    let mounted = true;
+
+    const loadHealthStatus = async () => {
+      setIsLoadingHealth(true);
+      try {
+        const [health, ready, version] = await Promise.all([
+          HealthService.checkHealth(),
+          HealthService.checkReady(),
+          HealthService.getVersion(),
+        ]);
+
+        if (mounted) {
+          setHealthStatus({ health, ready, version });
+        }
+      } catch (error) {
+        logger.error('Failed to load health status', error);
+        setHealthStatus(null);
+      } finally {
+        if (mounted) {
+          setIsLoadingHealth(false);
+        }
+      }
+    };
+
+    void loadHealthStatus();
+
+    // Refresh health status every 30 seconds
+    const interval = setInterval(loadHealthStatus, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const content = {
     en: {
@@ -211,6 +280,34 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
             <div>
               <h1 className="text-4xl font-bold text-gray-900 mb-2">{lang.title}</h1>
               <p className="text-gray-500">{lang.subtitle}</p>
+              {healthStatus && (
+                <div className="flex items-center gap-3 mt-2">
+                  <Badge
+                    className={`${
+                      healthStatus.health?.status === 'ok'
+                        ? 'bg-green-100 text-green-700 border-green-200'
+                        : 'bg-red-100 text-red-700 border-red-200'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${
+                      healthStatus.health?.status === 'ok' ? 'bg-green-500' : 'bg-red-500'
+                    } inline-block mr-1.5`}></span>
+                    System {healthStatus.health?.status === 'ok' ? 'Healthy' : 'Down'}
+                  </Badge>
+                  <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+                    API v{healthStatus.version?.version || '1.0.0'}
+                  </Badge>
+                  {healthStatus.ready && (
+                    <Badge className={`${
+                      healthStatus.ready.database === 'connected'
+                        ? 'bg-green-100 text-green-700 border-green-200'
+                        : 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                    }`}>
+                      DB: {healthStatus.ready.database || 'unknown'}
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
             <Button variant="outline" size="sm" className="gap-2">
               <Download className="w-4 h-4" />

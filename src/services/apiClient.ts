@@ -11,6 +11,14 @@ import { RealAnalyticsService } from './realAnalyticsService';
 import { EnhancedChatService } from './enhancedChatService';
 import { requestChatCompletion } from './chatbotService';
 import { UserEngagementService } from './userEngagementService';
+import { FeedbackService } from './feedbackService';
+import { ReportService } from './reportService';
+import { UserTrackingService } from './userTrackingService';
+import { SafetyService } from './safetyService';
+import { FollowUpService } from './followUpService';
+import { FeatureAnalyticsService } from './featureAnalyticsService';
+import { HealthService } from './healthService';
+import { SuggestionsService } from './suggestionsService';
 import { logger } from '@/utils/logger';
 
 export interface ApiClientConfig {
@@ -447,7 +455,7 @@ export class APIClient {
     },
 
     /**
-     * Submit chat feedback
+     * Submit chat feedback (enhanced)
      */
     submitFeedback: (payload: Parameters<typeof EnhancedChatService.submitChatFeedback>[0]) => {
       return EnhancedChatService.submitChatFeedback(payload);
@@ -504,6 +512,148 @@ export class APIClient {
       return UserEngagementService.trackSession(payload);
     },
   };
+
+  // ========== Feedback & Reports APIs ==========
+
+  Feedback = {
+    /**
+     * Submit feedback on bot response
+     */
+    submit: (payload: Parameters<typeof FeedbackService.submitFeedback>[0]) => {
+      return FeedbackService.submitFeedback(payload);
+    },
+  };
+
+  Report = {
+    /**
+     * Report harmful or incorrect response
+     */
+    submit: (payload: Parameters<typeof ReportService.submitReport>[0]) => {
+      return ReportService.submitReport(payload);
+    },
+  };
+
+  // ========== User Tracking APIs ==========
+
+  UserTracking = {
+    /**
+     * Capture user demographics
+     */
+    captureDemographics: (payload: Parameters<typeof UserTrackingService.captureDemographics>[0]) => {
+      return UserTrackingService.captureDemographics(payload);
+    },
+
+    /**
+     * Log chat event
+     */
+    logEvent: (payload: Parameters<typeof UserTrackingService.logChatEvent>[0]) => {
+      return UserTrackingService.logChatEvent(payload);
+    },
+
+    /**
+     * Update user settings
+     */
+    updateSettings: (payload: Parameters<typeof UserTrackingService.updateSettings>[0]) => {
+      return UserTrackingService.updateSettings(payload);
+    },
+
+    /**
+     * Track session event
+     */
+    trackSession: (payload: Parameters<typeof UserTrackingService.trackSession>[0]) => {
+      return UserTrackingService.trackSession(payload);
+    },
+  };
+
+  // ========== Safety APIs ==========
+
+  Safety = {
+    /**
+     * Log panic button event
+     */
+    logPanic: (payload: Parameters<typeof SafetyService.logPanicEvent>[0]) => {
+      return SafetyService.logPanicEvent(payload);
+    },
+
+    /**
+     * Log crisis detection event
+     */
+    logCrisis: (payload: Parameters<typeof SafetyService.logCrisisEvent>[0]) => {
+      return SafetyService.logCrisisEvent(payload);
+    },
+  };
+
+  // ========== Follow-up APIs ==========
+
+  FollowUp = {
+    /**
+     * Create follow-up request
+     */
+    create: (payload: Parameters<typeof FollowUpService.createFollowUpRequest>[0]) => {
+      return FollowUpService.createFollowUpRequest(payload);
+    },
+  };
+
+  // ========== Feature Analytics APIs ==========
+
+  FeatureAnalytics = {
+    /**
+     * Log story module event
+     */
+    logStory: (payload: Parameters<typeof FeatureAnalyticsService.logStoryEvent>[0]) => {
+      return FeatureAnalyticsService.logStoryEvent(payload);
+    },
+
+    /**
+     * Log myth buster event
+     */
+    logMythBuster: (payload: Parameters<typeof FeatureAnalyticsService.logMythBusterEvent>[0]) => {
+      return FeatureAnalyticsService.logMythBusterEvent(payload);
+    },
+
+    /**
+     * Log resource access
+     */
+    logResourceAccess: (payload: Parameters<typeof FeatureAnalyticsService.logResourceAccess>[0]) => {
+      return FeatureAnalyticsService.logResourceAccess(payload);
+    },
+  };
+
+  // ========== Health & System APIs ==========
+
+  Health = {
+    /**
+     * Check API health
+     */
+    check: () => {
+      return HealthService.checkHealth();
+    },
+
+    /**
+     * Check API ready status
+     */
+    checkReady: () => {
+      return HealthService.checkReady();
+    },
+
+    /**
+     * Get API version
+     */
+    getVersion: () => {
+      return HealthService.getVersion();
+    },
+  };
+
+  // ========== Suggestions APIs ==========
+
+  Suggestions = {
+    /**
+     * Get conversation suggestions
+     */
+    get: (params?: Parameters<typeof SuggestionsService.getSuggestions>[0]) => {
+      return SuggestionsService.getSuggestions(params);
+    },
+  };
 }
 
 // Export singleton instance factory
@@ -520,4 +670,12 @@ export {
   RealAnalyticsService,
   EnhancedChatService,
   UserEngagementService,
+  FeedbackService,
+  ReportService,
+  UserTrackingService,
+  SafetyService,
+  FollowUpService,
+  FeatureAnalyticsService,
+  HealthService,
+  SuggestionsService,
 };
