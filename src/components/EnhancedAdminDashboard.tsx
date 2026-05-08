@@ -38,6 +38,7 @@ import {
   Download,
 } from 'lucide-react';
 import { RealAnalyticsService } from '@/services/realAnalyticsService';
+import { getNumber, getNested } from '@/utils/analyticsUtils';
 import { StaffSession } from '@/services/staffAccessService';
 import { logger } from '@/utils/logger';
 
@@ -135,17 +136,17 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
 
   // KPI Stats - with fallback to empty values while loading
   const kpis = [
-    { label: lang.activeUsers, value: analyticsData?.summary?.total_active_users ?? 0, icon: Users, color: 'from-blue-500 to-blue-600' },
-    { label: lang.engagements, value: analyticsData?.summary?.conversations_in_period ?? 0, icon: BarChart3, color: 'from-purple-500 to-purple-600' },
+    { label: lang.activeUsers, value: getNumber(analyticsData?.summary, 'total_active_users', 'totalActiveUsers', 'active_users'), icon: Users, color: 'from-blue-500 to-blue-600' },
+    { label: lang.engagements, value: getNumber(analyticsData?.summary, 'conversations_in_period', 'conversationsInPeriod', 'conversations'), icon: BarChart3, color: 'from-purple-500 to-purple-600' },
     { label: lang.satisfaction, value: averageSatisfaction || 0, icon: Heart, color: 'from-red-500 to-red-600' },
   ];
 
   // Safety metrics
   const safetyMetrics = [
-    { label: 'Panic Exits', value: analyticsData?.safety?.panic_exits_total ?? 0, icon: AlertTriangle, color: 'text-yellow-600' },
-    { label: 'Crisis Interventions', value: analyticsData?.safety?.crisis_interventions ?? 0, icon: Heart, color: 'text-red-600' },
-    { label: 'Self-Harm Mentions', value: analyticsData?.safety?.self_harm_mentions ?? 0, icon: AlertTriangle, color: 'text-orange-600' },
-    { label: 'Suicidal Ideation', value: analyticsData?.safety?.suicidal_ideation_mentions ?? 0, icon: AlertTriangle, color: 'text-red-700' },
+    { label: 'Panic Exits', value: getNumber(analyticsData?.safety, 'panic_exits_total', 'panicExitsTotal', 'panic_exits'), icon: AlertTriangle, color: 'text-yellow-600' },
+    { label: 'Crisis Interventions', value: getNumber(analyticsData?.safety, 'crisis_interventions', 'crisisInterventions', 'crisis_interventions_count'), icon: Heart, color: 'text-red-600' },
+    { label: 'Self-Harm Mentions', value: getNumber(analyticsData?.safety, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_count'), icon: AlertTriangle, color: 'text-orange-600' },
+    { label: 'Suicidal Ideation', value: getNumber(analyticsData?.safety, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation_count'), icon: AlertTriangle, color: 'text-red-700' },
   ];
 
   if (isLoadingAnalytics) {
@@ -280,16 +281,31 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
-                          data={analyticsData?.demographics?.ageRange ? Object.entries(analyticsData.demographics.ageRange).map(([k, v]) => ({ age: k, value: v })) : []}
+                          data={getNested(analyticsData, 'demographics', 'ageRange') ? Object.entries(getNested(analyticsData, 'demographics', 'ageRange') as Record<string, number>).map(([k, v]) => ({ age: k, value: v })) : []}
                           dataKey="value"
                           nameKey="age"
                           cx="50%"
                           cy="50%"
                           outerRadius={80}
                         >
-                          {analyticsData?.demographics?.ageRange && Object.entries(analyticsData.demographics.ageRange).map((_, idx) => (
-                            <Cell key={idx} fill={AGE_COLORS[idx % AGE_COLORS.length]} />
-                          ))}
+                          {(() => {
+                                const ageRange = getNested(
+                                  analyticsData,
+                                  'demographics',
+                                  'ageRange'
+                                ) as Record<string, number> | undefined;
+
+                                if (!ageRange || typeof ageRange !== 'object') {
+                                  return null;
+                                }
+
+                                return Object.entries(ageRange).map((_, idx) => (
+                                  <Cell
+                                    key={idx}
+                                    fill={AGE_COLORS[idx % AGE_COLORS.length]}
+                                  />
+                                ));
+                              })()}
                         </Pie>
                         <Tooltip />
                       </PieChart>
@@ -303,7 +319,7 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                     <ChartSkeleton />
                   ) : (
                     <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={analyticsData?.demographics?.regions ? Object.entries(analyticsData.demographics.regions).map(([region, value]) => ({ region, value })) : []}>
+                      <BarChart data={getNested(analyticsData, 'demographics', 'regions') ? Object.entries(getNested(analyticsData, 'demographics', 'regions') as Record<string, number>).map(([region, value]) => ({ region, value })) : []}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
                         <XAxis dataKey="region" stroke="#9CA3AF" style={{ fontSize: 11 }} angle={-45} textAnchor="end" height={70} />
                         <YAxis stroke="#9CA3AF" style={{ fontSize: 12 }} />
@@ -322,16 +338,31 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
-                          data={analyticsData?.demographics?.gender ? Object.entries(analyticsData.demographics.gender).map(([gender, value]) => ({ gender, value })) : []}
+                          data={getNested(analyticsData, 'demographics', 'gender') ? Object.entries(getNested(analyticsData, 'demographics', 'gender') as Record<string, number>).map(([gender, value]) => ({ gender, value })) : []}
                           dataKey="value"
                           nameKey="gender"
                           cx="50%"
                           cy="50%"
                           outerRadius={80}
                         >
-                          {analyticsData?.demographics?.gender && Object.entries(analyticsData.demographics.gender).map((_, idx) => (
-                            <Cell key={idx} fill={GENDER_COLORS[idx % GENDER_COLORS.length]} />
-                          ))}
+                          {(() => {
+                            const gender = getNested(
+                              analyticsData,
+                              'demographics',
+                              'gender'
+                            ) as Record<string, number> | undefined;
+
+                            if (!gender || typeof gender !== 'object') {
+                              return null;
+                            }
+
+                            return Object.entries(gender).map((_, idx) => (
+                              <Cell
+                                key={idx}
+                                fill={GENDER_COLORS[idx % GENDER_COLORS.length]}
+                              />
+                            ));
+                          })()}
                         </Pie>
                         <Tooltip />
                       </PieChart>
@@ -376,17 +407,17 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
               <div className="grid grid-cols-3 gap-6">
                 <div>
                   <p className="text-sm text-gray-600 mb-2">Response Time</p>
-                  <p className="text-3xl font-bold text-gray-900">{analyticsData?.performance?.avgResponseTime ?? 0}ms</p>
+                  <p className="text-3xl font-bold text-gray-900">{getNumber(analyticsData?.performance, 'avgResponseTime', 'avg_response_time_ms', 'response_time_ms')}ms</p>
                   <Badge className="mt-2 bg-green-50 text-green-600 border-green-200">Healthy</Badge>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-2">System Uptime</p>
-                  <p className="text-3xl font-bold text-gray-900">{analyticsData?.performance?.systemUptime ?? 0}%</p>
+                  <p className="text-3xl font-bold text-gray-900">{getNumber(analyticsData?.performance, 'systemUptime', 'system_uptime_percent', 'uptime_percent')}%</p>
                   <Badge className="mt-2 bg-green-50 text-green-600 border-green-200">Online</Badge>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-2">Success Rate</p>
-                  <p className="text-3xl font-bold text-gray-900">{analyticsData?.performance?.messageProcessingSuccess ?? 0}%</p>
+                  <p className="text-3xl font-bold text-gray-900">{getNumber(analyticsData?.performance, 'messageProcessingSuccess', 'message_processing_success_percent', 'success_rate')}%</p>
                   <Badge className="mt-2 bg-blue-50 text-blue-600 border-blue-200">Excellent</Badge>
                 </div>
               </div>

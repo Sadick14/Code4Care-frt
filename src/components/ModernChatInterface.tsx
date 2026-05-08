@@ -20,7 +20,7 @@ interface ModernChatInterfaceProps {
   onMessagesChange: (messages: Message[]) => void;
 }
 
-const CHATBOT_AVATAR_SRC = "/chatbot.jpg";
+const CHATBOT_AVATAR_SRC = "/logo/3.png";
 
 export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: ModernChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -96,7 +96,7 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
         .catch(() => {
           try {
             const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = langMap[langCode] || 'en-US';
+            utter.lang = langCode ? langMap[langCode] || 'en-US' : 'en-US';
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utter);
           } catch (e) {
@@ -108,8 +108,8 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
 
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = langMap[langCode] || langMap['en'] || 'en-US';
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = langCode ? langMap[langCode] || 'en-US' : 'en-US';
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utter);
     } catch (err) {

@@ -18,6 +18,7 @@ import { SettingsPage } from "./components/SettingsPage";
 import { PanicScreen } from "./components/PanicScreen";
 import { NicknameModal } from "./components/NicknameModal";
 import OnboardingScreen from "./components/OnboardingScreen";
+import OnboardingCarousel from "./components/introscreen/app.tsx";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { UserEngagementService } from "@/services/userEngagementService";
 import { RealAnalyticsService } from "@/services/realAnalyticsService";
@@ -37,6 +38,7 @@ function AppContent() {
     ageRange,
     genderIdentity,
     region,
+    sessionDuration,
     analyticsOptIn,
     setBotName,
     setAgeRange,
@@ -45,7 +47,6 @@ function AppContent() {
     sessionId, setSessionId,
     resetAll,
     consultantMode,
-    setConsultantMode
   } = useApp();
 
   // PWA hooks
@@ -62,6 +63,50 @@ function AppContent() {
   const sessionStartedAtRef = useRef(Date.now());
   const sessionEndedRef = useRef(false);
   const sessionAnalyticsRecordedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasSeenOnboarding) {
+      return;
+    }
+
+    const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+
+    UserEngagementService.logNonBlocking(
+      UserEngagementService.captureDemographics({
+        session_id: sessionId,
+        bot_name: 'Room 1221',
+        age_range: ageRange,
+        gender_identity: genderIdentity,
+        region,
+        language: languageCode,
+      }),
+      'Failed to sync demographics for current session',
+    );
+
+    UserEngagementService.logNonBlocking(
+      UserEngagementService.updateUserSettings({
+        session_id: sessionId,
+        nickname: nickname || '',
+        language: languageCode,
+        chat_retention: sessionDuration,
+        analytics_consent: analyticsOptIn,
+        consultant_mode_enabled: consultantMode,
+      }),
+      'Failed to sync user settings for current session',
+    );
+  }, [
+    hasSeenOnboarding,
+    sessionId,
+    ageRange,
+    genderIdentity,
+    region,
+    nickname,
+    sessionDuration,
+    analyticsOptIn,
+    consultantMode,
+    i18n.language,
+    i18n.resolvedLanguage,
+  ]);
 
   // Sync nickname modal visibility with global state
   useEffect(() => {
@@ -214,7 +259,24 @@ function AppContent() {
     toast.success(t('chat.logoutSuccess', 'Logged out successfully'));
   };
 
+  const [showIntro, setShowIntro] = useState(true);
+
   if (!hasSeenOnboarding) {
+    if (showIntro) {
+      return (
+        <OnboardingCarousel
+          onComplete={() => {
+            // Carousel complete, move to demographics onboarding
+            setShowIntro(false);
+          }}
+          onSkip={() => {
+            // Skip carousel and go directly to demographics
+            setShowIntro(false);
+          }}
+        />
+      );
+    }
+
     return (
       <OnboardingScreen
         onComplete={({ botName: nextBotName, ageRange: nextAgeRange, genderIdentity: nextGenderIdentity, region: nextRegion }) => {

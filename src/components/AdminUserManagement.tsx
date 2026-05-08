@@ -32,7 +32,13 @@ import {
   StaffRole,
   StaffSession,
 } from '@/services/staffAccessService';
-import { UserManagementService, UserListItem } from '@/services/userManagementService';
+import {
+  UserChatHistoryResponse,
+  UserDetails,
+  UserListItem,
+  UserManagementService,
+  UserStatus,
+} from '@/services/userManagementService';
 import { logger } from '@/utils/logger';
 
 interface AdminUserManagementProps {
@@ -54,6 +60,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
   const [users, setUsers] = useState<UserListItem[]>([]);
+  const [usersTotal, setUsersTotal] = useState(0);
   const [staff, setStaff] = useState<StaffAccount[]>(() => StaffAccessService.getStaffAccounts());
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [staffModalOpen, setStaffModalOpen] = useState(false);
@@ -61,6 +68,48 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
   const [formData, setFormData] = useState(initialForm);
   const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserDetails, setSelectedUserDetails] = useState<UserDetails | null>(null);
+  const [selectedUserChat, setSelectedUserChat] = useState<UserChatHistoryResponse | null>(null);
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [isLoadingUserDetails, setIsLoadingUserDetails] = useState(false);
+  const [isLoadingUserChat, setIsLoadingUserChat] = useState(false);
+  const [isUpdatingUser, setIsUpdatingUser] = useState(false);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [userActionError, setUserActionError] = useState('');
+  const [userActionSuccess, setUserActionSuccess] = useState('');
+  const [nextStatus, setNextStatus] = useState<UserStatus>('active');
+  const [statusReason, setStatusReason] = useState('');
+  const [followUpNotes, setFollowUpNotes] = useState('');
+  const [deleteReason, setDeleteReason] = useState<'user_request' | 'gdpr' | 'safety'>('safety');
+  const [deleteConfirmationCode, setDeleteConfirmationCode] = useState('');
+
+  const closeUserModal = () => {
+    setUserModalOpen(false);
+    setSelectedUserId(null);
+    setSelectedUserDetails(null);
+    setSelectedUserChat(null);
+    setUserActionError('');
+    setUserActionSuccess('');
+    setNextStatus('active');
+    setStatusReason('');
+    setFollowUpNotes('');
+    setDeleteReason('safety');
+    setDeleteConfirmationCode('');
+  };
+
+  const formatDateTime = (value?: string) => {
+    if (!value) {
+      return 'N/A';
+    }
+
+    const parsed = new Date(value);
+    if (!Number.isFinite(parsed.getTime())) {
+      return value;
+    }
+
+    return parsed.toLocaleString();
+  };
 
   const loadStaff = async () => {
     try {
@@ -82,11 +131,144 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
         session.accessToken
       );
       setUsers(response.users);
+      setUsersTotal(response.total ?? response.users.length);
     } catch (error) {
       logger.error('Failed to load users', error);
       setUsers([]);
+      setUsersTotal(0);
     } finally {
       setIsLoadingUsers(false);
+    }
+  };
+
+  const handleViewUser = async (user: UserListItem) => {
+    setUserModalOpen(true);
+    setSelectedUserId(user.id);
+    setSelectedUserDetails(null);
+    setSelectedUserChat(null);
+    setUserActionError('');
+    setUserActionSuccess('');
+    setNextStatus(user.status);
+    setStatusReason('');
+    setFollowUpNotes('');
+    setDeleteReason('safety');
+    setDeleteConfirmationCode('');
+
+    setIsLoadingUserDetails(true);
+    setIsLoadingUserChat(true);
+
+    try {
+      const [details, chatHistory] = await Promise.all([
+        UserManagementService.getUserDetails(user.id, session.accessToken),
+        UserManagementService.getUserChatHistory(user.id, { limit: 20, offset: 0 }, session.accessToken),
+      ]);
+
+      setSelectedUserDetails(details);
+      setSelectedUserChat(chatHistory);
+      setNextStatus(details.status);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to load user details.';
+      setUserActionError(message);
+      logger.error(`Failed to load user action panel for ${user.id}`, error);
+    } finally {
+      setIsLoadingUserDetails(false);
+      setIsLoadingUserChat(false);
+    }
+  };
+
+  const handleUpdateUserStatus = async () => {
+    if (!selectedUserId) {
+      return;
+    }
+
+    const trimmedReason = statusReason.trim();
+    const trimmedFollowUp = followUpNotes.trim();
+    const currentStatus = selectedUserDetails?.status;
+    const statusChanged = currentStatus ? currentStatus !== nextStatus : true;
+
+    if (statusChanged && !trimmedReason) {
+      setUserActionError('Add a reason for changing user status.');
+      return;
+    }
+
+    setIsUpdatingUser(true);
+    setUserActionError('');
+    setUserActionSuccess('');
+
+    try {
+      const response = await UserManagementService.updateUser(
+        selectedUserId,
+        {
+          status: nextStatus,
+          reason_for_change: trimmedReason || undefined,
+          follow_up_notes: trimmedFollowUp || undefined,
+          follow_up_required: Boolean(trimmedFollowUp),
+        },
+        session.accessToken,
+      );
+
+      setUserActionSuccess(`User status updated to ${response.status}.`);
+
+      // Apply immediate UI state so successful updates are reflected even if background refresh fails.
+      setUsers((prev) => prev.map((user) => (user.id === selectedUserId ? { ...user, status: response.status } : user)));
+      setSelectedUserDetails((prev) => (prev ? { ...prev, status: response.status } : prev));
+      setNextStatus(response.status);
+
+      try {
+        await loadUsers();
+      } catch (refreshError) {
+        logger.error('Users list refresh failed after status update', refreshError);
+      }
+
+      try {
+        const refreshedDetails = await UserManagementService.getUserDetails(selectedUserId, session.accessToken);
+        setSelectedUserDetails(refreshedDetails);
+        setNextStatus(refreshedDetails.status);
+      } catch (refreshError) {
+        logger.error(`User details refresh failed after updating ${selectedUserId}`, refreshError);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to update user status.';
+      setUserActionError(message);
+      logger.error(`Failed to update user ${selectedUserId}`, error);
+    } finally {
+      setIsUpdatingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUserId) {
+      return;
+    }
+
+    if (!deleteConfirmationCode.trim()) {
+      setUserActionError('Enter a confirmation code before deleting this user.');
+      return;
+    }
+
+    setIsDeletingUser(true);
+    setUserActionError('');
+    setUserActionSuccess('');
+
+    try {
+      await UserManagementService.deleteUser(
+        selectedUserId,
+        {
+          reason: deleteReason,
+          confirmation_code: deleteConfirmationCode.trim(),
+        },
+        session.accessToken,
+      );
+
+      setUserActionSuccess('User deleted successfully.');
+      await loadUsers();
+      closeUserModal();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to delete user.';
+      setUserActionError(message);
+      logger.error(`Failed to delete user ${selectedUserId}`, error);
+    } finally {
+      setIsDeletingUser(false);
     }
   };
 
@@ -194,7 +376,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
   };
 
   const stats = {
-    total: users.length,
+    total: usersTotal,
     active: users.filter((u) => u.status === 'active').length,
     inactive: users.filter((u) => u.status === 'inactive').length,
     suspended: users.filter((u) => u.status === 'suspended').length,
@@ -331,7 +513,12 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleViewUser(user)}
+                          >
                             View
                           </Button>
                         </TableCell>
@@ -485,6 +672,151 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
               <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSaveStaff} disabled={isSaving}>
                 {isSaving ? 'Saving...' : editingStaffId ? 'Update' : 'Create'} Account
               </Button>
+            </div>
+          </Card>
+        </motion.div>
+      )}
+
+      {userModalOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={closeUserModal}
+        >
+          <Card className="bg-white p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border-[#E8ECFF]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">User Details</h3>
+                <p className="text-sm text-gray-500">Inspect profile, status, and chat activity.</p>
+              </div>
+              <Button variant="outline" onClick={closeUserModal}>
+                Close
+              </Button>
+            </div>
+
+            {userActionError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 mb-4">
+                {userActionError}
+              </div>
+            )}
+
+            {userActionSuccess && (
+              <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700 mb-4">
+                {userActionSuccess}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <Card className="border-[#E8ECFF] p-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">Profile</h4>
+                  {isLoadingUserDetails ? (
+                    <p className="text-sm text-gray-500">Loading user details...</p>
+                  ) : selectedUserDetails ? (
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between gap-4"><span className="text-gray-500">Nickname</span><span className="text-gray-900 font-medium">{selectedUserDetails.nickname}</span></div>
+                      <div className="flex justify-between gap-4"><span className="text-gray-500">Status</span><Badge variant="outline" className={getUserStatusColor(selectedUserDetails.status)}>{selectedUserDetails.status}</Badge></div>
+                      <div className="flex justify-between gap-4"><span className="text-gray-500">Age range</span><span className="text-gray-900">{selectedUserDetails.age_range || 'N/A'}</span></div>
+                      <div className="flex justify-between gap-4"><span className="text-gray-500">Gender</span><span className="text-gray-900">{selectedUserDetails.gender_identity || 'N/A'}</span></div>
+                      <div className="flex justify-between gap-4"><span className="text-gray-500">Region</span><span className="text-gray-900">{selectedUserDetails.region || 'N/A'}</span></div>
+                      <div className="flex justify-between gap-4"><span className="text-gray-500">Language</span><span className="text-gray-900 uppercase">{selectedUserDetails.language || 'N/A'}</span></div>
+                      <div className="flex justify-between gap-4"><span className="text-gray-500">Created</span><span className="text-gray-900">{formatDateTime(selectedUserDetails.created_at)}</span></div>
+                      <div className="flex justify-between gap-4"><span className="text-gray-500">Last active</span><span className="text-gray-900">{formatDateTime(selectedUserDetails.last_active)}</span></div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No user details available.</p>
+                  )}
+                </Card>
+
+                <Card className="border-[#E8ECFF] p-4 space-y-3">
+                  <h4 className="font-semibold text-gray-900">Update Status</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      value={nextStatus}
+                      onChange={(e) => setNextStatus(e.target.value as UserStatus)}
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 border border-[#E8ECFF] text-gray-900"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="suspended">Suspended</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Reason for change</label>
+                    <Input
+                      value={statusReason}
+                      onChange={(e) => setStatusReason(e.target.value)}
+                      placeholder="Reason for status update"
+                      className="bg-gray-50 border-[#E8ECFF] text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Follow-up notes</label>
+                    <textarea
+                      value={followUpNotes}
+                      onChange={(e) => setFollowUpNotes(e.target.value)}
+                      placeholder="Optional notes"
+                      className="w-full min-h-20 px-3 py-2 rounded-lg bg-gray-50 border border-[#E8ECFF] text-gray-900"
+                    />
+                  </div>
+                  <Button onClick={handleUpdateUserStatus} disabled={isUpdatingUser || !selectedUserId} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    {isUpdatingUser ? 'Updating...' : 'Update User'}
+                  </Button>
+                </Card>
+
+                <Card className="border-red-200 p-4 space-y-3 bg-red-50/30">
+                  <h4 className="font-semibold text-red-700">Delete User (GDPR)</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Delete reason</label>
+                    <select
+                      value={deleteReason}
+                      onChange={(e) => setDeleteReason(e.target.value as 'user_request' | 'gdpr' | 'safety')}
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-red-200 text-gray-900"
+                    >
+                      <option value="safety">Safety</option>
+                      <option value="user_request">User Request</option>
+                      <option value="gdpr">GDPR</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Confirmation code</label>
+                    <Input
+                      value={deleteConfirmationCode}
+                      onChange={(e) => setDeleteConfirmationCode(e.target.value)}
+                      placeholder="Enter confirmation code"
+                      className="bg-white border-red-200 text-gray-900"
+                    />
+                  </div>
+                  <Button variant="destructive" onClick={handleDeleteUser} disabled={isDeletingUser || !selectedUserId}>
+                    {isDeletingUser ? 'Deleting...' : 'Delete User'}
+                  </Button>
+                </Card>
+              </div>
+
+              <Card className="border-[#E8ECFF] p-4">
+                <h4 className="font-semibold text-gray-900 mb-3">Recent Chat History</h4>
+                {isLoadingUserChat ? (
+                  <p className="text-sm text-gray-500">Loading chat history...</p>
+                ) : selectedUserChat && selectedUserChat.messages?.length ? (
+                  <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-1">
+                    {selectedUserChat.messages.map((message) => (
+                      <div key={message.id} className="rounded-lg border border-[#E8ECFF] p-3 bg-white">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <Badge className={message.role === 'consultant' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'}>
+                            {message.role}
+                          </Badge>
+                          <span className="text-xs text-gray-500">{formatDateTime(message.timestamp)}</span>
+                        </div>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">{message.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No chat history available.</p>
+                )}
+              </Card>
             </div>
           </Card>
         </motion.div>

@@ -32,7 +32,7 @@ interface ChatInterfaceProps {
   clearTrigger?: number;
 }
 
-const CHATBOT_AVATAR_SRC = "/chatbot.jpg";
+const CHATBOT_AVATAR_SRC = "/logo/3.png";
 
 export function ChatInterface({ 
   clearTrigger = 0 

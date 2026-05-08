@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shield, Menu, UserCheck, AlertCircle, Phone } from "lucide-react";
+import { Shield, Menu, UserCheck, AlertCircle, User } from "lucide-react";
 import { dktSupportLines } from '@/data/dktProducts';
 import { useApp } from '@/providers/AppProvider';
 import { Button } from '@/components/ui/button';
@@ -54,9 +54,9 @@ export const Header: React.FC<HeaderProps> = ({
               href={`tel:${consultantPhone.replace(/\D/g, '')}`}
               title={t('chat.talkToConsultant', 'Talk to consultant')}
               aria-label={t('chat.talkToConsultant', 'Talk to consultant')}
-              className="inline-flex items-center justify-center rounded-full p-2 text-white bg-emerald-600 hover:bg-emerald-700 sm:hidden"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 shadow-sm transition-colors hover:border-emerald-300 hover:bg-emerald-100 sm:hidden"
             >
-              <Phone className="w-4 h-4" />
+              <User className="w-4 h-4" />
             </a>
           )}
           {consultantMode && (

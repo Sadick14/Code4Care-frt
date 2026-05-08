@@ -4,9 +4,10 @@ import { Card } from "./ui/card";
 interface IntroScreenProps {
   onStart: () => void;
   selectedLanguage: string;
+  onSkip?: () => void;
 }
 
-export function IntroScreen({ onStart, selectedLanguage }: IntroScreenProps) {
+export function IntroScreen({ onStart, selectedLanguage, onSkip }: IntroScreenProps) {
   const content = {
     en: {
       title: "Welcome to Room 1221",
@@ -98,6 +99,12 @@ export function IntroScreen({ onStart, selectedLanguage }: IntroScreenProps) {
         >
           {lang.button}
         </Button>
+
+        {onSkip && (
+          <div className="text-center mt-3">
+            <button onClick={onSkip} className="text-sm text-gray-500 underline">Skip to onboarding</button>
+          </div>
+        )}
 
         <p className="text-center text-sm text-gray-500 mt-4">
           {lang.footer}

@@ -28,7 +28,7 @@ export function AdminPanel({ selectedLanguage, onLogout, session }: AdminPanelPr
       case 'safety':
         return <AdminSafetyManagement selectedLanguage={selectedLanguage} accessToken={session.accessToken} />;
       case 'health':
-        return <AdminSystemHealth selectedLanguage={selectedLanguage} />;
+        return <AdminSystemHealth selectedLanguage={selectedLanguage} accessToken={session.accessToken} />;
       case 'reports':
         return <AdminReports selectedLanguage={selectedLanguage} accessToken={session.accessToken} />;
       default:
