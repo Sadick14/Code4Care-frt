@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { RealAnalyticsService } from '@/services/realAnalyticsService';
 import { getNumber, getNested } from '@/utils/analyticsUtils';
-import { StaffAccessService, StaffSession, AdminDashboardStats } from '@/services/staffAccessService';
+import { StaffAccessService, StaffSession } from '@/services/staffAccessService';
 import { HealthService } from '@/services';
 import { logger } from '@/utils/logger';
 
@@ -53,12 +53,9 @@ const GENDER_COLORS = ['#7c3aed', '#f97316', '#e11d48', '#2563eb', '#16a34a', '#
 
 export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProps) {
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('week');
-  const [remoteStats, setRemoteStats] = useState<AdminDashboardStats | null>(null);
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
   const [healthStatus, setHealthStatus] = useState<any>(null);
-  const [isLoadingHealth, setIsLoadingHealth] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -92,29 +89,18 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
   }, [period, session.accessToken]);
 
   useEffect(() => {
-    let mounted = true;
-
     const loadRemoteStats = async () => {
-      setIsLoadingStats(true);
       try {
-        const stats = await StaffAccessService.getDashboardStats(session.accessToken);
-        if (mounted) {
-          setRemoteStats(stats);
-        }
+        await StaffAccessService.getDashboardStats(session.accessToken);
       } catch (error) {
         logger.error('Failed to load dashboard stats', error);
-        setRemoteStats(null);
-      } finally {
-        if (mounted) {
-          setIsLoadingStats(false);
-        }
       }
     };
 
     void loadRemoteStats();
 
     return () => {
-      mounted = false;
+      // cleanup if needed
     };
   }, [session.accessToken]);
 
@@ -123,7 +109,6 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
     let mounted = true;
 
     const loadHealthStatus = async () => {
-      setIsLoadingHealth(true);
       try {
         const [health, ready, version] = await Promise.all([
           HealthService.checkHealth(),
@@ -137,10 +122,6 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
       } catch (error) {
         logger.error('Failed to load health status', error);
         setHealthStatus(null);
-      } finally {
-        if (mounted) {
-          setIsLoadingHealth(false);
-        }
       }
     };
 

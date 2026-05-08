@@ -51,7 +51,7 @@ function AppContent() {
 
   // PWA hooks
   const { isInstallable, handleInstall, handleDismiss } = useInstallPrompt();
-  const { isOnline, showOfflineBanner, wasOffline } = useOfflineStatus();
+  const { showOfflineBanner, wasOffline } = useOfflineStatus();
 
   const [currentSection, setCurrentSection] = useState<Section>("chat");
   const [sidebarOpen, setSidebarOpen] = useState(false);

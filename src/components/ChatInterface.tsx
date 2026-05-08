@@ -9,7 +9,10 @@ import fetchSpeechAudio from '@/services/ttsService';
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useApp } from "@/providers/AppProvider";
-import { ChatCitation, requestChatCompletion, FeedbackService, ReportService, SuggestionsService } from "@/services/chatbotService";
+import { ChatCitation, requestChatCompletion } from "@/services/chatbotService";
+import { FeedbackService } from "@/services/feedbackService";
+import { ReportService } from "@/services/reportService";
+import { SuggestionsService } from "@/services/suggestionsService";
 import { UserEngagementService } from "@/services/userEngagementService";
 import { RealAnalyticsService } from "@/services/realAnalyticsService";
 import { safeStorage } from "@/utils/safeStorage";
@@ -59,41 +62,6 @@ export function ChatInterface({
   const [playingId, setPlayingId] = useState<string | undefined>(undefined);
 
   const langMap: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
-
-  const speakText = (text: string, langCode?: string) => {
-    // If remote TTS proxy is enabled, fetch audio and play it (better quality)
-    const useRemote = import.meta.env.VITE_USE_REMOTE_TTS === 'true';
-    if (useRemote) {
-      fetchSpeechAudio(text, import.meta.env.VITE_TTS_VOICE || 'alloy')
-        .then((url) => {
-          const audio = new Audio(url);
-          audio.play().catch((e) => logger.error('Audio play failed', e));
-        })
-        .catch((err) => {
-          logger.error('Remote TTS failed, falling back to SpeechSynthesis', err);
-          // fallback
-          try {
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = langMap[langCode || chatLanguage] || 'en-US';
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utter);
-          } catch (e) {
-            logger.error('Speech synthesis failed', e);
-          }
-        });
-      return;
-    }
-
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    try {
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = langMap[langCode || chatLanguage] || (langCode || chatLanguage) || 'en-US';
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utter);
-    } catch (err) {
-      logger.error('Speech synthesis failed', err);
-    }
-  };
 
   const togglePlay = async (id: string, text: string, langCode?: string) => {
     if (playingId === id) {
@@ -244,7 +212,7 @@ export function ChatInterface({
     const fetchSuggestions = async () => {
       try {
         const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
-        const response = await SuggestionsService.getSuggestions(languageCode);
+        const response = await SuggestionsService.getSuggestions({ language: languageCode });
         setSuggestions(response.suggestions || []);
       } catch (error) {
         logger.error('Failed to fetch suggestions', error);

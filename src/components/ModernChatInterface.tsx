@@ -85,38 +85,6 @@ export function ModernChatInterface({ sessionId, nickname, onMessagesChange }: M
 
   const langMap: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
 
-  const speakText = (text: string, langCode?: string) => {
-    const useRemote = import.meta.env.VITE_USE_REMOTE_TTS === 'true';
-    if (useRemote) {
-      fetchSpeechAudio(text, import.meta.env.VITE_TTS_VOICE || 'alloy')
-        .then((url) => {
-          const audio = new Audio(url);
-          audio.play().catch(() => {});
-        })
-        .catch(() => {
-          try {
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = langCode ? langMap[langCode] || 'en-US' : 'en-US';
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utter);
-          } catch (e) {
-            // ignore
-          }
-        });
-      return;
-    }
-
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    try {
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = langCode ? langMap[langCode] || 'en-US' : 'en-US';
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utter);
-    } catch (err) {
-      // noop for now
-    }
-  };
-
   const togglePlay = async (id: string, text: string) => {
     if (playingId === id) {
       if (audioRef.current) {
