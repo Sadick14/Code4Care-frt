@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Send, Mic, Clock, User, ShieldCheck, Volume2, Pause, ThumbsUp, ThumbsDown, Flag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
@@ -458,39 +458,16 @@ export function ChatInterface({
               </div>
            </div>
 
-          {messages.length <= 3 && suggestions.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-2"
-            >
-              <p className="text-xs text-slate-500 font-medium px-1">
-                {t('chat.suggestionsLabel', 'Conversation starters:')}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {suggestions.slice(0, 4).map((suggestion, idx) => (
-                  <Button
-                    key={idx}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSend(suggestion)}
-                    className="rounded-xl border-blue-100 text-blue-600 bg-white hover:bg-blue-50 text-xs py-2 h-auto"
-                  >
-                    {suggestion}
-                  </Button>
-                ))}
-              </div>
-            </motion.div>
-          )}
+          {/* Conversation starters moved to render below the welcome message */}
 
           <AnimatePresence initial={false}>
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                className={`flex gap-3 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-              >
+            {messages.map((message, idx) => (
+              <React.Fragment key={message.id}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className={`flex gap-3 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                >
                 <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden shadow-sm ${
                     message.sender === 'bot' 
                         ? (message.mode === 'consultant' ? 'bg-emerald-600' : 'bg-blue-600') 
@@ -634,7 +611,34 @@ export function ChatInterface({
                     </div>
                   )}
                 </div>
-              </motion.div>
+                </motion.div>
+
+                {/* Show conversation starters directly below the welcome message */}
+                {idx === 0 && messages.length <= 3 && suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-2 w-full"
+                  >
+                    <p className="text-xs text-slate-500 font-medium px-1">
+                      {t('chat.suggestionsLabel', 'Conversation starters:')}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestions.slice(0, 4).map((suggestion, sidx) => (
+                        <Button
+                          key={sidx}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSend(suggestion)}
+                          className="rounded-xl border-blue-100 text-blue-600 bg-white hover:bg-blue-50 text-xs py-2 h-auto"
+                        >
+                          {suggestion}
+                        </Button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </React.Fragment>
             ))}
           </AnimatePresence>
 
