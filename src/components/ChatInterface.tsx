@@ -25,6 +25,7 @@ interface Message {
   sender: 'bot' | 'user';
   timestamp: Date;
   options?: string[];
+  followUpSuggestions?: string[];
   mode?: 'chatbot' | 'consultant';
   citations?: ChatCitation[];
   languageDetected?: string;
@@ -306,6 +307,28 @@ export function ChatInterface({
         };
 
         setMessages(prev => [...prev, botMsg]);
+
+        // Fetch follow-up suggestions for this bot message
+        try {
+          const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+          const suggestionsResponse = await SuggestionsService.getSuggestions({ 
+            language: languageCode,
+            context: answerText
+          });
+          
+          if (suggestionsResponse.suggestions && suggestionsResponse.suggestions.length > 0) {
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === botMsg.id 
+                  ? { ...msg, followUpSuggestions: suggestionsResponse.suggestions.slice(0, 3) }
+                  : msg
+              )
+            );
+          }
+        } catch (err) {
+          logger.error('Failed to fetch follow-up suggestions', err);
+        }
+
         UserEngagementService.logNonBlocking(
           UserEngagementService.logChatEvent({
             session_id: sessionId,
@@ -590,6 +613,22 @@ export function ChatInterface({
                           className="rounded-xl border-blue-100 text-blue-600 bg-white hover:bg-blue-50 text-xs py-1 h-9"
                         >
                           {option}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {message.sender === 'bot' && message.followUpSuggestions && message.followUpSuggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {message.followUpSuggestions.map((suggestion, idx) => (
+                        <Button
+                          key={idx}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { handleSend(suggestion); }}
+                          className="rounded-xl border-emerald-100 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 text-xs py-1 h-9"
+                        >
+                          {suggestion}
                         </Button>
                       ))}
                     </div>

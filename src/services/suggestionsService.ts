@@ -98,15 +98,45 @@ export class SuggestionsService {
 
       return await readJsonResponse<SuggestionsResponse>(response);
     } catch (error) {
-      logger.error('Failed to get suggestions', error);
-      // Return fallback suggestions
-      return {
-        suggestions: [
-          "How can I protect myself from STIs?",
-          "What happens during puberty?",
-          "How do I know if I'm ready for a relationship?",
-        ],
-      };
+      logger.warn('Failed to fetch suggestions from API, using fallback', error);
+      // Return fallback suggestions if API fails
+      return this.getFallbackSuggestions(params?.language);
     }
   }
+
+  /**
+   * Fallback suggestions for when API is unavailable
+   */
+  private static getFallbackSuggestions(language?: string): SuggestionsResponse {
+    const suggestions: Record<string, string[]> = {
+      en: [
+        'Can you help me with stress management?',
+        'Tell me about anxiety coping strategies',
+        'How can I improve my sleep?',
+        'What are some breathing exercises?'
+      ],
+      twi: [
+        'Medɔ no abɔ me abudade',
+        'Ka me bɔ abɔ fofor',
+        'Woakyerɛ me sɛnea mebu me din',
+        'Medɔ no amua ase'
+      ],
+      ewe: [
+        'Kpe ŋu nam be nye modzidzi la',
+        'Gblɔ nam subɔsubɔ sia me',
+        'Woafia nam alakpɔ dɔwo',
+        'Kpe ŋu nam yɔ nye ŋutivɔvɔ'
+      ],
+      ga: [
+        'Fo mi bɔ adwetɔ',
+        'Mi bɔ nuo ŋmema dɔforɔ',
+        'Fo mi bɔ sɛ ŋmema mo yoo',
+        'Mi bɔ onlɔ n-nyɛ'
+      ]
+    };
+
+    const langSuggestions = suggestions[language || 'en'] || suggestions['en'];
+    return { suggestions: langSuggestions };
+  }
 }
+
