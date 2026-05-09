@@ -267,6 +267,29 @@ export function ChatInterface({
     const outgoingMessage = (presetMessage ?? inputValue).trim();
     if (!outgoingMessage) return;
 
+    const normalizeSafetyFlag = (flag: unknown) => {
+      if (typeof flag === 'string') {
+        return flag.toLowerCase();
+      }
+
+      if (flag && typeof flag === 'object') {
+        const record = flag as Record<string, unknown>;
+        const label = typeof record.label === 'string' ? record.label : '';
+        const reason = typeof record.reason === 'string' ? record.reason : '';
+        const message = typeof record.message === 'string' ? record.message : '';
+        const severity = typeof record.severity === 'string' ? record.severity : '';
+        return `${label} ${reason} ${message} ${severity}`.toLowerCase();
+      }
+
+      return '';
+    };
+
+    const countSafetyFlags = (flags: unknown[], patterns: string[]) =>
+      flags.reduce<number>((count, flag) => {
+        const normalized = normalizeSafetyFlag(flag);
+        return count + (patterns.some((pattern) => normalized.includes(pattern)) ? 1 : 0);
+      }, 0);
+
     const userMsg: Message = { id: Date.now().toString(), text: outgoingMessage, sender: 'user', timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInputValue("");
@@ -341,6 +364,10 @@ export function ChatInterface({
               response_time_ms: response.response_time_ms,
               language_detected: response.language_detected,
               citations_count: response.citations.length,
+              harm_count: response.safety_flags.length,
+              self_harm_mentions: countSafetyFlags(response.safety_flags, ['self-harm', 'self_harm']),
+              suicidal_ideation_mentions: countSafetyFlags(response.safety_flags, ['suicidal', 'suicidal_ideation']),
+              risks_escalated_to_human: countSafetyFlags(response.safety_flags, ['consultant', 'escalat']),
               safety_flags_count: response.safety_flags.length,
             },
           }),
