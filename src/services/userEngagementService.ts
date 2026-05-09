@@ -3,7 +3,7 @@ import { logger } from '@/utils/logger';
 export type UserLanguage = 'en' | 'twi' | 'ewe' | 'ga' | string;
 export type ChatEventCategory = 'safety' | 'engagement' | 'navigation' | 'feedback' | 'system' | string;
 export type ChatInputMethod = 'quick_reply' | 'typed' | 'voice' | 'system' | string;
-export type SessionAction = 'start' | 'continue' | 'end' | 'resume' | string;
+export type SessionAction = 'start' | 'continue' | 'end' | string;
 export type DeviceType = 'mobile' | 'tablet' | 'desktop' | string;
 
 export interface CaptureDemographicsPayload {

@@ -200,7 +200,7 @@ export interface AdminFeedbackListResponse {
 export interface AdminListFeedbackOptions {
   page?: number;
   page_size?: number;
-  rating?: -1 | 0 | 1 | null;
+  rating?: 1 | 2 | 3 | 4 | 5 | null;
 }
 
 export interface AdminReportItem {

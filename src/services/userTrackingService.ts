@@ -58,7 +58,7 @@ export interface UserSettingsRequest {
   session_id: string;
   nickname?: string;
   language?: string;
-  chat_retention?: boolean;
+  chat_retention?: '24h' | '7d' | '30d' | '90d' | 'never';
   analytics_consent?: boolean;
   consultant_mode_enabled?: boolean;
 }
@@ -68,7 +68,7 @@ export interface UserSettingsResponse {
   session_id: string;
   nickname?: string;
   language?: string;
-  chat_retention: boolean;
+  chat_retention: string;
   analytics_consent: boolean;
   consultant_mode_enabled: boolean;
   created_at: string;
@@ -79,7 +79,7 @@ export interface UserSettingsResponse {
 
 export interface UserSessionRequest {
   session_id: string;
-  action: 'start' | 'end' | 'pause' | 'resume';
+  action: 'start' | 'continue' | 'end';
   return_visitor?: boolean;
   device_type?: string;
   os?: string;

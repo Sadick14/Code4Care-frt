@@ -27,7 +27,7 @@ export interface PanicEventResponse {
 export interface CrisisEventRequest {
   session_id: string;
   conversation_id?: string;
-  crisis_type: 'self_harm' | 'suicidal' | 'abuse' | 'emergency';
+  crisis_type: 'self_harm' | 'suicidal_ideation' | 'abuse' | 'severe_distress';
   confidence: number; // 0.0 - 1.0
   intervention_triggered: boolean;
   escalated_to_human: boolean;

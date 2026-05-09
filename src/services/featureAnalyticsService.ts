@@ -50,7 +50,7 @@ export interface MythBusterEventResponse {
 
 export interface ResourceAccessEventRequest {
   session_id: string;
-  resource_type: 'clinic_locator' | 'pharmacy_locator' | 'pdf_booklet' | 'hotline_info' | 'external_link';
+  resource_type: 'clinic' | 'pharmacy' | 'support_center';
   resource_id?: string;
   resource_name?: string;
   action: 'viewed' | 'downloaded' | 'clicked' | 'shared';

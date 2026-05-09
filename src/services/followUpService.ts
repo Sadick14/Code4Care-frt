@@ -9,7 +9,7 @@ import { logger } from '@/utils/logger';
 export interface FollowUpRequestRequest {
   session_id: string;
   conversation_id?: string;
-  contact_method: 'sms' | 'whatsapp' | 'call' | 'email';
+  contact_method: 'sms' | 'phone' | 'email';
   contact_info: string;
   requested_topic?: string;
 }
