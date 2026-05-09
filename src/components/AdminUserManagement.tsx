@@ -11,6 +11,9 @@ import {
   Briefcase,
   ShieldCheck,
   Download,
+  Send,
+  MessageCircle,
+  Globe,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -42,6 +45,35 @@ import {
 } from '@/services/userManagementService';
 import { logger } from '@/utils/logger';
 import { buildAdminExportFilename, downloadJsonFile } from '@/utils/adminExport';
+
+function getPlatformInfo(id: string): { platform: 'telegram' | 'whatsapp' | 'web'; label: string } {
+  if (id.startsWith('telegram:')) return { platform: 'telegram', label: 'Telegram' };
+  if (id.startsWith('whatsapp:')) return { platform: 'whatsapp', label: 'WhatsApp' };
+  return { platform: 'web', label: 'Web' };
+}
+
+function PlatformBadge({ id }: { id: string }) {
+  const { platform, label } = getPlatformInfo(id);
+  if (platform === 'telegram') {
+    return (
+      <Badge className="bg-sky-50 text-sky-700 border-sky-200 gap-1 text-xs py-0">
+        <Send className="w-3 h-3" />{label}
+      </Badge>
+    );
+  }
+  if (platform === 'whatsapp') {
+    return (
+      <Badge className="bg-green-50 text-green-700 border-green-200 gap-1 text-xs py-0">
+        <MessageCircle className="w-3 h-3" />{label}
+      </Badge>
+    );
+  }
+  return (
+    <Badge className="bg-slate-50 text-slate-600 border-slate-200 gap-1 text-xs py-0">
+      <Globe className="w-3 h-3" />{label}
+    </Badge>
+  );
+}
 
 interface AdminUserManagementProps {
   selectedLanguage: string;
@@ -287,8 +319,12 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
     let filtered = [...users];
 
     if (searchTerm) {
+      const q = searchTerm.toLowerCase();
       filtered = filtered.filter((u) =>
-        u.nickname.toLowerCase().includes(searchTerm.toLowerCase()) || u.age_range.includes(searchTerm)
+        u.nickname.toLowerCase().includes(q) ||
+        u.age_range.includes(q) ||
+        u.id.toLowerCase().includes(q) ||
+        getPlatformInfo(u.id).label.toLowerCase().includes(q)
       );
     }
 
@@ -463,7 +499,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder="Search by nickname..."
+                  placeholder="Search by nickname or platform..."
                   className="pl-9 bg-gray-50 border-[#E8ECFF] text-gray-900 placeholder:text-gray-400"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -485,6 +521,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                 <TableHeader>
                   <TableRow className="border-[#E8ECFF] hover:bg-transparent">
                     <TableHead className="text-gray-600">Nickname</TableHead>
+                    <TableHead className="text-gray-600">Platform</TableHead>
                     <TableHead className="text-gray-600">Age</TableHead>
                     <TableHead className="text-gray-600">Status</TableHead>
                     <TableHead className="text-gray-600">Engagement</TableHead>
@@ -494,13 +531,13 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                 <TableBody>
                   {isLoadingUsers ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                      <TableCell colSpan={6} className="text-center text-gray-500 py-8">
                         Loading users...
                       </TableCell>
                     </TableRow>
                   ) : filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                      <TableCell colSpan={6} className="text-center text-gray-500 py-8">
                         No users found
                       </TableCell>
                     </TableRow>
@@ -508,6 +545,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                     filteredUsers.map((user) => (
                       <TableRow key={user.id} className="border-[#E8ECFF] hover:bg-gray-50 transition-colors">
                         <TableCell className="text-gray-900 font-medium">{user.nickname}</TableCell>
+                        <TableCell><PlatformBadge id={user.id} /></TableCell>
                         <TableCell className="text-gray-600 text-sm">{user.age_range}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={getUserStatusColor(user.status)}>
@@ -734,6 +772,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                   ) : selectedUserDetails ? (
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Nickname</span><span className="text-gray-900 font-medium">{selectedUserDetails.nickname}</span></div>
+                      {selectedUserId && <div className="flex justify-between gap-4"><span className="text-gray-500">Platform</span><PlatformBadge id={selectedUserId} /></div>}
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Status</span><Badge variant="outline" className={getUserStatusColor(selectedUserDetails.status)}>{selectedUserDetails.status}</Badge></div>
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Age range</span><span className="text-gray-900">{selectedUserDetails.age_range || 'N/A'}</span></div>
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Gender</span><span className="text-gray-900">{selectedUserDetails.gender_identity || 'N/A'}</span></div>
