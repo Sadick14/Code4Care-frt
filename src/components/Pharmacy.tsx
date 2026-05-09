@@ -50,9 +50,7 @@ export function Pharmacy() {
   const openRegion = (region: string) => {
     setLocationError(null);
     if (!navigator.geolocation) {
-      // fallback: search by region only
-      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("pharmacies in " + region)}`;
-      window.open(url, "_blank");
+      setLocationError('Geolocation is not supported by your browser.');
       return;
     }
 
@@ -83,9 +81,6 @@ export function Pharmacy() {
       (err) => {
         setLocating(false);
         if (mapWindow && !mapWindow.closed) mapWindow.close();
-        // Fallback: open region-only search
-        const fallback = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("pharmacies in " + region)}`;
-        window.open(fallback, "_blank");
         if (err.code === 1) setLocationError("Location permission denied.");
         else if (err.code === 3) setLocationError("Location request timed out.");
         else setLocationError("Unable to retrieve location.");
@@ -118,12 +113,7 @@ export function Pharmacy() {
 
         // Navigate the previously opened window to Google Maps search centered on user's location
         const url = `https://www.google.com/maps/search/pharmacies+near+${lat},${lng}`;
-        try {
-          mapWindow.location.href = url;
-        } catch (e) {
-          // Fallback: if setting location fails, open in current tab
-          window.open(url, "_blank");
-        }
+        mapWindow.location.href = url;
       },
       (err) => {
         setLocating(false);

@@ -99,11 +99,7 @@ export interface UserSessionResponse {
   created_at: string;
 }
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_CHAT_API_BASE_URL ||
-  ''
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const DEMOGRAPHICS_PATH = '/v1/user/demographics';
 const CHAT_EVENT_PATH = '/v1/chat/event';
@@ -112,7 +108,7 @@ const SESSION_PATH = '/v1/session';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for user tracking requests.');
   }
   return new URL(path, API_BASE_URL).toString();
 }

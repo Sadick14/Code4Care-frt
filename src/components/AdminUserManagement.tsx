@@ -20,6 +20,16 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
+import {
   Table,
   TableBody,
   TableCell,
@@ -61,6 +71,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
+  const [filterStaffStatus, setFilterStaffStatus] = useState<'all' | 'active' | 'inactive'>('active');
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [usersTotal, setUsersTotal] = useState(0);
   const [staff, setStaff] = useState<StaffAccount[]>(() => StaffAccessService.getStaffAccounts());
@@ -70,6 +81,11 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
   const [formData, setFormData] = useState(initialForm);
   const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteStaffId, setDeleteStaffId] = useState<string | null>(null);
+  const [deleteStaffName, setDeleteStaffName] = useState('');
+  const [deleteStaffPassword, setDeleteStaffPassword] = useState('');
+  const [isDeletingStaff, setIsDeletingStaff] = useState(false);
+  const [deleteStaffError, setDeleteStaffError] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserDetails, setSelectedUserDetails] = useState<UserDetails | null>(null);
   const [selectedUserChat, setSelectedUserChat] = useState<UserChatHistoryResponse | null>(null);
@@ -283,6 +299,10 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
     void loadUsers();
   }, [filterStatus]);
 
+  useEffect(() => {
+    void loadStaff();
+  }, [filterStaffStatus]);
+
   const filteredUsers = useMemo(() => {
     let filtered = [...users];
 
@@ -372,9 +392,71 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
     }
   };
 
-  const handleDeleteStaff = async (staffId: string) => {
-    await StaffAccessService.deleteStaffAccount(staffId, session.accessToken);
-    await loadStaff();
+  const handleRequestDeleteStaff = (member: StaffAccount) => {
+    setDeleteStaffId(member.id);
+    setDeleteStaffName(member.name);
+    setDeleteStaffPassword('');
+    setDeleteStaffError('');
+  };
+
+  const isDeactivatingStaff = (): boolean => {
+    if (!deleteStaffId) return false;
+    const member = staff.find((s) => s.id === deleteStaffId);
+    return member?.status === 'active';
+  };
+
+  const closeDeleteStaffDialog = () => {
+    setDeleteStaffId(null);
+    setDeleteStaffName('');
+    setDeleteStaffPassword('');
+    setDeleteStaffError('');
+    setIsDeletingStaff(false);
+  };
+
+  const handleConfirmDeleteStaff = async () => {
+    if (!deleteStaffId) {
+      return;
+    }
+
+    const password = deleteStaffPassword.trim();
+    if (!password) {
+      setDeleteStaffError('Enter the admin password to confirm deletion.');
+      return;
+    }
+
+    setIsDeletingStaff(true);
+    setDeleteStaffError('');
+
+    try {
+      const targetStaff = staff.find((member) => member.id === deleteStaffId);
+      if (!targetStaff) {
+        throw new Error('Staff member not found.');
+      }
+
+      const reauthenticatedSession = await StaffAccessService.login(session.email, password);
+      const isDeactivating = targetStaff.status === 'active';
+
+      if (isDeactivating) {
+        await StaffAccessService.updateStaffAccount(
+          deleteStaffId,
+          {
+            name: targetStaff.name,
+            email: targetStaff.email,
+            role: targetStaff.role,
+            isActive: false,
+          },
+          reauthenticatedSession.accessToken || session.accessToken,
+        );
+      } else {
+        await StaffAccessService.deleteStaffAccount(deleteStaffId, reauthenticatedSession.accessToken || session.accessToken);
+      }
+      await loadStaff();
+      closeDeleteStaffDialog();
+    } catch (error) {
+      const action = isDeactivatingStaff() ? 'deactivate' : 'delete';
+      setDeleteStaffError(error instanceof Error ? error.message : `Unable to ${action} staff member.`);
+      setIsDeletingStaff(false);
+    }
   };
 
   const stats = {
@@ -578,6 +660,18 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
           </div>
 
           <Card className="border-[#E8ECFF] bg-white overflow-hidden">
+            <div className="flex items-center gap-3 p-4 border-b border-[#E8ECFF]">
+              <label className="text-sm font-medium text-gray-700">Status:</label>
+              <select
+                value={filterStaffStatus}
+                onChange={(e) => setFilterStaffStatus(e.target.value as 'all' | 'active' | 'inactive')}
+                className="px-4 py-2 rounded-lg bg-white border border-[#E8ECFF] text-gray-900"
+              >
+                <option value="active">Active Only</option>
+                <option value="inactive">Inactive Only</option>
+                <option value="all">All Staff</option>
+              </select>
+            </div>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -591,7 +685,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {staff.map((member) => (
+                  {staff.filter((member) => filterStaffStatus === 'all' || member.status === filterStaffStatus).map((member) => (
                       <TableRow key={member.id} className="border-[#E8ECFF] hover:bg-gray-50 transition-colors">
                         <TableCell className="text-gray-900 font-medium">{member.name}</TableCell>
                         <TableCell className="text-gray-600 capitalize text-sm">{member.role}</TableCell>
@@ -610,12 +704,20 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => handleEditStaff(member)}>
-                              Edit
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteStaff(member.id)}>
-                              Delete
-                            </Button>
+                            {member.status === 'active' ? (
+                              <>
+                                <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => handleEditStaff(member)}>
+                                  Edit
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleRequestDeleteStaff(member)}>
+                                  Deactivate
+                                </Button>
+                              </>
+                            ) : (
+                              <Button variant="ghost" size="sm" className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleRequestDeleteStaff(member)}>
+                                Delete Permanently
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -839,6 +941,43 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
           </Card>
         </motion.div>
       )}
+
+      <AlertDialog open={Boolean(deleteStaffId)} onOpenChange={(open) => !open && closeDeleteStaffDialog()}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isDeactivatingStaff() ? 'Deactivate staff member?' : 'Permanently delete staff member?'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isDeactivatingStaff() 
+                ? `This will keep ${deleteStaffName || 'this staff member'} in the system but make the account inactive. Enter the admin password to confirm.`
+                : `This will permanently remove ${deleteStaffName || 'this staff member'} from the system. This cannot be undone. Enter the admin password to confirm.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Admin password</label>
+            <Input
+              type="password"
+              value={deleteStaffPassword}
+              onChange={(e) => setDeleteStaffPassword(e.target.value)}
+              placeholder="Enter admin password"
+              className="bg-white border-[#E8ECFF] text-gray-900"
+            />
+            {deleteStaffError && <p className="text-sm text-red-600">{deleteStaffError}</p>}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl" onClick={closeDeleteStaffDialog}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteStaff}
+              className="rounded-xl bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={isDeletingStaff}
+            >
+              {isDeletingStaff ? (isDeactivatingStaff() ? 'Deactivating...' : 'Deleting...') : (isDeactivatingStaff() ? 'Deactivate Staff' : 'Delete Permanently')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

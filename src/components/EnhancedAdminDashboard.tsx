@@ -321,7 +321,7 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
     return Number((total / topics.length).toFixed(1));
   }, [analyticsData?.engagement?.topics, analyticsData?.engagement?.topicEngagement]);
 
-  // KPI Stats - with fallback to empty values while loading
+  // KPI stats while loading
   const kpis = [
     { label: lang.activeUsers, value: getNumber(analyticsData?.summary, 'total_active_users', 'totalActiveUsers', 'active_users'), icon: Users, color: 'from-blue-500 to-blue-600' },
     { label: lang.engagements, value: getNumber(analyticsData?.summary, 'conversations_in_period', 'conversationsInPeriod', 'conversations'), icon: BarChart3, color: 'from-purple-500 to-purple-600' },

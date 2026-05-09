@@ -77,6 +77,26 @@ export default defineConfig({
     port: 3000,
     open: true,
     proxy: {
+      '/v1': {
+        target: 'https://code4care-backend-production.up.railway.app',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/admin': {
+        target: 'https://code4care-backend-production.up.railway.app',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/support-requests': {
+        target: 'https://code4care-backend-production.up.railway.app',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/api/admin': {
+        target: 'https://code4care-backend-production.up.railway.app',
+        changeOrigin: true,
+        secure: true,
+      },
       '/api/chat': {
         target: 'https://code4care-backend-production.up.railway.app',
         changeOrigin: true,

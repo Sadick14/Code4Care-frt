@@ -53,7 +53,7 @@ export function ChatInterface({
   const [isLoaded, setIsLoaded] = useState(false);
   const [chatLanguage, setChatLanguage] = useState(i18n.resolvedLanguage?.split('-')[0] || i18n.language || 'en');
   const [completedBotMessages, setCompletedBotMessages] = useState<Set<string>>(new Set());
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [, setSuggestions] = useState<string[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -214,7 +214,9 @@ export function ChatInterface({
       try {
         const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
         const response = await SuggestionsService.getSuggestions({ language: languageCode });
-        setSuggestions(response.suggestions || []);
+        if (Array.isArray(response.suggestions)) {
+          setSuggestions(response.suggestions);
+        }
       } catch (error) {
         logger.error('Failed to fetch suggestions', error);
       }
@@ -461,7 +463,7 @@ export function ChatInterface({
           {/* Conversation starters moved to render below the welcome message */}
 
           <AnimatePresence initial={false}>
-            {messages.map((message, idx) => (
+            {messages.map((message) => (
               <React.Fragment key={message.id}>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9, y: 10 }}

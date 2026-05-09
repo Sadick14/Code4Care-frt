@@ -36,13 +36,8 @@ export interface RefreshTokenResponse {
   expires_in: number;
 }
 
-const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
 const DEFAULT_TOKEN_EXPIRY_SECONDS = 30 * 60;
-const API_BASE_URL = (
-  import.meta.env.VITE_ADMIN_API_BASE_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  DEFAULT_API_BASE_URL
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const TOKEN_KEY = 'code4care_access_token';
 const REFRESH_TOKEN_KEY = 'code4care_refresh_token';
@@ -53,7 +48,7 @@ const ADMIN_ME_PATH = '/admin/me';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for auth requests.');
   }
   return new URL(path, API_BASE_URL).toString();
 }

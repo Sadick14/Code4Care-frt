@@ -42,7 +42,7 @@ createRoot(document.getElementById("root")!).render(
           }
         />
 
-        {/* Fallback */}
+        {/* Catch-all */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

@@ -66,11 +66,7 @@ export interface ResourceAccessEventResponse {
   created_at: string;
 }
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_CHAT_API_BASE_URL ||
-  ''
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const STORY_EVENT_PATH = '/v1/story/event';
 const MYTHBUSTER_EVENT_PATH = '/v1/mythbuster/event';
@@ -78,7 +74,7 @@ const RESOURCE_ACCESS_PATH = '/v1/resource/access';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for feature analytics requests.');
   }
   return new URL(path, API_BASE_URL).toString();
 }
@@ -139,17 +135,7 @@ export class FeatureAnalyticsService {
       return await readJsonResponse<StoryEventResponse>(response);
     } catch (error) {
       logger.error('Failed to log story event', error);
-      // Return fallback - analytics shouldn't break UX
-      return {
-        id: `story-${Date.now()}`,
-        session_id: payload.session_id,
-        story_id: payload.story_id,
-        story_title: payload.story_title,
-        action: payload.action,
-        progress_percentage: payload.progress_percentage,
-        time_spent_seconds: payload.time_spent_seconds,
-        created_at: new Date().toISOString(),
-      };
+      throw error;
     }
   }
 
@@ -173,15 +159,7 @@ export class FeatureAnalyticsService {
       return await readJsonResponse<MythBusterEventResponse>(response);
     } catch (error) {
       logger.error('Failed to log myth buster event', error);
-      // Return fallback - analytics shouldn't break UX
-      return {
-        id: `myth-${Date.now()}`,
-        session_id: payload.session_id,
-        myth_id: payload.myth_id,
-        myth_title: payload.myth_title,
-        action: payload.action,
-        created_at: new Date().toISOString(),
-      };
+      throw error;
     }
   }
 
@@ -205,16 +183,7 @@ export class FeatureAnalyticsService {
       return await readJsonResponse<ResourceAccessEventResponse>(response);
     } catch (error) {
       logger.error('Failed to log resource access', error);
-      // Return fallback - analytics shouldn't break UX
-      return {
-        id: `resource-${Date.now()}`,
-        session_id: payload.session_id,
-        resource_type: payload.resource_type,
-        resource_id: payload.resource_id,
-        resource_name: payload.resource_name,
-        action: payload.action,
-        created_at: new Date().toISOString(),
-      };
+      throw error;
     }
   }
 }

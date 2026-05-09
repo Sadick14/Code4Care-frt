@@ -84,13 +84,13 @@ function AppContent() {
     );
 
     UserEngagementService.logNonBlocking(
-      UserEngagementService.updateUserSettings({
-        session_id: sessionId,
+      UserEngagementService.syncUserSettings({
+        sessionId,
         nickname: nickname || '',
         language: languageCode,
-        chat_retention: sessionDuration,
-        analytics_consent: analyticsOptIn,
-        consultant_mode_enabled: consultantMode,
+        chatRetention: sessionDuration,
+        analyticsConsent: analyticsOptIn,
+        consultantModeEnabled: consultantMode,
       }),
       'Failed to sync user settings for current session',
     );
@@ -261,6 +261,25 @@ function AppContent() {
 
   const [showIntro, setShowIntro] = useState(true);
 
+  const handleNicknameSubmit = (name: string) => {
+    const languageCode = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+
+    setNickname(name);
+    setShowNicknameModal(false);
+
+    UserEngagementService.logNonBlocking(
+      UserEngagementService.syncUserSettings({
+        sessionId,
+        nickname: name,
+        language: languageCode,
+        chatRetention: sessionDuration,
+        analyticsConsent: analyticsOptIn,
+        consultantModeEnabled: consultantMode,
+      }),
+      'Failed to persist nickname from nickname modal',
+    );
+  };
+
   if (!hasSeenOnboarding) {
     if (showIntro) {
       return (
@@ -304,13 +323,13 @@ function AppContent() {
             'Failed to capture onboarding demographics',
           );
           UserEngagementService.logNonBlocking(
-            UserEngagementService.updateUserSettings({
-              session_id: sessionId,
+            UserEngagementService.syncUserSettings({
+              sessionId,
               nickname: nickname || '',
               language: languageCode,
-              chat_retention: '24h',
-              analytics_consent: true,
-              consultant_mode_enabled: consultantMode,
+              chatRetention: '24h',
+              analyticsConsent: true,
+              consultantModeEnabled: consultantMode,
             }),
             'Failed to initialize user settings',
           );
@@ -438,7 +457,7 @@ function AppContent() {
       <NicknameModal 
         isOpen={showNicknameModal} 
         onClose={() => setShowNicknameModal(false)}
-        onSubmit={(name) => { setNickname(name); setShowNicknameModal(false); }}
+        onSubmit={handleNicknameSubmit}
       />
 
       {/* Clear Chat Confirmation */}
