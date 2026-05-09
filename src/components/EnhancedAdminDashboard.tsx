@@ -491,13 +491,16 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                           nameKey="age"
                           cx="50%"
                           cy="50%"
-                          outerRadius={80}
+                          outerRadius={70}
+                          label={({ age, percent }) => `${age} ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
                         >
                           {ageDemographicsData.map((_, idx) => (
                             <Cell key={idx} fill={AGE_COLORS[idx % AGE_COLORS.length]} />
                           ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />
+                        <Legend />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
@@ -537,13 +540,16 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                           nameKey="gender"
                           cx="50%"
                           cy="50%"
-                          outerRadius={80}
+                          outerRadius={70}
+                          label={({ gender, percent }) => `${gender} ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
                         >
                           {genderDemographicsData.map((_, idx) => (
                             <Cell key={idx} fill={GENDER_COLORS[idx % GENDER_COLORS.length]} />
                           ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />
+                        <Legend />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
@@ -553,6 +559,10 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                   <h3 className="font-semibold text-gray-900 mb-4">Language Preference</h3>
                   {isLoadingAnalytics ? (
                     <ChartSkeleton />
+                  ) : languageDemographicsData.length === 0 ? (
+                    <div className="h-[250px] flex items-center justify-center text-sm text-gray-500">
+                      No language data available
+                    </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
@@ -562,13 +572,19 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
                           nameKey="language"
                           cx="50%"
                           cy="50%"
-                          outerRadius={80}
+                          outerRadius={70}
+                          label={({ language, percent }) => `${language} ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
                         >
                           {languageDemographicsData.map((_, idx) => (
                             <Cell key={idx} fill={LANGUAGE_COLORS[idx % LANGUAGE_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip content={<CustomTooltip />} />
+                        <Tooltip
+                          content={<CustomTooltip />}
+                          formatter={(value: number, name: string) => [value, name]}
+                        />
+                        <Legend />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
