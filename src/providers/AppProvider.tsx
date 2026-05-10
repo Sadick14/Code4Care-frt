@@ -52,7 +52,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return true;
     }
   });
-  const [sessionId, setSessionId] = useState<string>(() => safeStorage.getItem('room1221_session_id') || Date.now().toString());
+  const [sessionId, setSessionId] = useState<string>(() => safeStorage.getItem('room1221_session_id') || crypto.randomUUID());
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean>(() => safeStorage.getItem('room1221_onboarding_complete') === 'true');
   const [consultantMode, setConsultantMode] = useState<boolean>(false);
 
@@ -68,6 +68,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       },
     });
   }, []);
+
+  // Exchange the local session ID for a backend-owned UUID on first load.
+  // This ensures demographics (saved during onboarding) and chat conversations
+  // are always stored under the same session_id.
+  // Only touches sessionId — no other state is read or modified.
+  useEffect(() => {
+    const base = import.meta.env.VITE_API_BASE_URL?.trim();
+    if (!base) return;
+
+    const current = safeStorage.getItem('room1221_session_id') || '';
+
+    fetch(new URL('/v1/session', base).toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: current || undefined }),
+    })
+      .then((r) => r.json())
+      .then((data: unknown) => {
+        const received = (data as Record<string, unknown>)?.session_id;
+        if (typeof received === 'string' && received && received !== current) {
+          setSessionId(received);
+        }
+      })
+      .catch(() => {
+        // Network unavailable — keep whatever ID we have, chat will still work
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount only
 
   // Persistence effects
   useEffect(() => {
@@ -129,7 +157,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRegion('greater-accra');
     setSessionDuration('24h');
     setAnalyticsOptIn(true);
-    setSessionId(Date.now().toString());
+    setSessionId(crypto.randomUUID());
     setHasSeenOnboarding(false);
     setConsultantMode(false);
   };
