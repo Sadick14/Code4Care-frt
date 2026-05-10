@@ -31,19 +31,19 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load the same normalized analytics summary used by the reports page.
+  // Load directly from the safety analytics endpoint which queries panic_events + crisis_events.
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const analyticsResponse = await RealAnalyticsService.getAggregatedReportData(
+        const safetyResponse = await RealAnalyticsService.getSafetyAnalytics(
           { period: 'week' },
           accessToken,
         );
-        setSafetyAnalytics(analyticsResponse);
+        setSafetyAnalytics(safetyResponse);
       } catch (err) {
-        logger.error('Failed to load safety summary analytics', err);
+        logger.error('Failed to load safety analytics', err);
         setError(err instanceof Error ? err.message : 'Failed to load safety analytics');
         setSafetyAnalytics(null);
       } finally {
@@ -54,33 +54,35 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
     void loadData();
   }, [accessToken]);
 
-  // Extract stats from analytics response
-  const safetyData = safetyAnalytics?.safety ?? safetyAnalytics?.safetyMetrics ?? {};
+  // The safety endpoint returns { incidents: {...}, escalations: {...}, severity_distribution: {...} }
+  const incidents = (safetyAnalytics as any)?.incidents ?? {};
+  const escalationsData = (safetyAnalytics as any)?.escalations ?? {};
+
   const indicatorChartData = [
-    { indicator: 'Panic Exits', count: getNumber(safetyData, 'panic_exits_total', 'panicExitsTotal', 'panic_exits') },
-    { indicator: 'Crisis Interventions', count: getNumber(safetyData, 'crisis_interventions', 'crisisInterventions', 'crisisInterventionsTriggered', 'crisis_interventions_triggered') },
-    { indicator: 'Self-Harm Mentions', count: getNumber(safetyData, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected') },
-    { indicator: 'Suicidal Ideation', count: getNumber(safetyData, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation') },
-    { indicator: 'Escalated Risks', count: getNumber(safetyData, 'risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated') },
-    { indicator: 'Follow-ups Pending', count: getNumber(safetyData, 'concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up') },
+    { indicator: 'Panic Exits', count: getNumber(incidents, 'panic_exits_total') },
+    { indicator: 'Crisis Interventions', count: getNumber(incidents, 'crisis_interventions') },
+    { indicator: 'Self-Harm', count: getNumber(incidents, 'self_harm_mentions') },
+    { indicator: 'Suicidal Ideation', count: getNumber(incidents, 'suicidal_ideation_mentions') },
+    { indicator: 'Severe Distress', count: getNumber(incidents, 'severe_distress_mentions') },
+    { indicator: 'Abuse', count: getNumber(incidents, 'abuse_mentions') },
   ];
 
   const totalSafetyEvents = indicatorChartData.reduce((sum, item) => sum + item.count, 0);
 
   const stats = {
     total: totalSafetyEvents,
-    crisisInterventions: getNumber(safetyData, 'crisis_interventions', 'crisisInterventions', 'crisisInterventionsTriggered', 'crisis_interventions_triggered'),
-    selfHarmMentions: getNumber(safetyData, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'),
-    suicidalIdeation: getNumber(safetyData, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'),
-    escalations: getNumber(safetyData, 'risks_escalated_to_human', 'risksEscalatedToHuman', 'total_escalated'),
-    followUpPending: getNumber(safetyData, 'concerned_users_followed_up', 'concernedUsersFollowedUp', 'followed_up'),
+    crisisInterventions: getNumber(incidents, 'crisis_interventions'),
+    selfHarmMentions: getNumber(incidents, 'self_harm_mentions'),
+    suicidalIdeation: getNumber(incidents, 'suicidal_ideation_mentions'),
+    escalations: getNumber(escalationsData, 'total_escalated', 'to_human_consultant'),
+    followUpPending: getNumber(escalationsData, 'follow_up_pending') || getNumber(incidents, 'concerned_users_followed_up'),
   };
 
-  const severityStats = safetyAnalytics?.severity_distribution ?? {
-    low: stats.selfHarmMentions,
-    medium: stats.crisisInterventions,
-    high: stats.escalations,
-    critical: stats.suicidalIdeation,
+  const severityStats = (safetyAnalytics as any)?.severity_distribution ?? {
+    low: getNumber(incidents, 'severe_distress_mentions'),
+    medium: getNumber(incidents, 'abuse_mentions'),
+    high: getNumber(incidents, 'self_harm_mentions'),
+    critical: getNumber(incidents, 'suicidal_ideation_mentions'),
   };
 
   const getSeverityColor = (severity: string) => {
@@ -105,8 +107,11 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
 
   const getTypeLabel = (type: string) => {
     switch (type) {
+      case 'self_harm':
       case 'self-harm': return 'Self-Harm';
-      case 'suicidal': return 'Suicidal';
+      case 'suicidal_ideation':
+      case 'suicidal': return 'Suicidal Ideation';
+      case 'severe_distress': return 'Severe Distress';
       case 'abuse': return 'Abuse';
       case 'panic': return 'Panic';
       default: return type;
@@ -115,10 +120,14 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
 
   const getTypeIcon = (type: string) => {
     switch (type) {
+      case 'self_harm':
       case 'self-harm':
         return <Heart className="w-4 h-4 text-red-600" />;
+      case 'suicidal_ideation':
       case 'suicidal':
         return <AlertTriangle className="w-4 h-4 text-red-600" />;
+      case 'severe_distress':
+        return <AlertCircle className="w-4 h-4 text-red-600" />;
       case 'abuse':
         return <Siren className="w-4 h-4 text-orange-600" />;
       case 'panic':
@@ -222,7 +231,7 @@ export function AdminSafetyManagement({ selectedLanguage, accessToken }: AdminSa
           </div>
           <div>
             <div className="text-sm text-gray-600 mb-2">To Consultant</div>
-            <div className="text-3xl font-bold text-purple-600">{safetyAnalytics?.escalations?.to_human_consultant ?? 0}</div>
+            <div className="text-3xl font-bold text-purple-600">{getNumber(escalationsData, 'to_human_consultant')}</div>
           </div>
         </div>
       </Card>

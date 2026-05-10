@@ -556,8 +556,16 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-gray-900">{user.total_messages} messages</span>
-                              <Badge className={user.engagement_score >= 80 ? 'bg-green-50 text-green-700 border-green-200 text-xs' : user.engagement_score >= 50 ? 'bg-blue-50 text-blue-700 border-blue-200 text-xs' : 'bg-yellow-50 text-yellow-700 border-yellow-200 text-xs'}>
-                                {user.engagement_score >= 80 ? 'Very Active' : user.engagement_score >= 50 ? 'Active' : 'Moderate'}
+                              <Badge className={
+                                user.total_messages === 0
+                                  ? 'bg-slate-50 text-slate-500 border-slate-200 text-xs'
+                                  : user.engagement_score >= 80
+                                    ? 'bg-green-50 text-green-700 border-green-200 text-xs'
+                                    : user.engagement_score >= 50
+                                      ? 'bg-blue-50 text-blue-700 border-blue-200 text-xs'
+                                      : 'bg-yellow-50 text-yellow-700 border-yellow-200 text-xs'
+                              }>
+                                {user.total_messages === 0 ? 'No Activity' : user.engagement_score >= 80 ? 'Very Active' : user.engagement_score >= 50 ? 'Active' : 'Low'}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-2">
@@ -780,6 +788,21 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Language</span><span className="text-gray-900 uppercase">{selectedUserDetails.language || 'N/A'}</span></div>
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Created</span><span className="text-gray-900">{formatDateTime(selectedUserDetails.created_at)}</span></div>
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Last active</span><span className="text-gray-900">{formatDateTime(selectedUserDetails.last_active)}</span></div>
+                      {selectedUserDetails.statistics && (
+                        <>
+                          <div className="border-t border-[#E8ECFF] my-1" />
+                          <div className="flex justify-between gap-4"><span className="text-gray-500">Sessions</span><span className="text-gray-900">{selectedUserDetails.statistics.total_sessions ?? 0}</span></div>
+                          <div className="flex justify-between gap-4"><span className="text-gray-500">Messages</span><span className="text-gray-900">{selectedUserDetails.statistics.total_messages ?? 0}</span></div>
+                        </>
+                      )}
+                      {selectedUserDetails.safety_profile && (
+                        <>
+                          <div className="border-t border-[#E8ECFF] my-1" />
+                          <div className="flex justify-between gap-4"><span className="text-gray-500">Panic events</span><span className={`font-medium ${(selectedUserDetails.safety_profile as any).panic_button_used > 0 ? 'text-orange-600' : 'text-gray-900'}`}>{(selectedUserDetails.safety_profile as any).panic_button_used ?? 0}</span></div>
+                          <div className="flex justify-between gap-4"><span className="text-gray-500">Crisis flags</span><span className={`font-medium ${(selectedUserDetails.safety_profile as any).crisis_flags > 0 ? 'text-red-600' : 'text-gray-900'}`}>{(selectedUserDetails.safety_profile as any).crisis_flags ?? 0}</span></div>
+                          <div className="flex justify-between gap-4"><span className="text-gray-500">Escalations</span><span className={`font-medium ${(selectedUserDetails.safety_profile as any).escalations > 0 ? 'text-purple-600' : 'text-gray-900'}`}>{(selectedUserDetails.safety_profile as any).escalations ?? 0}</span></div>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <p className="text-sm text-gray-500">No user details available.</p>
