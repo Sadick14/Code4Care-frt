@@ -36,7 +36,7 @@ function MobileIntroLayout({
         </button>
 
         {/* Image */}
-        <div className="relative h-[50%] w-full shrink-0 overflow-hidden">
+        <div className="relative h-[48%] w-full shrink-0 overflow-hidden">
           <img src={image} alt="intro" className="w-full h-full object-cover" />
 
           <div className="absolute bottom-[-1px] left-0 w-full overflow-hidden leading-none">
@@ -52,18 +52,18 @@ function MobileIntroLayout({
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col items-center justify-between px-8 pt-5 pb-[calc(env(safe-area-inset-bottom)+1rem)] overflow-hidden">
+        <div className="flex-1 flex flex-col items-center justify-between px-8 pt-6 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] overflow-hidden">
           <div className="flex w-full flex-1 flex-col items-center justify-start">
-            <h2 className="text-[1.6rem] leading-tight font-bold text-center text-[#101828] mb-2">
+            <h2 className="text-[1.7rem] leading-tight font-bold text-center text-[#101828] mb-3">
               {title}
             </h2>
 
-            <p className="text-center text-[#8E8E93] text-[0.92rem] leading-relaxed max-w-sm mb-5">
+            <p className="text-center text-[#8E8E93] text-[0.95rem] leading-relaxed max-w-sm mb-6">
               {description}
             </p>
 
             {/* Pagination */}
-            <div className="flex gap-2 mb-5">
+            <div className="flex gap-2 mb-6">
               {[0, 1, 2].map((index) => (
                 <div
                   key={index}
