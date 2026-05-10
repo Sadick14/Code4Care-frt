@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Search,
   Plus,
@@ -14,6 +14,8 @@ import {
   Send,
   MessageCircle,
   Globe,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -104,8 +106,11 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
   const [filterStaffStatus, setFilterStaffStatus] = useState<'all' | 'active' | 'inactive'>('active');
+  const [currentPage, setCurrentPage] = useState(1);
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [usersTotal, setUsersTotal] = useState(0);
+  const [usersPages, setUsersPages] = useState(1);
+  const PAGE_SIZE = 50;
   const [staff, setStaff] = useState<StaffAccount[]>(() => StaffAccessService.getStaffAccounts());
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [staffModalOpen, setStaffModalOpen] = useState(false);
@@ -169,13 +174,14 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
     }
   };
 
-  const loadUsers = async (search?: string) => {
+  const loadUsers = async (search?: string, page?: number) => {
+    const targetPage = page ?? currentPage;
     setIsLoadingUsers(true);
     try {
       const response = await UserManagementService.listUsers(
         {
-          page: 1,
-          limit: 200,
+          page: targetPage,
+          limit: PAGE_SIZE,
           status: filterStatus !== 'all' ? (filterStatus as any) : undefined,
           search: search || undefined,
         },
@@ -183,10 +189,13 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
       );
       setUsers(response.users);
       setUsersTotal(response.total ?? response.users.length);
+      setUsersPages(response.pages ?? 1);
+      setCurrentPage(targetPage);
     } catch (error) {
       logger.error('Failed to load users', error);
       setUsers([]);
       setUsersTotal(0);
+      setUsersPages(1);
     } finally {
       setIsLoadingUsers(false);
     }
@@ -211,7 +220,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
     try {
       const [details, chatHistory] = await Promise.all([
         UserManagementService.getUserDetails(user.id, session.accessToken),
-        UserManagementService.getUserChatHistory(user.id, { limit: 20, offset: 0 }, session.accessToken),
+        UserManagementService.getUserChatHistory(user.id, { limit: 500, offset: 0 }, session.accessToken),
       ]);
 
       setSelectedUserDetails(details);
@@ -266,7 +275,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
       setNextStatus(response.status);
 
       try {
-        await loadUsers();
+        await loadUsers(searchTerm || undefined, currentPage);
       } catch (refreshError) {
         logger.error('Users list refresh failed after status update', refreshError);
       }
@@ -312,7 +321,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
       );
 
       setUserActionSuccess('User deleted successfully.');
-      await loadUsers();
+      await loadUsers(searchTerm || undefined, currentPage);
       closeUserModal();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to delete user.';
@@ -323,13 +332,19 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
     }
   };
 
+  // Track whether the initial load has already run so that filter/search effects
+  // don't fire an extra request on mount (their dependencies change at the same time).
+  const initialLoadDone = useRef(false);
+
   useEffect(() => {
     void loadStaff();
-    void loadUsers();
+    void loadUsers(undefined, 1);
+    initialLoadDone.current = true;
   }, [session.accessToken]);
 
   useEffect(() => {
-    void loadUsers();
+    if (!initialLoadDone.current) return;
+    void loadUsers(searchTerm || undefined, 1);
   }, [filterStatus]);
 
   useEffect(() => {
@@ -337,8 +352,9 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
   }, [filterStaffStatus]);
   // Debounce search: send to backend after 400ms of no typing
   useEffect(() => {
+    if (!initialLoadDone.current) return;
     const timer = setTimeout(() => {
-      void loadUsers(searchTerm || undefined);
+      void loadUsers(searchTerm || undefined, 1);
     }, 400);
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -683,6 +699,68 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                 </TableBody>
               </Table>
             </div>
+
+            {/* Pagination */}
+            {usersPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-[#E8ECFF]">
+                <p className="text-sm text-gray-500">
+                  Showing {((currentPage - 1) * PAGE_SIZE) + 1}–{Math.min(currentPage * PAGE_SIZE, usersTotal)} of {usersTotal} users
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0 border-[#E8ECFF]"
+                    disabled={currentPage <= 1 || isLoadingUsers}
+                    onClick={() => void loadUsers(searchTerm || undefined, currentPage - 1)}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+
+                  {Array.from({ length: usersPages }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === usersPages || Math.abs(p - currentPage) <= 1)
+                    .reduce<(number | '…')[]>((acc, p, idx, arr) => {
+                      if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push('…');
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((p, idx) =>
+                      p === '…' ? (
+                        <span key={`ellipsis-${idx}`} className="px-1 text-gray-400 text-sm">…</span>
+                      ) : (
+                        <Button
+                          key={p}
+                          variant={p === currentPage ? 'default' : 'outline'}
+                          size="sm"
+                          className={`h-8 w-8 p-0 ${p === currentPage ? 'bg-blue-600 text-white' : 'border-[#E8ECFF] text-gray-600'}`}
+                          disabled={isLoadingUsers}
+                          onClick={() => void loadUsers(searchTerm || undefined, p as number)}
+                        >
+                          {p}
+                        </Button>
+                      )
+                    )
+                  }
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0 border-[#E8ECFF]"
+                    disabled={currentPage >= usersPages || isLoadingUsers}
+                    onClick={() => void loadUsers(searchTerm || undefined, currentPage + 1)}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Single-page count */}
+            {usersPages <= 1 && usersTotal > 0 && (
+              <div className="px-4 py-3 border-t border-[#E8ECFF]">
+                <p className="text-sm text-gray-500">Showing {users.length} of {usersTotal} users</p>
+              </div>
+            )}
           </Card>
         </TabsContent>
 
@@ -987,22 +1065,34 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
               </div>
 
               <Card className="border-[#E8ECFF] p-4">
-                <h4 className="font-semibold text-gray-900 mb-3">Recent Chat History</h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">Recent Chat History</h4>
+                  {selectedUserChat && selectedUserChat.total_messages > 0 && (
+                    <span className="text-xs text-gray-500">
+                      {(selectedUserChat.messages?.length ?? 0) >= selectedUserChat.total_messages
+                        ? `${selectedUserChat.total_messages} messages`
+                        : `Showing ${selectedUserChat.messages?.length ?? 0} of ${selectedUserChat.total_messages} messages`}
+                    </span>
+                  )}
+                </div>
                 {isLoadingUserChat ? (
                   <p className="text-sm text-gray-500">Loading chat history...</p>
                 ) : selectedUserChat && selectedUserChat.messages?.length ? (
                   <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-1">
-                    {selectedUserChat.messages.map((message) => (
-                      <div key={message.id} className="rounded-lg border border-[#E8ECFF] p-3 bg-white">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <Badge className={message.role === 'consultant' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'}>
-                            {message.role}
-                          </Badge>
-                          <span className="text-xs text-gray-500">{formatDateTime(message.timestamp)}</span>
+                    {selectedUserChat.messages.map((message) => {
+                      const isBot = message.role === 'assistant' || message.role === 'consultant';
+                      return (
+                        <div key={message.id} className="rounded-lg border border-[#E8ECFF] p-3 bg-white">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <Badge className={isBot ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'}>
+                              {isBot ? 'Assistant' : 'User'}
+                            </Badge>
+                            <span className="text-xs text-gray-500">{formatDateTime(message.timestamp)}</span>
+                          </div>
+                          <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">{message.message}</p>
                         </div>
-                        <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">{message.message}</p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500">No chat history available.</p>

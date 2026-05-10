@@ -88,7 +88,7 @@ export interface UserListResponse {
 export interface ChatMessage {
   id: string;
   session_id: string;
-  role: 'user' | 'consultant';
+  role: 'user' | 'assistant' | 'consultant';
   message: string;
   timestamp: string;
   language?: string;
