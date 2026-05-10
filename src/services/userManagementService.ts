@@ -83,6 +83,7 @@ export interface UserListResponse {
   page: number;
   limit: number;
   pages: number;
+  status_counts?: { active: number; inactive: number; suspended: number };
 }
 
 export interface ChatMessage {
@@ -247,12 +248,21 @@ function normalizeUserListResponse(payload: unknown): UserListResponse {
 
   const users = usersRaw.map(normalizeUserListItem).filter((user) => Boolean(user.id));
 
+  const rawCounts = isRecord(source.status_counts) ? source.status_counts : undefined;
+
   return {
     users,
     total: toNumber(source.total, users.length),
     page: toNumber(source.page, 1),
     limit: toNumber(source.limit, users.length || 50),
     pages: toNumber(source.pages, 1),
+    status_counts: rawCounts
+      ? {
+          active: toNumber(rawCounts.active),
+          inactive: toNumber(rawCounts.inactive),
+          suspended: toNumber(rawCounts.suspended),
+        }
+      : undefined,
   };
 }
 

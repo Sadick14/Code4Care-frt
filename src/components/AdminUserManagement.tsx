@@ -104,12 +104,13 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
   void selectedLanguage;
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended' | 'active_suspended'>('all');
   const [filterStaffStatus, setFilterStaffStatus] = useState<'all' | 'active' | 'inactive'>('active');
   const [currentPage, setCurrentPage] = useState(1);
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [usersTotal, setUsersTotal] = useState(0);
   const [usersPages, setUsersPages] = useState(1);
+  const [statusCounts, setStatusCounts] = useState({ active: 0, inactive: 0, suspended: 0 });
   const PAGE_SIZE = 50;
   const [staff, setStaff] = useState<StaffAccount[]>(() => StaffAccessService.getStaffAccounts());
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
@@ -182,7 +183,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
         {
           page: targetPage,
           limit: PAGE_SIZE,
-          status: filterStatus !== 'all' ? (filterStatus as any) : undefined,
+          status: filterStatus !== 'all' ? filterStatus : undefined,
           search: search || undefined,
         },
         session.accessToken
@@ -191,6 +192,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
       setUsersTotal(response.total ?? response.users.length);
       setUsersPages(response.pages ?? 1);
       setCurrentPage(targetPage);
+      if (response.status_counts) setStatusCounts(response.status_counts);
     } catch (error) {
       logger.error('Failed to load users', error);
       setUsers([]);
@@ -521,10 +523,10 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
   };
 
   const stats = {
-    total: usersTotal,
-    active: users.filter((u) => u.status === 'active').length,
-    inactive: users.filter((u) => u.status === 'inactive').length,
-    suspended: users.filter((u) => u.status === 'suspended').length,
+    total: statusCounts.active + statusCounts.inactive + statusCounts.suspended || usersTotal,
+    active: statusCounts.active,
+    inactive: statusCounts.inactive,
+    suspended: statusCounts.suspended,
     staffActive: staff.filter((s) => s.status === 'active').length,
     staffTotal: staff.length,
   };
@@ -615,11 +617,13 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
 
               <select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'inactive' | 'suspended')}
+                onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
                 className="px-4 py-2 rounded-lg bg-white border border-[#E8ECFF] text-gray-900"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
+                <option value="active_suspended">Active & Suspended</option>
+                <option value="suspended">Suspended</option>
                 <option value="inactive">Inactive</option>
               </select>
             </div>
