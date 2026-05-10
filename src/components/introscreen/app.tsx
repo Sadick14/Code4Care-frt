@@ -27,17 +27,17 @@ function MobileIntroLayout({
   return (
     <>
       {/* MOBILE */}
-      <div className="md:hidden fixed inset-0 w-full bg-white flex flex-col overflow-hidden z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        {/* Image */}
-        <div className="relative h-[48vh] w-full overflow-hidden">
-          <img src={image} alt="intro" className="w-full h-full object-cover" />
+      <div className="md:hidden relative h-dvh w-full bg-white flex flex-col overflow-hidden">
+        <button
+          onClick={onSkip}
+          className="absolute right-5 top-[calc(env(safe-area-inset-top)+1rem)] z-20 bg-[#5B82FF] text-white px-5 py-3 rounded-2xl font-semibold shadow-md"
+        >
+          Skip
+        </button>
 
-          <button
-            onClick={onSkip}
-            className="absolute top-14 right-5 bg-[#5B82FF] text-white px-5 py-3 rounded-2xl font-semibold shadow-md"
-          >
-            Skip
-          </button>
+        {/* Image */}
+        <div className="relative h-[50%] w-full shrink-0 overflow-hidden">
+          <img src={image} alt="intro" className="w-full h-full object-cover" />
 
           <div className="absolute bottom-[-1px] left-0 w-full overflow-hidden leading-none">
             <svg
@@ -52,32 +52,34 @@ function MobileIntroLayout({
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col items-center px-8 pt-8 pb-10">
-          <h2 className="text-[2rem] font-bold text-center text-[#101828] mb-5">
-            {title}
-          </h2>
+        <div className="flex-1 flex flex-col items-center justify-between px-8 pt-5 pb-[calc(env(safe-area-inset-bottom)+1rem)] overflow-hidden">
+          <div className="flex w-full flex-1 flex-col items-center justify-start">
+            <h2 className="text-[1.6rem] leading-tight font-bold text-center text-[#101828] mb-2">
+              {title}
+            </h2>
 
-          <p className="text-center text-[#8E8E93] text-lg max-w-sm mb-10">
-            {description}
-          </p>
+            <p className="text-center text-[#8E8E93] text-[0.92rem] leading-relaxed max-w-sm mb-5">
+              {description}
+            </p>
 
-          {/* Pagination */}
-          <div className="flex gap-2 mb-12">
-            {[0, 1, 2].map((index) => (
-              <div
-                key={index}
-                className={`rounded-full transition-all ${
-                  activeIndex === index
-                    ? "w-10 h-2 bg-[#2563FF]"
-                    : "w-2 h-2 bg-[#D9D9D9]"
-                }`}
-              />
-            ))}
+            {/* Pagination */}
+            <div className="flex gap-2 mb-5">
+              {[0, 1, 2].map((index) => (
+                <div
+                  key={index}
+                  className={`rounded-full transition-all ${
+                    activeIndex === index
+                      ? "w-10 h-2 bg-[#2563FF]"
+                      : "w-2 h-2 bg-[#D9D9D9]"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
 
           <button
             onClick={onNext}
-            className="w-full max-w-sm bg-[#2563FF] text-white font-semibold py-4 rounded-full text-lg active:scale-[0.98]"
+            className="w-full max-w-sm bg-[#2563FF] text-white font-semibold py-3 rounded-full text-base active:scale-[0.98]"
           >
             {buttonText}
           </button>
