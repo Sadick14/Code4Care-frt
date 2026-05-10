@@ -11,6 +11,9 @@ import {
   Briefcase,
   ShieldCheck,
   Download,
+  Send,
+  MessageCircle,
+  Globe,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -52,6 +55,35 @@ import {
 } from '@/services/userManagementService';
 import { logger } from '@/utils/logger';
 import { buildAdminExportFilename, downloadJsonFile } from '@/utils/adminExport';
+
+function getPlatformInfo(id: string): { platform: 'telegram' | 'whatsapp' | 'web'; label: string } {
+  if (id.startsWith('telegram:')) return { platform: 'telegram', label: 'Telegram' };
+  if (id.startsWith('whatsapp:')) return { platform: 'whatsapp', label: 'WhatsApp' };
+  return { platform: 'web', label: 'Web' };
+}
+
+function PlatformBadge({ id }: { id: string }) {
+  const { platform, label } = getPlatformInfo(id);
+  if (platform === 'telegram') {
+    return (
+      <Badge className="bg-sky-50 text-sky-700 border-sky-200 gap-1 text-xs py-0">
+        <Send className="w-3 h-3" />{label}
+      </Badge>
+    );
+  }
+  if (platform === 'whatsapp') {
+    return (
+      <Badge className="bg-green-50 text-green-700 border-green-200 gap-1 text-xs py-0">
+        <MessageCircle className="w-3 h-3" />{label}
+      </Badge>
+    );
+  }
+  return (
+    <Badge className="bg-slate-50 text-slate-600 border-slate-200 gap-1 text-xs py-0">
+      <Globe className="w-3 h-3" />{label}
+    </Badge>
+  );
+}
 
 interface AdminUserManagementProps {
   selectedLanguage: string;
@@ -137,14 +169,15 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
     }
   };
 
-  const loadUsers = async () => {
+  const loadUsers = async (search?: string) => {
     setIsLoadingUsers(true);
     try {
       const response = await UserManagementService.listUsers(
         {
           page: 1,
-          limit: 100,
+          limit: 200,
           status: filterStatus !== 'all' ? (filterStatus as any) : undefined,
+          search: search || undefined,
         },
         session.accessToken
       );
@@ -302,13 +335,25 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
   useEffect(() => {
     void loadStaff();
   }, [filterStaffStatus]);
+  // Debounce search: send to backend after 400ms of no typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void loadUsers(searchTerm || undefined);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const filteredUsers = useMemo(() => {
     let filtered = [...users];
 
     if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      // Client-side secondary filter for instant feedback within loaded results
       filtered = filtered.filter((u) =>
-        u.nickname.toLowerCase().includes(searchTerm.toLowerCase()) || u.age_range.includes(searchTerm)
+        u.nickname.toLowerCase().includes(q) ||
+        u.age_range.includes(q) ||
+        u.id.toLowerCase().includes(q) ||
+        getPlatformInfo(u.id).label.toLowerCase().includes(q)
       );
     }
 
@@ -545,7 +590,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder="Search by nickname..."
+                  placeholder="Search by nickname or platform..."
                   className="pl-9 bg-gray-50 border-[#E8ECFF] text-gray-900 placeholder:text-gray-400"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -567,6 +612,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                 <TableHeader>
                   <TableRow className="border-[#E8ECFF] hover:bg-transparent">
                     <TableHead className="text-gray-600">Nickname</TableHead>
+                    <TableHead className="text-gray-600">Platform</TableHead>
                     <TableHead className="text-gray-600">Age</TableHead>
                     <TableHead className="text-gray-600">Status</TableHead>
                     <TableHead className="text-gray-600">Engagement</TableHead>
@@ -576,13 +622,13 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                 <TableBody>
                   {isLoadingUsers ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                      <TableCell colSpan={6} className="text-center text-gray-500 py-8">
                         Loading users...
                       </TableCell>
                     </TableRow>
                   ) : filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                      <TableCell colSpan={6} className="text-center text-gray-500 py-8">
                         No users found
                       </TableCell>
                     </TableRow>
@@ -590,6 +636,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                     filteredUsers.map((user) => (
                       <TableRow key={user.id} className="border-[#E8ECFF] hover:bg-gray-50 transition-colors">
                         <TableCell className="text-gray-900 font-medium">{user.nickname}</TableCell>
+                        <TableCell><PlatformBadge id={user.id} /></TableCell>
                         <TableCell className="text-gray-600 text-sm">{user.age_range}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={getUserStatusColor(user.status)}>
@@ -600,8 +647,16 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-gray-900">{user.total_messages} messages</span>
-                              <Badge className={user.engagement_score >= 80 ? 'bg-green-50 text-green-700 border-green-200 text-xs' : user.engagement_score >= 50 ? 'bg-blue-50 text-blue-700 border-blue-200 text-xs' : 'bg-yellow-50 text-yellow-700 border-yellow-200 text-xs'}>
-                                {user.engagement_score >= 80 ? 'Very Active' : user.engagement_score >= 50 ? 'Active' : 'Moderate'}
+                              <Badge className={
+                                user.total_messages === 0
+                                  ? 'bg-slate-50 text-slate-500 border-slate-200 text-xs'
+                                  : user.engagement_score >= 80
+                                    ? 'bg-green-50 text-green-700 border-green-200 text-xs'
+                                    : user.engagement_score >= 50
+                                      ? 'bg-blue-50 text-blue-700 border-blue-200 text-xs'
+                                      : 'bg-yellow-50 text-yellow-700 border-yellow-200 text-xs'
+                              }>
+                                {user.total_messages === 0 ? 'No Activity' : user.engagement_score >= 80 ? 'Very Active' : user.engagement_score >= 50 ? 'Active' : 'Low'}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-2">
@@ -836,6 +891,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                   ) : selectedUserDetails ? (
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Nickname</span><span className="text-gray-900 font-medium">{selectedUserDetails.nickname}</span></div>
+                      {selectedUserId && <div className="flex justify-between gap-4"><span className="text-gray-500">Platform</span><PlatformBadge id={selectedUserId} /></div>}
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Status</span><Badge variant="outline" className={getUserStatusColor(selectedUserDetails.status)}>{selectedUserDetails.status}</Badge></div>
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Age range</span><span className="text-gray-900">{selectedUserDetails.age_range || 'N/A'}</span></div>
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Gender</span><span className="text-gray-900">{selectedUserDetails.gender_identity || 'N/A'}</span></div>
@@ -843,6 +899,21 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Language</span><span className="text-gray-900 uppercase">{selectedUserDetails.language || 'N/A'}</span></div>
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Created</span><span className="text-gray-900">{formatDateTime(selectedUserDetails.created_at)}</span></div>
                       <div className="flex justify-between gap-4"><span className="text-gray-500">Last active</span><span className="text-gray-900">{formatDateTime(selectedUserDetails.last_active)}</span></div>
+                      {selectedUserDetails.statistics && (
+                        <>
+                          <div className="border-t border-[#E8ECFF] my-1" />
+                          <div className="flex justify-between gap-4"><span className="text-gray-500">Sessions</span><span className="text-gray-900">{selectedUserDetails.statistics.total_sessions ?? 0}</span></div>
+                          <div className="flex justify-between gap-4"><span className="text-gray-500">Messages</span><span className="text-gray-900">{selectedUserDetails.statistics.total_messages ?? 0}</span></div>
+                        </>
+                      )}
+                      {selectedUserDetails.safety_profile && (
+                        <>
+                          <div className="border-t border-[#E8ECFF] my-1" />
+                          <div className="flex justify-between gap-4"><span className="text-gray-500">Panic events</span><span className={`font-medium ${(selectedUserDetails.safety_profile as any).panic_button_used > 0 ? 'text-orange-600' : 'text-gray-900'}`}>{(selectedUserDetails.safety_profile as any).panic_button_used ?? 0}</span></div>
+                          <div className="flex justify-between gap-4"><span className="text-gray-500">Crisis flags</span><span className={`font-medium ${(selectedUserDetails.safety_profile as any).crisis_flags > 0 ? 'text-red-600' : 'text-gray-900'}`}>{(selectedUserDetails.safety_profile as any).crisis_flags ?? 0}</span></div>
+                          <div className="flex justify-between gap-4"><span className="text-gray-500">Escalations</span><span className={`font-medium ${(selectedUserDetails.safety_profile as any).escalations > 0 ? 'text-purple-600' : 'text-gray-900'}`}>{(selectedUserDetails.safety_profile as any).escalations ?? 0}</span></div>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <p className="text-sm text-gray-500">No user details available.</p>
