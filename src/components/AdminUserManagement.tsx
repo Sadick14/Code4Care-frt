@@ -153,14 +153,15 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
     }
   };
 
-  const loadUsers = async () => {
+  const loadUsers = async (search?: string) => {
     setIsLoadingUsers(true);
     try {
       const response = await UserManagementService.listUsers(
         {
           page: 1,
-          limit: 100,
+          limit: 200,
           status: filterStatus !== 'all' ? (filterStatus as any) : undefined,
+          search: search || undefined,
         },
         session.accessToken
       );
@@ -315,11 +316,20 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
     void loadUsers();
   }, [filterStatus]);
 
+  // Debounce search: send to backend after 400ms of no typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void loadUsers(searchTerm || undefined);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const filteredUsers = useMemo(() => {
     let filtered = [...users];
 
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
+      // Client-side secondary filter for instant feedback within loaded results
       filtered = filtered.filter((u) =>
         u.nickname.toLowerCase().includes(q) ||
         u.age_range.includes(q) ||
