@@ -312,7 +312,7 @@ function normalizeAnalyticsOverviewSummary(data: AnalyticsOverviewSummary): Anal
   const safetyRecord = normalizeRecordSection(safetyMetrics, {
     panic_exits_total: ['panic_exits_total', 'panicExitsTotal'],
     panic_exits_in_period: ['panic_exits_in_period', 'panicExitsToday', 'panic_exits_today'],
-    crisis_interventions: ['crisis_interventions', 'crisisInterventions', 'crisis_interventions_triggered'],
+    crisis_interventions: ['crisis_interventions', 'crisisInterventions', 'crisis_interventions_triggered', 'crisisInterventionsTriggered'],
     self_harm_mentions: ['self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'],
     suicidal_ideation_mentions: ['suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'],
     abuse_mentions: ['abuse_mentions', 'abuseMentionsDetected', 'abuse_mentions_detected'],
@@ -372,7 +372,7 @@ function normalizeAnalyticsOverviewSummary(data: AnalyticsOverviewSummary): Anal
       ...safetyRecord,
       panic_exits_total: getNumber(safetyRecord, 'panic_exits_total', 'panicExitsTotal', 'panic_exits'),
       panic_exits_in_period: getNumber(safetyRecord, 'panic_exits_in_period', 'panicExitsToday', 'panic_exits_today'),
-      crisis_interventions: getNumber(safetyRecord, 'crisis_interventions', 'crisisInterventions', 'crisis_interventions_triggered'),
+      crisis_interventions: getNumber(safetyRecord, 'crisis_interventions', 'crisisInterventions', 'crisisInterventionsTriggered', 'crisis_interventions_triggered'),
       self_harm_mentions: getNumber(safetyRecord, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'),
       suicidal_ideation_mentions: getNumber(safetyRecord, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'),
       abuse_mentions: getNumber(safetyRecord, 'abuse_mentions', 'abuseMentionsDetected', 'abuse_mentions_detected'),

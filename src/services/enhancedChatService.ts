@@ -56,6 +56,7 @@ export interface ChatSessionMessage {
   role: 'user' | 'bot' | 'consultant';
   content: string;
   timestamp: string;
+  metadata?: Record<string, unknown>;
   citations?: Array<{
     title?: string;
     source?: string;
