@@ -79,7 +79,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const current = safeStorage.getItem('room1221_session_id') || '';
 
-    fetch(new URL('/v1/session', base).toString(), {
+    fetch(new URL('/v1/session/init', base).toString(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: current || undefined }),
