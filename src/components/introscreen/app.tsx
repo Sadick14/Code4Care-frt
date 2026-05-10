@@ -27,7 +27,7 @@ function MobileIntroLayout({
   return (
     <>
       {/* MOBILE */}
-      <div className="md:hidden h-screen w-full bg-white flex flex-col overflow-hidden">
+      <div className="md:hidden fixed inset-0 w-full bg-white flex flex-col overflow-hidden z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {/* Image */}
         <div className="relative h-[48vh] w-full overflow-hidden">
           <img src={image} alt="intro" className="w-full h-full object-cover" />
