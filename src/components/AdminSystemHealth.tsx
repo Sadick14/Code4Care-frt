@@ -147,105 +147,68 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
   }, []);
 
 
+  // Compute response-time trend from performance history (first half vs second half)
+  const rtTrend = (() => {
+    if (performanceData.length < 4) return 0;
+    const half = Math.floor(performanceData.length / 2);
+    const older = performanceData.slice(0, half).map(d => d.response).filter(v => v > 0);
+    const newer = performanceData.slice(half).map(d => d.response).filter(v => v > 0);
+    if (!older.length || !newer.length) return 0;
+    const avgOlder = older.reduce((a, b) => a + b, 0) / older.length;
+    const avgNewer = newer.reduce((a, b) => a + b, 0) / newer.length;
+    return Number(((avgNewer - avgOlder) / avgOlder * 100).toFixed(1));
+  })();
+
   const metrics: SystemMetric[] = healthMetrics ? [
     {
-      name: 'API Response Time',
-      value: getNumber(healthMetrics?.metrics, 'api_response_time', 'apiResponseTime', 'response_time_ms') || 156,
+      name: 'Avg Response Time',
+      value: getNumber(healthMetrics?.metrics, 'api_response_time', 'apiResponseTime', 'response_time_avg_ms') || getNumber(healthMetrics, 'response_time_avg_ms'),
       unit: 'ms',
-      status: getNumber(healthMetrics?.metrics, 'api_response_time', 'apiResponseTime', 'response_time_ms') > 200 ? 'warning' : 'healthy',
-      trend: -2.5,
+      status: (getNumber(healthMetrics?.metrics, 'api_response_time', 'apiResponseTime', 'response_time_avg_ms') || getNumber(healthMetrics, 'response_time_avg_ms')) > 1000 ? 'warning' : 'healthy',
+      trend: rtTrend,
       icon: <Zap className="w-5 h-5 text-blue-400" />,
     },
     {
       name: 'System Uptime',
-      value: getNumber(healthMetrics?.metrics, 'system_uptime', 'systemUptime', 'uptime_percent') || 99.92,
+      value: getNumber(healthMetrics?.metrics, 'system_uptime', 'systemUptime', 'uptime_percent') || getNumber(healthMetrics, 'uptime_percent'),
       unit: '%',
-      status: getNumber(healthMetrics?.metrics, 'system_uptime', 'systemUptime', 'uptime_percent') < 99 ? 'warning' : 'healthy',
+      status: (getNumber(healthMetrics?.metrics, 'system_uptime', 'systemUptime', 'uptime_percent') || 100) < 99 ? 'warning' : 'healthy',
       trend: 0,
       icon: <Activity className="w-5 h-5 text-green-400" />,
     },
     {
       name: 'Error Rate',
-      value: getNumber(healthMetrics?.metrics, 'error_rate', 'errorRate').toFixed(2),
-      unit: '/minute',
-      status: getNumber(healthMetrics?.metrics, 'error_rate', 'errorRate') > 1 ? 'warning' : 'healthy',
-      trend: 12,
+      value: getNumber(healthMetrics?.metrics, 'error_rate', 'errorRate', 'error_rate').toFixed(2),
+      unit: '/min',
+      status: getNumber(healthMetrics?.metrics, 'error_rate', 'errorRate', 'error_rate') > 1 ? 'warning' : 'healthy',
+      trend: 0,
       icon: <AlertTriangle className="w-5 h-5 text-yellow-400" />,
     },
     {
-      name: 'Active Engagements',
-      value: getNumber(healthMetrics?.metrics, 'active_engagements', 'activeEngagements', 'active_engagements') || 847,
-      unit: 'users',
+      name: 'Active Sessions',
+      value: getNumber(healthMetrics?.metrics, 'active_engagements', 'activeEngagements', 'active_sessions') || getNumber(healthMetrics, 'active_sessions'),
+      unit: 'today',
       status: 'healthy',
-      trend: 8.3,
+      trend: 0,
       icon: <Server className="w-5 h-5 text-purple-400" />,
     },
     {
-      name: 'Memory Usage',
-      value: getNumber(healthMetrics?.metrics, 'memory_usage', 'memoryUsage', 'memory_usage') || 68,
-      unit: '%',
-      status: getNumber(healthMetrics?.metrics, 'memory_usage', 'memoryUsage', 'memory_usage') > 85 ? 'warning' : 'healthy',
-      trend: -1.2,
-      icon: <Database className="w-5 h-5 text-orange-400" />,
-    },
-    {
-      name: 'Database Queries',
-      value: getNumber(healthMetrics?.metrics, 'database_queries', 'databaseQueries', 'database_queries') || 2145,
-      unit: '/min',
-      status: 'healthy',
-      trend: 3.5,
-      icon: <Server className="w-5 h-5 text-cyan-400" />,
-    },
-  ] : [
-    {
-      name: 'API Response Time',
-      value: 156,
-      unit: 'ms',
-      status: 'healthy',
-      trend: -2.5,
-      icon: <Zap className="w-5 h-5 text-blue-400" />,
-    },
-    {
-      name: 'System Uptime',
-      value: 99.92,
-      unit: '%',
-      status: 'healthy',
+      name: 'Overall Status',
+      value: healthMetrics?.overall_status === 'healthy' ? 'Healthy' : healthMetrics?.overall_status === 'degraded' ? 'Degraded' : 'Unhealthy',
+      unit: '',
+      status: healthMetrics?.overall_status === 'healthy' ? 'healthy' : healthMetrics?.overall_status === 'degraded' ? 'warning' : 'critical',
       trend: 0,
       icon: <Activity className="w-5 h-5 text-green-400" />,
     },
     {
-      name: 'Error Rate',
-      value: 0.8,
-      unit: '/minute',
-      status: 'warning',
-      trend: 12,
-      icon: <AlertTriangle className="w-5 h-5 text-yellow-400" />,
-    },
-    {
-      name: 'Active Engagements',
-      value: 847,
-      unit: 'users',
+      name: 'DB Messages/hr',
+      value: getNumber(healthMetrics?.metrics, 'database_queries', 'databaseQueries', 'database_queries'),
+      unit: '/hr',
       status: 'healthy',
-      trend: 8.3,
-      icon: <Server className="w-5 h-5 text-purple-400" />,
+      trend: 0,
+      icon: <Database className="w-5 h-5 text-cyan-400" />,
     },
-    {
-      name: 'Memory Usage',
-      value: 68,
-      unit: '%',
-      status: 'healthy',
-      trend: -1.2,
-      icon: <Database className="w-5 h-5 text-orange-400" />,
-    },
-    {
-      name: 'Database Queries',
-      value: 2145,
-      unit: '/min',
-      status: 'healthy',
-      trend: 3.5,
-      icon: <Server className="w-5 h-5 text-cyan-400" />,
-    },
-  ];
+  ] : [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -328,7 +291,7 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
 
       {/* Core Metrics */}
       <div className="grid grid-cols-3 gap-4">
-        {isLoadingMetrics
+        {isLoadingMetrics || metrics.length === 0
           ? Array.from({ length: 6 }).map((_, i) => <MetricSkeleton key={i} />)
           : metrics.map((metric, idx) => (
             <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
