@@ -44,7 +44,7 @@ export function ChatInterface({
   clearTrigger = 0 
 }: ChatInterfaceProps) {
   const { t, i18n } = useTranslation();
-  const { nickname, botName, sessionId, consultantMode, sessionDuration, ageRange, genderIdentity, region, analyticsOptIn } = useApp();
+  const { nickname, botName, sessionId, setSessionId, consultantMode, sessionDuration, ageRange, genderIdentity, region, analyticsOptIn } = useApp();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -316,6 +316,11 @@ export function ChatInterface({
         language: languageCode,
         session_id: sessionId,
       });
+
+      // Sync to the backend-assigned session UUID so all messages land in the same conversation
+      if (response.session_id && response.session_id !== sessionId) {
+        setSessionId(response.session_id);
+      }
 
       const answerText = response.answer.trim();
 

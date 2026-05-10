@@ -80,6 +80,7 @@ function normalizeChatResponse(payload: unknown, defaultLanguage: string): ChatA
       : '';
 
   return {
+    session_id: typeof record.session_id === 'string' ? record.session_id : undefined,
     answer,
     citations: normalizeArray<ChatCitation>(record.citations),
     safety_flags: normalizeArray<SafetyFlag>(record.safety_flags),
