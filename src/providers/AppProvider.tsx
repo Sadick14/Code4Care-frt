@@ -77,7 +77,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const base = import.meta.env.VITE_API_BASE_URL?.trim();
     if (!base) return;
 
-    const current = safeStorage.getItem('room1221_session_id') || '';
+    // On first visit localStorage hasn't been populated yet — fall back to
+    // the initial state value so the backend receives the same UUID that
+    // onboarding will use, preventing a demographics/conversation split.
+    const current = safeStorage.getItem('room1221_session_id') || sessionId;
 
     fetch(new URL('/v1/session/init', base).toString(), {
       method: 'POST',
