@@ -311,19 +311,23 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
   }
 
   const averageSatisfaction = useMemo(() => {
+    // Prefer real feedback average from backend summary
+    const fromSummary = getNumber(analyticsData?.summary, 'average_satisfaction', 'averageSatisfaction');
+    if (fromSummary > 0) return fromSummary;
+
+    // Fall back to topic-derived average if backend didn't return one
     const topics = analyticsData?.engagement?.topics ?? analyticsData?.engagement?.topicEngagement ?? [];
-
-    if (topics.length === 0) {
-      return 0;
-    }
-
+    if (topics.length === 0) return 0;
     const total = topics.reduce((sum: number, topic: any) => sum + Number(topic.satisfaction_score ?? topic.satisfactionScore ?? 0), 0);
     return Number((total / topics.length).toFixed(1));
-  }, [analyticsData?.engagement?.topics, analyticsData?.engagement?.topicEngagement]);
+  }, [analyticsData?.summary, analyticsData?.engagement?.topics, analyticsData?.engagement?.topicEngagement]);
+
+  const periodLabel = period === 'today' ? 'Today' : period === 'week' ? 'This Week' : 'This Month';
 
   // KPI stats while loading
   const kpis = [
-    { label: lang.activeUsers, value: getNumber(analyticsData?.summary, 'total_active_users', 'totalActiveUsers', 'active_users'), icon: Users, color: 'from-blue-500 to-blue-600' },
+    { label: 'Total Users', value: getNumber(analyticsData?.summary, 'total_active_users', 'totalActiveUsers', 'active_users'), icon: Users, color: 'from-blue-500 to-blue-600' },
+    { label: `Active ${periodLabel}`, value: getNumber(analyticsData?.summary, 'users_in_period', 'usersInPeriod'), icon: Users, color: 'from-teal-500 to-teal-600' },
     { label: lang.engagements, value: getNumber(analyticsData?.summary, 'conversations_in_period', 'conversationsInPeriod', 'conversations'), icon: BarChart3, color: 'from-purple-500 to-purple-600' },
     { label: lang.satisfaction, value: averageSatisfaction || 0, icon: Heart, color: 'from-red-500 to-red-600' },
   ];
@@ -440,7 +444,7 @@ export function AdminDashboard({ selectedLanguage, session }: AdminDashboardProp
         </motion.div>
 
         {/* KPI Cards */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-3 gap-4 mb-8">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-4 gap-4 mb-8">
           {kpis.map((kpi, idx) => {
             const Icon = kpi.icon;
             return (
