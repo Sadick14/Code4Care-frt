@@ -56,6 +56,7 @@ export interface ChatSessionMessage {
   role: 'user' | 'bot' | 'consultant';
   content: string;
   timestamp: string;
+  metadata?: Record<string, unknown>;
   citations?: Array<{
     title?: string;
     source?: string;
@@ -85,17 +86,13 @@ export interface ChatSessionHistoryResponse {
   };
 }
 
-const API_BASE_URL = (
-  import.meta.env.VITE_CHAT_API_BASE_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  ''
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const CHAT_BASE_PATH = '/v1/chat';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for chat endpoints.');
   }
   return new URL(path, API_BASE_URL).toString();
 }

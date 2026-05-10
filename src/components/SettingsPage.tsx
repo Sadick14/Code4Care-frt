@@ -59,13 +59,13 @@ export function SettingsPage({ onClearChat, onLogout }: SettingsPageProps) {
     const languageCode = overrides.language ?? (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
 
     UserEngagementService.logNonBlocking(
-      UserEngagementService.updateUserSettings({
-        session_id: sessionId,
+      UserEngagementService.syncUserSettings({
+        sessionId,
         nickname: overrides.nickname ?? nickname ?? "",
         language: languageCode,
-        chat_retention: overrides.chatRetention ?? sessionDuration,
-        analytics_consent: overrides.analyticsConsent ?? analyticsOptIn,
-        consultant_mode_enabled: overrides.consultantModeEnabled ?? consultantMode,
+        chatRetention: overrides.chatRetention ?? sessionDuration,
+        analyticsConsent: overrides.analyticsConsent ?? analyticsOptIn,
+        consultantModeEnabled: overrides.consultantModeEnabled ?? consultantMode,
       }),
       "Failed to update user settings",
     );

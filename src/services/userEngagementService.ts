@@ -59,6 +59,15 @@ export interface UpdateUserSettingsResponse {
   updated_at: string;
 }
 
+export interface SyncUserSettingsOptions {
+  sessionId: string;
+  nickname?: string;
+  language?: string;
+  chatRetention?: string;
+  analyticsConsent?: boolean;
+  consultantModeEnabled?: boolean;
+}
+
 export interface TrackSessionPayload {
   session_id: string;
   action: SessionAction;
@@ -75,16 +84,11 @@ export interface TrackSessionResponse {
   created_at: string;
 }
 
-const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
-const API_BASE_URL = (
-  import.meta.env.VITE_USER_API_BASE_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  DEFAULT_API_BASE_URL
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for engagement requests.');
   }
 
   return new URL(path, API_BASE_URL).toString();
@@ -213,6 +217,20 @@ export class UserEngagementService {
    */
   static updateUserSettings(payload: UpdateUserSettingsPayload): Promise<UpdateUserSettingsResponse> {
     return postJson<UpdateUserSettingsPayload, UpdateUserSettingsResponse>('/v1/user/settings', payload);
+  }
+
+  /**
+   * Build and persist a complete user-settings payload from partial UI state.
+   */
+  static syncUserSettings(options: SyncUserSettingsOptions): Promise<UpdateUserSettingsResponse> {
+    return UserEngagementService.updateUserSettings({
+      session_id: options.sessionId,
+      nickname: options.nickname ?? '',
+      language: options.language ?? 'en',
+      chat_retention: options.chatRetention ?? '24h',
+      analytics_consent: options.analyticsConsent ?? true,
+      consultant_mode_enabled: options.consultantModeEnabled ?? false,
+    });
   }
 
   /**

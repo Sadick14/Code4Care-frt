@@ -44,18 +44,14 @@ export interface CrisisEventResponse {
   created_at: string;
 }
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_CHAT_API_BASE_URL ||
-  ''
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const PANIC_PATH = '/v1/safety/panic';
 const CRISIS_PATH = '/v1/safety/crisis';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for safety requests.');
   }
   return new URL(path, API_BASE_URL).toString();
 }
@@ -116,14 +112,7 @@ export class SafetyService {
       return await readJsonResponse<PanicEventResponse>(response);
     } catch (error) {
       logger.error('Failed to log panic event', error);
-      // Return fallback response - safety logging is critical but shouldn't break UX
-      return {
-        id: `panic-${Date.now()}`,
-        session_id: payload.session_id,
-        action: payload.action,
-        time_active_seconds: payload.time_active_seconds,
-        created_at: new Date().toISOString(),
-      };
+      throw error;
     }
   }
 
@@ -147,17 +136,7 @@ export class SafetyService {
       return await readJsonResponse<CrisisEventResponse>(response);
     } catch (error) {
       logger.error('Failed to log crisis event', error);
-      // Return fallback response - safety logging is critical but shouldn't break UX
-      return {
-        id: `crisis-${Date.now()}`,
-        session_id: payload.session_id,
-        conversation_id: payload.conversation_id,
-        crisis_type: payload.crisis_type,
-        confidence: payload.confidence,
-        intervention_triggered: payload.intervention_triggered,
-        escalated_to_human: payload.escalated_to_human,
-        created_at: new Date().toISOString(),
-      };
+      throw error;
     }
   }
 }

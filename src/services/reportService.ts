@@ -15,17 +15,13 @@ export interface ReportResponse {
   status: 'received';
 }
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_CHAT_API_BASE_URL ||
-  ''
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const REPORT_PATH = '/v1/report';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for report service.');
   }
   return new URL(path, API_BASE_URL).toString();
 }

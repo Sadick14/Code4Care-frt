@@ -39,6 +39,7 @@ export type SafetyFlag = string | {
 };
 
 export interface ChatApiResponse {
+  session_id?: string;
   answer: string;
   citations: ChatCitation[];
   safety_flags: SafetyFlag[];
@@ -46,18 +47,13 @@ export interface ChatApiResponse {
   response_time_ms: number;
 }
 
-const CHAT_API_BASE_URL = (
-  import.meta.env.VITE_CHAT_API_BASE_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  ''
-).trim();
+const CHAT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
-const DEFAULT_CHAT_ENDPOINT = CHAT_API_BASE_URL ? '/v1/chat' : '/api/chat';
-const CHAT_ENDPOINTS = [import.meta.env.VITE_CHAT_API_ENDPOINT || DEFAULT_CHAT_ENDPOINT];
+const CHAT_ENDPOINT = '/v1/chat';
 
 function buildChatUrl(path: string) {
   if (!CHAT_API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for chat requests.');
   }
 
   return new URL(path, CHAT_API_BASE_URL).toString();
@@ -75,7 +71,7 @@ function normalizeArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
 
-function normalizeChatResponse(payload: unknown, fallbackLanguage: string): ChatApiResponse {
+function normalizeChatResponse(payload: unknown, defaultLanguage: string): ChatApiResponse {
   const record = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
   const answer = typeof record.answer === 'string'
     ? record.answer
@@ -87,7 +83,7 @@ function normalizeChatResponse(payload: unknown, fallbackLanguage: string): Chat
     answer,
     citations: normalizeArray<ChatCitation>(record.citations),
     safety_flags: normalizeArray<SafetyFlag>(record.safety_flags),
-    language_detected: typeof record.language_detected === 'string' ? record.language_detected : fallbackLanguage,
+    language_detected: typeof record.language_detected === 'string' ? record.language_detected : defaultLanguage,
     response_time_ms: typeof record.response_time_ms === 'number' ? record.response_time_ms : 0,
   };
 }
@@ -138,39 +134,23 @@ async function readErrorMessage(response: Response): Promise<string> {
 }
 
 export async function requestChatCompletion(payload: ChatApiRequest): Promise<ChatApiResponse> {
-  let lastError: Error | null = null;
+  try {
+    const response = await postChatCompletion(payload, CHAT_ENDPOINT);
 
-  for (const endpoint of CHAT_ENDPOINTS) {
-    try {
-      const response = await postChatCompletion(payload, endpoint);
-
-      if (!response.ok) {
-        const errorMessage = await readErrorMessage(response);
-
-        if ((response.status === 404 || response.status === 405) && endpoint === CHAT_ENDPOINTS[0]) {
-          lastError = new Error(`Chat API endpoint not available at ${endpoint}: ${errorMessage}`);
-          continue;
-        }
-
-        throw new Error(`Chat API request failed (${response.status}) at ${endpoint}: ${errorMessage}`);
-      }
-
-      const data = await response.json();
-      return normalizeChatResponse(data, payload.language);
-    } catch (error) {
-      if (error instanceof Error) {
-        lastError = error;
-      } else {
-        lastError = new Error('Chat API request failed');
-      }
-
-      if (endpoint !== CHAT_ENDPOINTS[0]) {
-        break;
-      }
+    if (!response.ok) {
+      const errorMessage = await readErrorMessage(response);
+      throw new Error(`Chat API request failed (${response.status}) at ${CHAT_ENDPOINT}: ${errorMessage}`);
     }
-  }
 
-  throw lastError || new Error('Chat API request failed');
+    const data = await response.json();
+    return normalizeChatResponse(data, payload.language);
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error('Chat API request failed');
+  }
 }
 
 // Comprehensive SRH Knowledge Base (Ghana-Specific)

@@ -33,12 +33,14 @@ export interface CreateSupportRequestPayload {
 
 export interface SupportRequestCreationResponse {
   id: string;
-  user_id: string;
+  session_id?: string; // Backend returns session_id
+  user_id?: string;    // Also accept user_id for compatibility
   status: SupportRequestStatus;
   created_at: string;
   assigned_staff_id: string | null;
+  assigned_staff_name?: string | null;
   position_in_queue: number;
-  estimated_wait_time_minutes: number;
+  estimated_wait_time_minutes?: number;
   urgency: RequestUrgency;
 }
 
@@ -50,7 +52,8 @@ export interface AssignedStaff {
 
 export interface SupportRequestListItem {
   id: string;
-  user_id: string;
+  session_id?: string; // Backend returns session_id
+  user_id?: string;    // Also accept user_id for compatibility
   user_nickname: string;
   age_range: string;
   gender_identity: string;
@@ -132,17 +135,13 @@ export interface CloseSupportRequestPayload {
   notes?: string;
 }
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_ADMIN_API_BASE_URL ||
-  ''
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const SUPPORT_REQUESTS_BASE_PATH = '/support-requests';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for support request service.');
   }
   return new URL(path, API_BASE_URL).toString();
 }

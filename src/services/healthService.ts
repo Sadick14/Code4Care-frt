@@ -24,11 +24,7 @@ export interface VersionResponse {
   environment?: string;
 }
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_CHAT_API_BASE_URL ||
-  ''
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const HEALTH_PATH = '/health';
 const READY_PATH = '/health/ready';
@@ -36,7 +32,7 @@ const VERSION_PATH = '/version';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for health service requests.');
   }
   return new URL(path, API_BASE_URL).toString();
 }

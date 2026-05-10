@@ -152,19 +152,13 @@ export interface SessionAnalyticsResponse {
   status: 'recorded';
 }
 
-const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
-const API_BASE_URL = (
-  import.meta.env.VITE_ANALYTICS_API_BASE_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_ADMIN_API_BASE_URL ||
-  DEFAULT_API_BASE_URL
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const ANALYTICS_BASE_PATH = '/analytics';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for analytics requests.');
   }
   return new URL(path, API_BASE_URL).toString();
 }
@@ -318,7 +312,7 @@ function normalizeAnalyticsOverviewSummary(data: AnalyticsOverviewSummary): Anal
   const safetyRecord = normalizeRecordSection(safetyMetrics, {
     panic_exits_total: ['panic_exits_total', 'panicExitsTotal'],
     panic_exits_in_period: ['panic_exits_in_period', 'panicExitsToday', 'panic_exits_today'],
-    crisis_interventions: ['crisis_interventions', 'crisisInterventions', 'crisis_interventions_triggered'],
+    crisis_interventions: ['crisis_interventions', 'crisisInterventions', 'crisis_interventions_triggered', 'crisisInterventionsTriggered'],
     self_harm_mentions: ['self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'],
     suicidal_ideation_mentions: ['suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'],
     abuse_mentions: ['abuse_mentions', 'abuseMentionsDetected', 'abuse_mentions_detected'],
@@ -378,7 +372,7 @@ function normalizeAnalyticsOverviewSummary(data: AnalyticsOverviewSummary): Anal
       ...safetyRecord,
       panic_exits_total: getNumber(safetyRecord, 'panic_exits_total', 'panicExitsTotal', 'panic_exits'),
       panic_exits_in_period: getNumber(safetyRecord, 'panic_exits_in_period', 'panicExitsToday', 'panic_exits_today'),
-      crisis_interventions: getNumber(safetyRecord, 'crisis_interventions', 'crisisInterventions', 'crisis_interventions_triggered'),
+      crisis_interventions: getNumber(safetyRecord, 'crisis_interventions', 'crisisInterventions', 'crisisInterventionsTriggered', 'crisis_interventions_triggered'),
       self_harm_mentions: getNumber(safetyRecord, 'self_harm_mentions', 'selfHarmMentions', 'self_harm_mentions_detected'),
       suicidal_ideation_mentions: getNumber(safetyRecord, 'suicidal_ideation_mentions', 'suicidalIdeationMentions', 'suicidal_ideation'),
       abuse_mentions: getNumber(safetyRecord, 'abuse_mentions', 'abuseMentionsDetected', 'abuse_mentions_detected'),
@@ -453,34 +447,14 @@ export class RealAnalyticsService {
     accessToken?: string,
   ): Promise<AnalyticsSummary> {
     try {
-      // Primary source for admin analytics sections.
       const summary = await RealAnalyticsService.getAnalyticsSummary({
         period: options?.period ?? 'week',
       }, accessToken);
 
       return RealAnalyticsService.normalizeAnalyticsSummary(summary);
     } catch (error) {
-      logger.error('Failed to get analytics summary via /v1/analytics/summary, attempting dashboard fallback', error);
-
-      const url = buildUrlWithParams(`${ANALYTICS_BASE_PATH}/dashboard`, {
-        period: options?.period ?? 'week',
-      });
-
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: buildHeaders(accessToken),
-        });
-
-        if (!response.ok) {
-          throw new Error(await readApiError(response));
-        }
-
-        return await readJsonResponse<AnalyticsSummary>(response);
-      } catch (fallbackError) {
-        logger.error('Failed to get analytics dashboard summary from fallback endpoint', fallbackError);
-        throw fallbackError;
-      }
+      logger.error('Failed to get analytics summary', error);
+      throw error;
     }
   }
 
@@ -493,39 +467,7 @@ export class RealAnalyticsService {
     options?: { period?: 'today' | 'week' | 'month' | 'year' },
     accessToken?: string,
   ): Promise<any> {
-    try {
-      // Prefer server aggregated endpoint
-      return await RealAnalyticsService.getDashboardSummary(options, accessToken);
-    } catch (err) {
-      logger.debug('Dashboard endpoint unavailable, composing aggregated report data', err);
-      const [overview, safety, users, performance, topics] = await Promise.all([
-        RealAnalyticsService.getAnalyticsSummary(options, accessToken).catch(() => null),
-        RealAnalyticsService.getSafetyAnalytics(options, accessToken).catch(() => null),
-        RealAnalyticsService.getUserAnalytics(options, accessToken).catch(() => null),
-        RealAnalyticsService.getPerformanceMetrics(options, accessToken).catch(() => null),
-        RealAnalyticsService.getTopicAnalytics(options, accessToken).catch(() => null),
-      ]);
-
-      const composed: any = {};
-      if (overview) {
-        composed.summary = (overview as any).summary ?? (overview as any);
-        composed.trends = (overview as any).trends ?? (overview as any).trends ?? [];
-        // merge summary fields to top-level for compatibility
-        if ((overview as any).summary) {
-          Object.assign(composed, (overview as any).summary);
-        }
-      }
-
-      if (safety) composed.safety = safety;
-      if (users) {
-        composed.demographics = (users as any).demographics ?? (users as any);
-        if ((users as any).summary) Object.assign(composed, (users as any).summary);
-      }
-      if (performance) composed.performance = (performance as any).metrics ?? (performance as any);
-      if (topics) composed.topics = topics;
-
-      return composed;
-    }
+    return RealAnalyticsService.getDashboardSummary(options, accessToken);
   }
 
   /**

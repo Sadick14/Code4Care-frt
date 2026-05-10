@@ -7,10 +7,12 @@
 import { logger } from '@/utils/logger';
 
 const SAFETY_BASE_PATH = '/v1/safety';
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 function buildUrl(path: string): string {
-  if (!API_BASE_URL) return path;
+  if (!API_BASE_URL) {
+    throw new Error('VITE_API_BASE_URL is required for safety event requests.');
+  }
   return new URL(path, API_BASE_URL).toString();
 }
 
@@ -53,7 +55,7 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
 // Type definitions for panic and crisis events
 export interface PanicEventPayload {
   session_id: string;
-  action: 'initiated' | 'cancelled' | 'activated';
+  action: 'activated' | 'dismissed';
   time_active_seconds?: number;
 }
 
@@ -61,13 +63,14 @@ export interface PanicEventResponse {
   id: string;
   session_id: string;
   action: string;
+  time_active_seconds?: number;
   created_at: string;
 }
 
 export interface CrisisEventPayload {
   session_id: string;
-  conversation_id: string;
-  crisis_type: 'severe_distress' | 'self_harm' | 'suicidal_ideation' | 'abuse' | 'other';
+  conversation_id?: string;
+  crisis_type: 'severe_distress' | 'self_harm' | 'suicidal_ideation' | 'abuse';
   confidence: number; // 0-1
   intervention_triggered: boolean;
   escalated_to_human: boolean;
@@ -78,6 +81,7 @@ export interface CrisisEventResponse {
   session_id: string;
   crisis_type: string;
   confidence: number;
+  intervention_triggered: boolean;
   escalated_to_human: boolean;
   created_at: string;
 }

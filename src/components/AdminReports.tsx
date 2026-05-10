@@ -199,19 +199,12 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
     let totalMessages = getNumber(analyticsData?.summary, 'messages_in_period', 'messagesInPeriod');
     let avgSatisfaction = '0.0';
 
-    // Fallback to trends aggregation when summary fields are missing
-    const trends = analyticsData.trends || [];
-    if (!totalEngagements && trends.length > 0) {
-      totalEngagements = trends.reduce((sum: number, item: any) => sum + (item.engagements ?? item.engagement_count ?? 0), 0);
-    }
-    if (!totalMessages && trends.length > 0) {
-      totalMessages = trends.reduce((sum: number, item: any) => sum + (item.totalMessages ?? item.total_messages ?? 0), 0);
-    }
+    const trends = Array.isArray(analyticsData.trends) ? analyticsData.trends : [];
     if (trends.length > 0) {
       const satSum = trends.reduce((sum: number, item: any) => sum + (item.satisfactionAverage ?? item.satisfaction_average ?? 0), 0);
-      avgSatisfaction = ((satSum / trends.length) || 0).toFixed(1);
+      avgSatisfaction = (satSum / trends.length).toFixed(1);
     } else {
-      avgSatisfaction = (getNumber(analyticsData?.summary, 'avg_satisfaction', 'averageSatisfaction') || 0).toFixed(1);
+      avgSatisfaction = getNumber(analyticsData?.summary, 'avg_satisfaction', 'averageSatisfaction').toFixed(1);
     }
 
     if (reportType === 'overview' || reportType === 'full') {
@@ -236,8 +229,8 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
         return [
         { label: 'Active Users', value: getNumber(analyticsData?.demographics, 'totalActiveUsers', 'total_active_users', 'activeUsers', 'active_users'), icon: Users, color: 'text-blue-600' },
         { label: 'Returning Users', value: getNumber(analyticsData?.demographics, 'returningUsers', 'returning_users'), icon: TrendingUp, color: 'text-green-600' },
-        { label: 'Top Age Segment', value: getString(analyticsData?.demographics, 'topAgeSegment', 'top_age_segment') || '15-19', icon: BarChart3, color: 'text-indigo-600' },
-        { label: 'Top Language', value: getString(analyticsData?.demographics, 'topLanguage', 'top_language') || 'English', icon: FileText, color: 'text-cyan-600' },
+        { label: 'Top Age Segment', value: getString(analyticsData?.demographics, 'topAgeSegment', 'top_age_segment') || 'N/A', icon: BarChart3, color: 'text-indigo-600' },
+        { label: 'Top Language', value: getString(analyticsData?.demographics, 'topLanguage', 'top_language') || 'N/A', icon: FileText, color: 'text-cyan-600' },
       ];
     }
 
@@ -678,11 +671,11 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#E8ECFF]">
-                {Object.keys(tableRows[0] || { Metric: '', Value: '' }).map((header) => (
+                {tableRows.length > 0 ? Object.keys(tableRows[0]).map((header) => (
                   <th key={header} className="text-left py-2 px-3 text-gray-600 font-semibold">
                     {header}
                   </th>
-                ))}
+                )) : null}
               </tr>
             </thead>
             <tbody>

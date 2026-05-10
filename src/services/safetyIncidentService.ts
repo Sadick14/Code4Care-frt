@@ -7,15 +7,12 @@
 import { logger } from '@/utils/logger';
 
 const ADMIN_BASE_PATH = '/api/admin';
-const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_ADMIN_API_BASE_URL ||
-  DEFAULT_API_BASE_URL
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 function buildUrl(path: string): string {
-  if (!API_BASE_URL) return path;
+  if (!API_BASE_URL) {
+    throw new Error('VITE_API_BASE_URL is required for safety incident requests.');
+  }
   return new URL(path, API_BASE_URL).toString();
 }
 
@@ -155,7 +152,7 @@ export interface UpdateIncidentRequest {
 
 export class SafetyIncidentService {
   /**
-   * GET /api/admin/incidents/analytics - Get safety analytics (fallback with RealAnalyticsService instead)
+   * GET /api/admin/incidents/analytics - Get safety analytics
    */
   static async getSafetyAnalytics(
     options?: {
@@ -181,49 +178,18 @@ export class SafetyIncidentService {
       });
 
       if (!response.ok) {
-        // If dedicated incidents endpoint doesn't exist, return empty analytics
-        logger.warn('Failed to get safety analytics - using empty fallback', await readApiError(response));
-        return {
-          period: options?.period || 'week',
-          incidents: {
-            total: 0,
-            panic_exits: { total: 0, triggered: 0, responded_within_minutes: 0, avg_response_time_minutes: 0 },
-            crisis_interventions: 0,
-            self_harm_mentions: 0,
-            suicidal_ideation: 0,
-            abuse_mentions: 0,
-            followed_up: 0,
-          },
-          severity_distribution: { low: 0, medium: 0, high: 0, critical: 0 },
-          escalations: { total_escalated: 0, to_human_consultant: 0, to_external_resources: 0, follow_up_pending: 0 },
-          trends: { incidents_increasing: false, change_vs_last_period: 0, peak_time: '' },
-        };
+        throw new Error(await readApiError(response));
       }
 
       return await readJsonResponse<SafetyAnalyticsResponse>(response);
     } catch (error) {
       logger.error('Failed to get safety analytics', error);
-      // Return empty analytics instead of throwing
-      return {
-        period: options?.period || 'week',
-        incidents: {
-          total: 0,
-          panic_exits: { total: 0, triggered: 0, responded_within_minutes: 0, avg_response_time_minutes: 0 },
-          crisis_interventions: 0,
-          self_harm_mentions: 0,
-          suicidal_ideation: 0,
-          abuse_mentions: 0,
-          followed_up: 0,
-        },
-        severity_distribution: { low: 0, medium: 0, high: 0, critical: 0 },
-        escalations: { total_escalated: 0, to_human_consultant: 0, to_external_resources: 0, follow_up_pending: 0 },
-        trends: { incidents_increasing: false, change_vs_last_period: 0, peak_time: '' },
-      };
+      throw error;
     }
   }
 
   /**
-   * GET /api/admin/incidents - List safety incidents (fallback with analytics if unavailable)
+   * GET /api/admin/incidents - List safety incidents
    */
   static async listIncidents(
     options?: {
@@ -251,26 +217,13 @@ export class SafetyIncidentService {
       });
 
       if (!response.ok) {
-        // If incidents endpoint doesn't exist, return empty list so component doesn't crash
-        logger.warn('Failed to list incidents - using empty fallback', await readApiError(response));
-        return {
-          incidents: [],
-          total: 0,
-          page: options?.page ?? 1,
-          limit: options?.limit ?? 100,
-        };
+        throw new Error(await readApiError(response));
       }
 
       return await readJsonResponse<IncidentListResponse>(response);
     } catch (error) {
       logger.error('Failed to list incidents', error);
-      // Return empty response instead of throwing to allow component to work with analytics data
-      return {
-        incidents: [],
-        total: 0,
-        page: options?.page ?? 1,
-        limit: options?.limit ?? 100,
-      };
+      throw error;
     }
   }
 
@@ -290,14 +243,13 @@ export class SafetyIncidentService {
       });
 
       if (!response.ok) {
-        logger.warn('Failed to get incident details', await readApiError(response));
-        return null;
+        throw new Error(await readApiError(response));
       }
 
       return await readJsonResponse<IncidentListItem>(response);
     } catch (error) {
       logger.error('Failed to get incident details', error);
-      return null;
+      throw error;
     }
   }
 
@@ -319,14 +271,13 @@ export class SafetyIncidentService {
       });
 
       if (!response.ok) {
-        logger.warn('Failed to update incident', await readApiError(response));
-        return null;
+        throw new Error(await readApiError(response));
       }
 
       return await readJsonResponse<IncidentListItem>(response);
     } catch (error) {
       logger.error('Failed to update incident', error);
-      return null;
+      throw error;
     }
   }
 
@@ -348,14 +299,13 @@ export class SafetyIncidentService {
       });
 
       if (!response.ok) {
-        logger.warn('Failed to escalate incident', await readApiError(response));
-        return null;
+        throw new Error(await readApiError(response));
       }
 
       return await readJsonResponse<IncidentListItem>(response);
     } catch (error) {
       logger.error('Failed to escalate incident', error);
-      return null;
+      throw error;
     }
   }
 
@@ -438,15 +388,14 @@ export class SafetyIncidentService {
       });
 
       if (!response.ok) {
-        logger.warn('Failed to get safety trends', await readApiError(response));
-        return [];
+        throw new Error(await readApiError(response));
       }
 
       const data = await readJsonResponse<{ trends: SafetyTrendDataPoint[] } | SafetyTrendDataPoint[]>(response);
       return Array.isArray(data) ? data : data.trends || [];
     } catch (error) {
       logger.error('Failed to get safety trends', error);
-      return [];
+      throw error;
     }
   }
 }

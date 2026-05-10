@@ -20,23 +20,19 @@ export interface FollowUpRequestResponse {
   session_id: string;
   conversation_id?: string;
   contact_method: string;
-  contact_info: string;
+  contact_info?: string;
   requested_topic?: string;
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   created_at: string;
 }
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_CHAT_API_BASE_URL ||
-  ''
-).trim();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const FOLLOWUP_PATH = '/v1/followup';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for follow-up requests.');
   }
   return new URL(path, API_BASE_URL).toString();
 }

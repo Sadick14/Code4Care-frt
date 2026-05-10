@@ -1,5 +1,6 @@
 import { safeStorage } from '@/utils/safeStorage';
 import { AuthService } from '@/services/authService';
+import { logger } from '@/utils/logger';
 
 export type StaffRole = 'admin' | 'consultant' | 'supervisor' | 'coordinator' | 'viewer' | 'super_admin';
 export type StaffStatus = 'active' | 'inactive';
@@ -237,12 +238,7 @@ export interface AdminUpdateReportRequest {
 const STAFF_ACCOUNTS_KEY = 'room1221_staff_accounts';
 const SUPPORT_REQUESTS_KEY = 'room1221_support_requests';
 const SESSION_KEY = 'room1221_staff_session';
-const DEFAULT_ADMIN_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
-const ADMIN_API_BASE_URL = (
-  import.meta.env.VITE_ADMIN_API_BASE_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  DEFAULT_ADMIN_API_BASE_URL
-).trim();
+const ADMIN_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 const ADMIN_LOGIN_PATH = '/admin/login';
 const ADMIN_ME_PATH = '/admin/me';
 const ADMIN_CREATE_STAFF_PATH = '/admin/staff';
@@ -318,13 +314,13 @@ const defaultSupportRequests: SupportRequest[] = [
   { id: 'req-3', userId: '6', userNickname: 'HopeSeeker', userAge: '15-18', requestedAt: '5 mins ago', status: 'waiting', duration: 5 },
 ];
 
-function parseJson<T>(raw: string | null, fallback: T): T {
-  if (!raw) return fallback;
+function parseJson<T>(raw: string | null, defaultValue: T): T {
+  if (!raw) return defaultValue;
 
   try {
     return JSON.parse(raw) as T;
   } catch {
-    return fallback;
+    return defaultValue;
   }
 }
 
@@ -342,7 +338,7 @@ function withCalculatedLoads(staff: StaffAccount[], requests: SupportRequest[]) 
 
 function buildAdminUrl(path: string) {
   if (!ADMIN_API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for admin requests.');
   }
 
   return new URL(path, ADMIN_API_BASE_URL).toString();
@@ -423,10 +419,6 @@ function buildAdminHeaders(accessToken?: string) {
   }
 
   return headers;
-}
-
-function isAdminApiUnavailable(error: unknown) {
-  return error instanceof TypeError || (error instanceof Error && /failed to fetch|networkerror|network/i.test(error.message));
 }
 
 function mergeRemoteStaffIntoLocal(remoteStaff: AdminStaffRecord[]): StaffAccount[] {
@@ -532,7 +524,7 @@ export class StaffAccessService {
 
   static async listStaff(accessToken?: string): Promise<StaffAccount[]> {
     if (!accessToken) {
-      return this.getStaffAccounts();
+      throw new Error('Admin session expired. Please sign in again.');
     }
 
     try {
@@ -550,11 +542,8 @@ export class StaffAccessService {
       this.saveStaffAccounts(merged);
       return merged;
     } catch (error) {
-      if (isAdminApiUnavailable(error)) {
-        return this.getStaffAccounts();
-      }
-
-      return this.getStaffAccounts();
+      logger.error('Failed to load staff accounts', error);
+      throw error;
     }
   }
 
@@ -770,21 +759,22 @@ export class StaffAccessService {
   }
 
   static async deleteStaffAccount(staffId: string, accessToken?: string) {
-    if (accessToken) {
-      try {
-        const response = await fetch(buildAdminUrl(`/admin/staff/${encodePathSegment(staffId)}`), {
-          method: 'DELETE',
-          headers: buildAdminHeaders(accessToken),
-        });
+    if (!accessToken) {
+      throw new Error('Admin session expired. Please sign in again.');
+    }
 
-        if (!response.ok) {
-          throw new Error(await readApiError(response));
-        }
-      } catch (error) {
-        if (!isAdminApiUnavailable(error)) {
-          throw error;
-        }
+    try {
+      const response = await fetch(buildAdminUrl(`/admin/staff/${encodePathSegment(staffId)}`), {
+        method: 'DELETE',
+        headers: buildAdminHeaders(accessToken),
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiError(response));
       }
+    } catch (error) {
+      logger.error(`Failed to delete staff account ${staffId}`, error);
+      throw error;
     }
 
     const staff = this.getStaffAccounts().filter((member) => member.id !== staffId);
@@ -806,9 +796,9 @@ export class StaffAccessService {
     this.saveSupportRequests(requests);
   }
 
-  static async getDashboardStats(accessToken?: string): Promise<AdminDashboardStats | null> {
+  static async getDashboardStats(accessToken?: string): Promise<AdminDashboardStats> {
     if (!accessToken) {
-      return null;
+      throw new Error('Admin session expired. Please sign in again.');
     }
 
     try {
@@ -823,11 +813,8 @@ export class StaffAccessService {
 
       return await readJsonResponse<AdminDashboardStats>(response);
     } catch (error) {
-      if (isAdminApiUnavailable(error)) {
-        return null;
-      }
-
-      return null;
+      logger.error('Failed to load dashboard stats', error);
+      throw error;
     }
   }
 

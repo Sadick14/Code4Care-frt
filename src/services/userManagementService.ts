@@ -119,18 +119,15 @@ export interface UserDeleteRequest {
   confirmation_code: string;
 }
 
-const DEFAULT_API_BASE_URL = 'https://code4care-backend-production.up.railway.app';
 const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_ADMIN_API_BASE_URL ||
-  DEFAULT_API_BASE_URL
-).trim();
+  import.meta.env.VITE_API_BASE_URL
+)?.trim();
 
 const USERS_BASE_PATH = '/users';
 
 function buildUrl(path: string): string {
   if (!API_BASE_URL) {
-    return path;
+    throw new Error('VITE_API_BASE_URL is required for user management requests.');
   }
   return new URL(path, API_BASE_URL).toString();
 }
@@ -198,7 +195,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function toNumber(value: unknown, fallback = 0): number {
+function toNumber(value: unknown, defaultValue = 0): number {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
   }
@@ -210,11 +207,11 @@ function toNumber(value: unknown, fallback = 0): number {
     }
   }
 
-  return fallback;
+  return defaultValue;
 }
 
-function toStringValue(value: unknown, fallback = ''): string {
-  return typeof value === 'string' ? value : fallback;
+function toStringValue(value: unknown, defaultValue = ''): string {
+  return typeof value === 'string' ? value : defaultValue;
 }
 
 function normalizeUserListItem(rawUser: unknown): UserListItem {

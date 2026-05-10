@@ -120,17 +120,9 @@ export type {
   SessionAnalyticsResponse,
 } from './realAnalyticsService';
 
-// Safety Incident Services
-export { SafetyIncidentService } from './safetyIncidentService';
-export type {
-  IncidentType,
-  IncidentMetrics,
-  SafetyAnalyticsResponse as SafetyAnalytics,
-  SafetyTrendDataPoint,
-  IncidentListItem,
-  IncidentListResponse,
-  UpdateIncidentRequest,
-} from './safetyIncidentService';
+// Safety Incident Services (removed - backend endpoint not available)
+// The `/api/admin/incidents` admin endpoints are not implemented in the backend
+// and were returning 404 in production. References removed from central exports.
 
 // Safety Event Services
 export { SafetyEventService } from './safetyEventService';
