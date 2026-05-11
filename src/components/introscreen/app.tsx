@@ -1,6 +1,5 @@
 import React from "react";
 
-// Screen images
 const screen1Img = "/introscreen/6046367028903349859.jpg";
 const screen2Img = "/introscreen/6046367028903349861.jpg";
 const screen3Img = "/introscreen/6046367028903349860.jpg";
@@ -26,7 +25,7 @@ function MobileIntroLayout({
 }: LayoutProps) {
   return (
     <>
-      {/* MOBILE */}
+      {/* MOBILE - unchanged vertical layout */}
       <div className="md:hidden relative h-dvh w-full bg-white flex flex-col overflow-hidden">
         <button
           onClick={onSkip}
@@ -34,49 +33,33 @@ function MobileIntroLayout({
         >
           Skip
         </button>
-
-        {/* Image */}
         <div className="relative h-[48%] w-full shrink-0 overflow-hidden">
           <img src={image} alt="intro" className="w-full h-full object-cover" />
-
           <div className="absolute bottom-[-1px] left-0 w-full overflow-hidden leading-none">
-            <svg
-              viewBox="0 0 1440 120"
-              className="w-full h-[90px]"
-              preserveAspectRatio="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+            <svg viewBox="0 0 1440 120" className="w-full h-[90px]" preserveAspectRatio="none">
               <path d="M0,0 C480,120 960,120 1440,0 L1440,120 L0,120 Z" fill="white" />
             </svg>
           </div>
         </div>
-
-        {/* Content */}
         <div className="flex-1 flex flex-col items-center justify-between px-8 pt-6 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] overflow-hidden">
           <div className="flex w-full flex-1 flex-col items-center justify-start">
             <h2 className="text-[1.7rem] leading-tight font-bold text-center text-[#101828] mb-3">
               {title}
             </h2>
-
             <p className="text-center text-[#8E8E93] text-[0.95rem] leading-relaxed max-w-sm mb-6">
               {description}
             </p>
-
-            {/* Pagination */}
             <div className="flex gap-2 mb-6">
               {[0, 1, 2].map((index) => (
                 <div
                   key={index}
                   className={`rounded-full transition-all ${
-                    activeIndex === index
-                      ? "w-10 h-2 bg-[#2563FF]"
-                      : "w-2 h-2 bg-[#D9D9D9]"
+                    activeIndex === index ? "w-10 h-2 bg-[#2563FF]" : "w-2 h-2 bg-[#D9D9D9]"
                   }`}
                 />
               ))}
             </div>
           </div>
-
           <button
             onClick={onNext}
             className="w-full max-w-sm bg-[#2563FF] text-white font-semibold py-3 rounded-full text-base active:scale-[0.98]"
@@ -85,58 +68,13 @@ function MobileIntroLayout({
           </button>
         </div>
       </div>
-
-      {/* DESKTOP */}
-      <div className="hidden md:flex items-center justify-center h-screen bg-gray-50 px-3 py-3">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
-          <div className="h-80 overflow-hidden flex items-center justify-center">
-            <img src={image} alt="intro" className="w-full h-full object-cover" />
-          </div>
-
-          <div className="px-6 py-8">
-            <div className="flex justify-end mb-6">
-              <button onClick={onSkip} className="text-sm text-gray-400">
-                Skip
-              </button>
-            </div>
-
-            <div className="flex justify-center gap-2 mb-8">
-              {[0, 1, 2].map((index) => (
-                <div
-                  key={index}
-                  className={`rounded-full ${
-                    activeIndex === index
-                      ? "w-8 h-2 bg-[#155dfc]"
-                      : "w-2 h-2 bg-[#d9d9d9]"
-                  }`}
-                />
-              ))}
-            </div>
-
-            <h2 className="text-3xl font-bold text-center mb-3">{title}</h2>
-
-            <p className="text-center text-gray-500 mb-8">{description}</p>
-
-            <button
-              onClick={onNext}
-              className="w-full bg-[#155dfc] text-white font-semibold py-3 rounded-xl"
-            >
-              {buttonText}
-            </button>
-          </div>
-        </div>
-      </div>
     </>
   );
 }
 
-// Shared props for screens
-type ScreenProps = {
-  onNext: () => void;
-  onSkip: () => void;
-};
+// Screens and Carousel (unchanged)
+type ScreenProps = { onNext: () => void; onSkip: () => void };
 
-// Screens
 function Screen1({ onNext, onSkip }: ScreenProps) {
   return (
     <MobileIntroLayout
@@ -194,21 +132,11 @@ function Screen3({ onNext, onSkip }: ScreenProps) {
   );
 }
 
-// Carousel
-type Props = {
-  onComplete?: () => void;
-  onSkip?: () => void;
-};
+type Props = { onComplete?: () => void; onSkip?: () => void };
 
 export default function OnboardingCarousel({ onComplete, onSkip }: Props) {
   const [current, setCurrent] = React.useState<number>(0);
-
-  const screens = [
-    Screen1,
-    Screen2,
-    Screen3,
-  ];
-
+  const screens = [Screen1, Screen2, Screen3];
   const CurrentScreen = screens[current];
 
   const handleNext = () => {

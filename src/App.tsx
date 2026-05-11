@@ -19,6 +19,7 @@ import { PanicScreen } from "./components/PanicScreen";
 import { NicknameModal } from "./components/NicknameModal";
 import OnboardingScreen from "./components/OnboardingScreen";
 import OnboardingCarousel from "./components/introscreen/app.tsx";
+import { DesktopHeroIntro } from "./components/DesktopHeroIntro";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { UserEngagementService } from "@/services/userEngagementService";
 import { RealAnalyticsService } from "@/services/realAnalyticsService";
@@ -60,9 +61,21 @@ function AppContent() {
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [clearChatTrigger, setClearChatTrigger] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showDesktopHero, setShowDesktopHero] = useState(true);
   const sessionStartedAtRef = useRef(Date.now());
   const sessionEndedRef = useRef(false);
   const sessionAnalyticsRecordedRef = useRef(false);
+
+  // Listen for mobile/desktop viewport changes
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (!hasSeenOnboarding) {
@@ -281,7 +294,19 @@ function AppContent() {
   };
 
   if (!hasSeenOnboarding) {
-    if (showIntro) {
+    // Desktop: Show hero intro first
+    if (showDesktopHero && !isMobile) {
+      return (
+        <DesktopHeroIntro
+          onComplete={() => {
+            setShowDesktopHero(false);
+          }}
+        />
+      );
+    }
+
+    // Mobile: Show carousel first
+    if (showIntro && isMobile) {
       return (
         <OnboardingCarousel
           onComplete={() => {
