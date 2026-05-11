@@ -24,6 +24,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { UserEngagementService } from "@/services/userEngagementService";
 import { RealAnalyticsService } from "@/services/realAnalyticsService";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
@@ -412,7 +413,7 @@ function AppContent() {
       
       {/* PWA Components */}
       <OfflineBanner isOffline={showOfflineBanner} wasOffline={wasOffline} />
-      <InstallPrompt 
+      <PWAInstallModal
         isVisible={isInstallable} 
         onInstall={handleInstall} 
         onDismiss={handleDismiss}
