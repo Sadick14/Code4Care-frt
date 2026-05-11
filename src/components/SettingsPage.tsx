@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Bot, Clock3, Languages, LogOut, Shield, Trash2, UserRound } from "lucide-react";
+import { Bot, Clock3, Download, Languages, LogOut, Shield, Trash2, UserRound } from "lucide-react";
 
 import { useApp } from "@/providers/AppProvider";
 import { UserEngagementService } from "@/services/userEngagementService";
@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 
 interface SettingsPageProps {
   onClearChat: () => void;
   onLogout: () => void;
+  onResetPWADismissal?: () => void;
 }
 
 const SESSION_OPTIONS = [
@@ -29,7 +31,7 @@ const LANGUAGE_OPTIONS = [
   { code: "ga", label: "Ga" },
 ];
 
-export function SettingsPage({ onClearChat, onLogout }: SettingsPageProps) {
+export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: SettingsPageProps) {
   const { t, i18n } = useTranslation();
   const {
     nickname,
@@ -238,6 +240,30 @@ export function SettingsPage({ onClearChat, onLogout }: SettingsPageProps) {
                 }}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border-[#CFE0FF] shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[#0048ff]">
+              <Download className="h-4 w-4" />
+              {t("settings.pwaTitle", "Install App")}
+            </CardTitle>
+            <CardDescription>
+              {t("settings.pwaDesc", "Re-enable the installation prompt to add Room 1221 to your home screen.")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              onClick={() => {
+                onResetPWADismissal?.();
+                toast.success(t("settings.pwaReset", "Install prompt has been re-enabled"));
+              }}
+              className="w-full rounded-xl bg-[#0048ff] text-white hover:bg-[#003edc]"
+            >
+              <Download className="h-4 w-4" />
+              {t("settings.enableInstall", "Re-enable Install Prompt")}
+            </Button>
           </CardContent>
         </Card>
 

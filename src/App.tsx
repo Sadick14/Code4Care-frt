@@ -50,7 +50,7 @@ function AppContent() {
   } = useApp();
 
   // PWA hooks
-  const { isInstallable, handleInstall, handleDismiss } = useInstallPrompt();
+  const { isInstallable, handleInstall, handleDismiss, resetDismissal } = useInstallPrompt();
   const { showOfflineBanner, wasOffline } = useOfflineStatus();
 
   const [currentSection, setCurrentSection] = useState<Section>("chat");
@@ -446,6 +446,7 @@ function AppContent() {
                 <SettingsPage
                   onClearChat={() => setShowClearDialog(true)}
                   onLogout={() => setShowLogoutDialog(true)}
+                  onResetPWADismissal={resetDismissal}
                 />
               )}
             </motion.div>
