@@ -31,7 +31,7 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
   };
 
   return (
-    <div className="h-[100dvh] lg:h-screen flex items-center justify-center px-3 py-4 sm:p-4 overflow-y-auto bg-gradient-to-b from-[#f2f7ff] via-white to-[#eef5ff]">
+    <div className="h-[100dvh] lg:h-screen flex items-center justify-center px-3 py-4 sm:p-4 overflow-y-auto bg-gradient-to-b from-white via-[#FFF8F8] to-[#FFF1F1]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -40,10 +40,10 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
       >
         <div className="w-full px-1 sm:px-2">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-blue-600 flex items-center justify-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-[#BE322D] to-[#F16365] flex items-center justify-center">
               <Shield className="w-6 h-6 text-white" />
             </div>
-            <p className="text-xs font-semibold tracking-wide uppercase text-blue-600 mb-1">Room 1221</p>
+            <p className="text-xs font-semibold tracking-wide uppercase text-[#BE322D] mb-1">Room 1221</p>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Staff Dashboard Login</h1>
             <p className="text-gray-500 text-sm">Secure access for Admin and Support Consultant accounts.</p>
           </div>
@@ -59,7 +59,7 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
                   setEmail(e.target.value);
                   setError('');
                 }}
-                className="h-12 pl-10 rounded-xl border-gray-200 focus:border-blue-500"
+                className="h-12 pl-10 rounded-xl border-gray-200 focus:border-[#BE322D]"
                 disabled={isLoading}
               />
             </div>
@@ -74,7 +74,7 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
                   setPassword(e.target.value);
                   setError('');
                 }}
-                className="h-12 pl-10 rounded-xl border-gray-200 focus:border-blue-500"
+                className="h-12 pl-10 rounded-xl border-gray-200 focus:border-[#BE322D]"
                 disabled={isLoading}
               />
             </div>
@@ -89,7 +89,7 @@ export function AdminDashboardLogin({ onAdminLogin }: AdminDashboardLoginProps) 
               </motion.div>
             )}
 
-            <Button type="submit" className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-lg" disabled={isLoading}>
+            <Button type="submit" className="w-full h-12 rounded-xl bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A] text-lg" disabled={isLoading}>
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />

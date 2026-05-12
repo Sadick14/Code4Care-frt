@@ -156,11 +156,11 @@ export function CrisisSupport({ selectedLanguage }: CrisisSupportProps) {
       case "alert":
         return <AlertCircle className="w-6 h-6" style={{ color: '#FF4444' }} />;
       case "heart":
-        return <Heart className="w-6 h-6" style={{ color: '#0048ff' }} />;
+        return <Heart className="w-6 h-6" style={{ color: '#BE322D' }} />;
       case "info":
-        return <Info className="w-6 h-6" style={{ color: '#0048ff' }} />;
+        return <Info className="w-6 h-6" style={{ color: '#BE322D' }} />;
       default:
-        return <Phone className="w-6 h-6" style={{ color: '#0048ff' }} />;
+        return <Phone className="w-6 h-6" style={{ color: '#BE322D' }} />;
     }
   };
 
@@ -169,16 +169,16 @@ export function CrisisSupport({ selectedLanguage }: CrisisSupportProps) {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="mb-2" style={{ color: '#0048ff' }}>{lang.title}</h1>
+          <h1 className="mb-2" style={{ color: '#BE322D' }}>{lang.title}</h1>
           <p className="text-gray-600">{lang.subtitle}</p>
         </div>
 
         {/* Legal Notice - Age of Consent */}
-        <Card className="p-6 mb-6" style={{ borderColor: '#0048ff', borderWidth: '2px' }}>
+        <Card className="p-6 mb-6" style={{ borderColor: '#F4D6D5', borderWidth: '2px' }}>
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-6 h-6 flex-shrink-0 mt-1" style={{ color: '#0048ff' }} />
+            <AlertCircle className="w-6 h-6 flex-shrink-0 mt-1" style={{ color: '#BE322D' }} />
             <div>
-              <h3 className="mb-2" style={{ color: '#0048ff' }}>{lang.legalNotice}</h3>
+              <h3 className="mb-2" style={{ color: '#BE322D' }}>{lang.legalNotice}</h3>
               <p className="mb-2" style={{ color: '#1A1A1A' }}>
                 <strong>{lang.ageOfConsent}</strong>
               </p>
@@ -201,7 +201,7 @@ export function CrisisSupport({ selectedLanguage }: CrisisSupportProps) {
                       <Badge 
                         variant="outline" 
                         className="rounded-full mb-2"
-                        style={{ borderColor: '#0048ff', color: '#0048ff' }}
+                        style={{ borderColor: '#BE322D', color: '#BE322D' }}
                       >
                         {hotline.type}
                       </Badge>
@@ -214,7 +214,7 @@ export function CrisisSupport({ selectedLanguage }: CrisisSupportProps) {
                       <Button 
                         className="w-full rounded-full"
                         style={{ 
-                          background: 'linear-gradient(135deg, #0048ff 0%, #0066ff 100%)',
+                          background: 'linear-gradient(135deg, #BE322D 0%, #F16365 100%)',
                           boxShadow: '0 2px 8px rgba(0, 72, 255, 0.2)'
                         }}
                       >

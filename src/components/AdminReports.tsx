@@ -54,7 +54,7 @@ type TrendRow = {
 
 type TableRow = Record<string, string | number>;
 
-const CHART_COLORS = ['#0048ff', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'];
+const CHART_COLORS = ['#BE322D', '#F16365', '#F39A9B', '#F7C7C8', '#FDECEC'];
 
 function downloadFile(fileName: string, data: string, mimeType: string) {
   const blob = new Blob([data], { type: mimeType });
@@ -452,7 +452,7 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
             <FileText className="w-4 h-4" />
             Export PDF
           </Button>
-          <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={handleExportJson}>
+          <Button className="gap-2 bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A]" onClick={handleExportJson}>
             <FileText className="w-4 h-4" />
             Export JSON
           </Button>
@@ -467,7 +467,7 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
                 <h2 className="text-lg font-semibold text-gray-900">Report Builder</h2>
                 <p className="text-sm text-gray-500">Choose the data focus and the year range to export.</p>
               </div>
-              <Badge className="bg-blue-50 text-blue-600 border-blue-200">{includedSections.length} sections</Badge>
+              <Badge className="bg-[#FFF1F1] text-[#BE322D] border-[#F4D6D5]">{includedSections.length} sections</Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {reportCards.map((card, idx) => {
@@ -482,11 +482,11 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
                     onClick={() => setReportType(card.id)}
                     className={`rounded-xl border p-4 text-left transition-all ${
                       isActive
-                        ? 'border-blue-300 bg-blue-50 shadow-sm'
+                        ? 'border-[#F16365] bg-[#FFF1F1] shadow-sm'
                         : 'border-[#E8ECFF] bg-white hover:border-blue-200 hover:shadow-sm'
                     }`}
                   >
-                    <Icon className={`w-5 h-5 mb-3 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
+                    <Icon className={`w-5 h-5 mb-3 ${isActive ? 'text-[#BE322D]' : 'text-gray-500'}`} />
                     <p className="font-semibold text-gray-900">{card.title}</p>
                     <p className="text-sm text-gray-500 mt-1">{card.description}</p>
                   </motion.button>
@@ -615,7 +615,7 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
                   <YAxis stroke="#9CA3AF" />
                   <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
                   <Legend />
-                  <Line type="monotone" dataKey="engagements" stroke="#0048ff" strokeWidth={2} name="Engagements" />
+                  <Line type="monotone" dataKey="engagements" stroke="#BE322D" strokeWidth={2} name="Engagements" />
                 </LineChart>
               ) : reportType === 'performance' ? (
                 <ComposedChart data={performanceChartData}>
@@ -623,7 +623,7 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
                   <XAxis dataKey="name" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
                   <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-                  <Bar dataKey="value" fill="#0048ff" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="value" fill="#BE322D" radius={[6, 6, 0, 0]} />
                 </ComposedChart>
               ) : reportType === 'safety' ? (
                 <BarChart data={safetyChartData}>
@@ -640,7 +640,7 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
                   <YAxis stroke="#9CA3AF" />
                   <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
                   <Legend />
-                  <Line type="monotone" dataKey="engagements" stroke="#0048ff" strokeWidth={2} name="Engagements" />
+                  <Line type="monotone" dataKey="engagements" stroke="#BE322D" strokeWidth={2} name="Engagements" />
                   <Line type="monotone" dataKey="totalMessages" stroke="#3b82f6" strokeWidth={2} name="Messages" />
                 </LineChart>
               )}
@@ -656,7 +656,7 @@ export function AdminReports({ selectedLanguage, accessToken }: AdminReportsProp
               <XAxis dataKey={reportType === 'activity' ? 'Date' : 'name' in (overviewChartData[0] || {}) ? 'name' : 'Metric'} stroke="#9CA3AF" />
               <YAxis stroke="#9CA3AF" />
               <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF' }} />
-              <Bar dataKey={reportType === 'activity' ? 'Engagements' : 'value' in (overviewChartData[0] || {}) ? 'value' : 'Value'} fill="#0048ff" radius={[6, 6, 0, 0]} />
+              <Bar dataKey={reportType === 'activity' ? 'Engagements' : 'value' in (overviewChartData[0] || {}) ? 'value' : 'Value'} fill="#BE322D" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>

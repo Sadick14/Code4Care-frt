@@ -28,7 +28,7 @@ const LANGUAGE_OPTIONS = [
   { code: "en", label: "English" },
   { code: "twi", label: "Twi" },
   { code: "ewe", label: "Ewe" },
-  { code: "ga", label: "Ga" },
+  { code: "ha", label: "Hausa" },
 ];
 
 export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: SettingsPageProps) {
@@ -85,9 +85,9 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
   const currentLanguage = (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
 
   return (
-    <div className="h-full overflow-y-auto bg-gradient-to-b from-[#F7FAFF] via-white to-[#F3F8FF] p-4 md:p-6 lg:p-8">
+    <div className="h-full overflow-y-auto bg-gradient-to-b from-[#FFF8F8] via-white to-[#FFF1F1] p-4 md:p-6 lg:p-8">
       <div className="mx-auto w-full max-w-4xl space-y-6">
-        <div className="rounded-3xl border border-[#CFE0FF] bg-gradient-to-r from-[#0048ff] via-[#0066ff] to-[#00a3ff] p-6 text-white shadow-xl shadow-blue-100">
+        <div className="rounded-3xl border border-[#F4D6D5] bg-gradient-to-r from-[#BE322D] via-[#F16365] to-[#F8A6A8] p-6 text-white shadow-xl shadow-[#F5D5D5]">
           <div className="flex items-start gap-4">
             <div className="mt-1 rounded-2xl border border-white/30 bg-white/20 p-3">
               <Shield className="h-6 w-6" />
@@ -103,7 +103,7 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
 
         <Card className="rounded-2xl border-[#CFE0FF] shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#0048ff]">
+            <CardTitle className="flex items-center gap-2 text-[#BE322D]">
               <Bot className="h-4 w-4" />
               {t("settings.profileTitle", "Identity & Profile")}
             </CardTitle>
@@ -114,23 +114,23 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#0F2A6B]">{t("settings.botName", "Chatbot Name")}</label>
+                <label className="text-sm font-semibold text-[#241515]">{t("settings.botName", "Chatbot Name")}</label>
                 <Input
                   value={draftBotName}
                   onChange={(e) => setDraftBotName(e.target.value)}
                   placeholder={t("settings.botNamePlaceholder", "Enter chatbot name")}
-                  className="h-11 rounded-xl border-[#CFE0FF]"
+                  className="h-11 rounded-xl border-[#F4D6D5]"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#0F2A6B]">{t("settings.nickname", "Your Nickname")}</label>
+                <label className="text-sm font-semibold text-[#241515]">{t("settings.nickname", "Your Nickname")}</label>
                 <div className="relative">
-                  <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5B77B8]" />
+                  <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A6B6B]" />
                   <Input
                     value={draftNickname}
                     onChange={(e) => setDraftNickname(e.target.value)}
                     placeholder={t("settings.nicknamePlaceholder", "Optional nickname")}
-                    className="h-11 rounded-xl border-[#CFE0FF] pl-10"
+                    className="h-11 rounded-xl border-[#F4D6D5] pl-10"
                   />
                 </div>
               </div>
@@ -138,7 +138,7 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
             <div className="flex justify-end">
               <Button
                 onClick={handleSaveNames}
-                className="rounded-xl bg-[#0048ff] text-white hover:bg-[#003edc]"
+                className="rounded-xl bg-[#BE322D] text-white hover:bg-[#9F2622]"
               >
                 {t("common.save", "Save")}
               </Button>
@@ -148,7 +148,7 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
 
         <Card className="rounded-2xl border-[#CFE0FF] shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#0048ff]">
+            <CardTitle className="flex items-center gap-2 text-[#BE322D]">
               <Languages className="h-4 w-4" />
               {t("settings.language", "Language")}
             </CardTitle>
@@ -167,8 +167,8 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
                     }}
                     className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
                       active
-                        ? "border-[#0048ff] bg-gradient-to-r from-[#0048ff] to-[#0066ff] text-white shadow-md shadow-blue-200/80"
-                        : "border-[#CFE0FF] bg-white text-[#34508E] hover:border-[#0048ff] hover:bg-[#E8ECFF] hover:text-[#0048ff]"
+                        ? "border-[#BE322D] bg-gradient-to-r from-[#BE322D] to-[#F16365] text-white shadow-md shadow-[#F5D5D5]/80"
+                        : "border-[#F4D6D5] bg-white text-[#6D4A49] hover:border-[#BE322D] hover:bg-[#FFF1F1] hover:text-[#BE322D]"
                     }`}
                   >
                     {lang.label}
@@ -181,7 +181,7 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
 
         <Card className="rounded-2xl border-[#CFE0FF] shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#0048ff]">
+            <CardTitle className="flex items-center gap-2 text-[#BE322D]">
               <Clock3 className="h-4 w-4" />
               {t("settings.retention", "Message Retention")}
             </CardTitle>
@@ -202,8 +202,8 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
                     }}
                     className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
                       active
-                        ? "border-[#0048ff] bg-[#0048ff] text-white shadow-sm"
-                        : "border-[#CFE0FF] bg-white text-[#34508E] hover:border-[#0048ff] hover:bg-[#E8ECFF] hover:text-[#0048ff]"
+                        ? "border-[#BE322D] bg-[#BE322D] text-white shadow-sm"
+                        : "border-[#F4D6D5] bg-white text-[#6D4A49] hover:border-[#BE322D] hover:bg-[#FFF1F1] hover:text-[#BE322D]"
                     }`}
                   >
                     {option.label}
@@ -216,7 +216,7 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
 
         <Card className="rounded-2xl border-[#CFE0FF] shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#0048ff]">
+            <CardTitle className="flex items-center gap-2 text-[#BE322D]">
               <Shield className="h-4 w-4" />
               {t("settings.dataForGood", "Data for Good")}
             </CardTitle>
@@ -245,7 +245,7 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
 
         <Card className="rounded-2xl border-[#CFE0FF] shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#0048ff]">
+            <CardTitle className="flex items-center gap-2 text-[#BE322D]">
               <Download className="h-4 w-4" />
               {t("settings.pwaTitle", "Install App")}
             </CardTitle>
@@ -259,7 +259,7 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
                 onResetPWADismissal?.();
                 toast.success(t("settings.pwaReset", "Install prompt has been re-enabled"));
               }}
-              className="w-full rounded-xl bg-[#0048ff] text-white hover:bg-[#003edc]"
+              className="w-full rounded-xl bg-[#BE322D] text-white hover:bg-[#9F2622]"
             >
               <Download className="h-4 w-4" />
               {t("settings.enableInstall", "Re-enable Install Prompt")}

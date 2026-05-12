@@ -532,14 +532,14 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
   };
 
   const userStats = [
-    { label: 'Total Users', value: stats.total, icon: Users, iconClass: 'text-blue-600' },
+    { label: 'Total Users', value: stats.total, icon: Users, iconClass: 'text-[#BE322D]' },
     { label: 'Active', value: stats.active, icon: UserCheck, iconClass: 'text-green-600' },
     { label: 'Inactive', value: stats.inactive, icon: UserMinus, iconClass: 'text-yellow-600' },
     { label: 'Suspended', value: stats.suspended, icon: UserX, iconClass: 'text-red-600' },
   ];
 
   const staffStats = [
-    { label: 'Total Staff', value: stats.staffTotal, icon: Briefcase, iconClass: 'text-blue-600' },
+    { label: 'Total Staff', value: stats.staffTotal, icon: Briefcase, iconClass: 'text-[#BE322D]' },
     { label: 'Active', value: stats.staffActive, icon: UserCheck, iconClass: 'text-green-600' },
     { label: 'Inactive', value: staff.filter((s) => s.status === 'inactive').length, icon: UserMinus, iconClass: 'text-slate-600' },
   ];
@@ -574,14 +574,14 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
           <h1 className="text-3xl font-bold text-gray-900">User & Staff Management</h1>
           <p className="text-gray-500">Monitor user accounts and manage staff access.</p>
         </div>
-        <Button variant="outline" className="gap-2 border-[#E8ECFF] hover:bg-gray-50" onClick={handleExport}>
+        <Button variant="outline" className="gap-2 border-[#F4D6D5] hover:bg-[#FFF1F1] text-[#BE322D]" onClick={handleExport}>
           <Download className="w-4 h-4" />
           Export
         </Button>
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 bg-gray-100 border border-[#E8ECFF]">
+        <TabsList className="grid w-full grid-cols-2 bg-gray-100 border border-[#F4D6D5]">
           <TabsTrigger value="users">Users ({stats.total})</TabsTrigger>
           <TabsTrigger value="staff">Staff Access ({stats.staffTotal})</TabsTrigger>
         </TabsList>
@@ -590,7 +590,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
           <div className="grid grid-cols-4 gap-4">
             {userStats.map((stat, idx) => (
               <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-                <Card className="p-4 bg-white border-[#E8ECFF]">
+                <Card className="p-4 bg-white border-[#F4D6D5]">
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="text-sm font-medium text-gray-600 mb-1">{stat.label}</div>
@@ -603,13 +603,13 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
             ))}
           </div>
 
-          <Card className="border-[#E8ECFF] bg-white overflow-hidden">
+          <Card className="border-[#F4D6D5] bg-white overflow-hidden">
             <div className="flex flex-col sm:flex-row gap-3 p-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <Input
                   placeholder="Search by nickname or platform..."
-                  className="pl-9 bg-gray-50 border-[#E8ECFF] text-gray-900 placeholder:text-gray-400"
+                  className="pl-9 bg-gray-50 border-[#F4D6D5] text-gray-900 placeholder:text-gray-400"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -618,7 +618,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-                className="px-4 py-2 rounded-lg bg-white border border-[#E8ECFF] text-gray-900"
+                className="px-4 py-2 rounded-lg bg-white border border-[#F4D6D5] text-gray-900"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -630,7 +630,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-[#E8ECFF] hover:bg-transparent">
+                  <TableRow className="border-[#F4D6D5] hover:bg-transparent">
                     <TableHead className="text-gray-600">Nickname</TableHead>
                     <TableHead className="text-gray-600">Platform</TableHead>
                     <TableHead className="text-gray-600">Age</TableHead>
@@ -654,7 +654,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                     </TableRow>
                   ) : (
                     filteredUsers.map((user) => (
-                      <TableRow key={user.id} className="border-[#E8ECFF] hover:bg-gray-50 transition-colors">
+                      <TableRow key={user.id} className="border-[#F4D6D5] hover:bg-gray-50 transition-colors">
                         <TableCell className="text-gray-900 font-medium">{user.nickname}</TableCell>
                         <TableCell><PlatformBadge id={user.id} /></TableCell>
                         <TableCell className="text-gray-600 text-sm">{user.age_range}</TableCell>
@@ -673,7 +673,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                                   : user.engagement_score >= 80
                                     ? 'bg-green-50 text-green-700 border-green-200 text-xs'
                                     : user.engagement_score >= 50
-                                      ? 'bg-blue-50 text-blue-700 border-blue-200 text-xs'
+                                      ? 'bg-[#FFF1F1] text-[#BE322D] border-[#F4D6D5] text-xs'
                                       : 'bg-yellow-50 text-yellow-700 border-yellow-200 text-xs'
                               }>
                                 {user.total_messages === 0 ? 'No Activity' : user.engagement_score >= 80 ? 'Very Active' : user.engagement_score >= 50 ? 'Active' : 'Low'}
@@ -681,7 +681,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600" style={{ width: `${user.engagement_score}%` }} />
+                                <div className="h-full bg-gradient-to-r from-[#BE322D] to-[#F16365]" style={{ width: `${user.engagement_score}%` }} />
                               </div>
                               <span className="text-xs text-gray-500">{user.engagement_score}%</span>
                             </div>
@@ -691,7 +691,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="text-xs text-[#BE322D] hover:text-[#9F2622] hover:bg-[#FFF1F1]"
                             onClick={() => handleViewUser(user)}
                           >
                             View
@@ -714,7 +714,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 w-8 p-0 border-[#E8ECFF]"
+                    className="h-8 w-8 p-0 border-[#F4D6D5]"
                     disabled={currentPage <= 1 || isLoadingUsers}
                     onClick={() => void loadUsers(searchTerm || undefined, currentPage - 1)}
                   >
@@ -736,7 +736,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                           key={p}
                           variant={p === currentPage ? 'default' : 'outline'}
                           size="sm"
-                          className={`h-8 w-8 p-0 ${p === currentPage ? 'bg-blue-600 text-white' : 'border-[#E8ECFF] text-gray-600'}`}
+                          className={`h-8 w-8 p-0 ${p === currentPage ? 'bg-[#BE322D] text-white' : 'border-[#F4D6D5] text-gray-600'}`}
                           disabled={isLoadingUsers}
                           onClick={() => void loadUsers(searchTerm || undefined, p as number)}
                         >
@@ -749,7 +749,7 @@ export function AdminUserManagement({ selectedLanguage, session }: AdminUserMana
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 w-8 p-0 border-[#E8ECFF]"
+                    className="h-8 w-8 p-0 border-[#F4D6D5]"
                     disabled={currentPage >= usersPages || isLoadingUsers}
                     onClick={() => void loadUsers(searchTerm || undefined, currentPage + 1)}
                   >

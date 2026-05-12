@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessageSquare, BookOpen, Brain, Building2, Pill, Settings, Trash2, LogOut, Globe, X, Sparkles } from "lucide-react";
+import { MessageSquare, BookOpen, Brain, Building2, Pill, Settings, Trash2, LogOut, Globe, Sparkles } from "lucide-react";
 import { useApp } from '@/providers/AppProvider';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -44,19 +44,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { code: 'en', label: 'English' },
     { code: 'twi', label: 'Twi' },
     { code: 'ewe', label: 'Ewe' },
-    { code: 'ga', label: 'Ga' }
+    { code: 'ha', label: 'Hausa' }
   ];
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-sidebar to-sidebar-accent/30 text-sidebar-foreground border-r border-sidebar-border shadow-xl overflow-y-auto">
       {/* Premium Header (fixed height) */}
       <div className="relative isolate py-4 px-6 overflow-hidden flex-none h-28">
-        <div className="absolute inset-0 bg-[#0048ff]" />
+        <div className="absolute inset-0 bg-[#BE322D]" />
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
         
         <div className="relative z-10 flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 overflow-hidden shadow-lg shadow-black/15">
+            <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center border border-white/30 overflow-hidden shadow-lg shadow-black/15">
               <img
                 src={CHATBOT_AVATAR_SRC}
                 alt={`${botName} avatar`}
@@ -89,13 +89,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     key={item.id}
                     onClick={() => { setCurrentSection(item.id); onClose?.(); }}
                     className={`w-full group z-0 flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative overflow-hidden ${
-                      isActive ? 'text-white shadow-lg shadow-blue-200/70' : 'text-sidebar-foreground/75 hover:bg-[#E8ECFF] hover:text-[#0048ff]'
+                      isActive ? 'text-white shadow-lg shadow-[#F5D5D5]/70' : 'text-sidebar-foreground/75 hover:bg-[#FFF1F1] hover:text-[#BE322D]'
                     }`}
                   >
                     {isActive && (
                       <motion.div 
                         layoutId="active-nav"
-                        className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#0048ff] to-[#0066ff]"
+                        className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#BE322D] to-[#F16365]"
                       />
                     )}
                     <Icon className={`relative z-10 w-5 h-5 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:translate-x-1'}`} />
@@ -150,8 +150,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => handleLanguageChange(lang.code)}
                   className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                     i18n.resolvedLanguage?.split('-')[0] === lang.code
-                      ? 'bg-gradient-to-r from-[#0048ff] to-[#0066ff] text-white border-[#0048ff] shadow-md shadow-blue-200/70' 
-                      : 'bg-sidebar text-sidebar-foreground/70 border-sidebar-border hover:border-[#0048ff] hover:bg-[#E8ECFF] hover:text-[#0048ff]'
+                      ? 'bg-gradient-to-r from-[#BE322D] to-[#F16365] text-white border-[#BE322D] shadow-md shadow-[#F5D5D5]/70' 
+                      : 'bg-sidebar text-sidebar-foreground/70 border-sidebar-border hover:border-[#BE322D] hover:bg-[#FFF1F1] hover:text-[#BE322D]'
                   }`}
                 >
                   {lang.label}

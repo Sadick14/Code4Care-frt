@@ -102,7 +102,7 @@ export function AdminReportScheduler({ accessToken }: AdminReportSchedulerProps)
           </p>
         </div>
         <Button
-          className="gap-2 bg-blue-600 hover:bg-blue-700"
+          className="gap-2 bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A]"
           onClick={() => setShowCreateModal(true)}
         >
           <Calendar className="w-4 h-4" />
@@ -123,7 +123,7 @@ export function AdminReportScheduler({ accessToken }: AdminReportSchedulerProps)
                     <Badge className={report.enabled ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'}>
                       {report.enabled ? 'Active' : 'Paused'}
                     </Badge>
-                    <Badge className="bg-blue-50 text-blue-600 border-blue-200">
+                    <Badge className="bg-[#FFF1F1] text-[#BE322D] border-[#F4D6D5]">
                       {report.frequency}
                     </Badge>
                     <Badge className="bg-purple-50 text-purple-600 border-purple-200">
@@ -186,11 +186,11 @@ export function AdminReportScheduler({ accessToken }: AdminReportSchedulerProps)
               onClick={() => setSelectedTemplate(template)}
               className="rounded-xl border border-[#E8ECFF] bg-white hover:border-blue-200 hover:shadow-sm p-4 text-left transition-all"
             >
-              <FileText className="w-5 h-5 text-blue-600 mb-3" />
+              <FileText className="w-5 h-5 text-[#BE322D] mb-3" />
               <p className="font-semibold text-gray-900 mb-1">{template.name}</p>
               <p className="text-sm text-gray-500 mb-3">{template.description}</p>
               <div className="flex items-center gap-2">
-                <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-xs">
+                <Badge className="bg-[#FFF1F1] text-[#BE322D] border-[#F4D6D5] text-xs">
                   {template.defaultPeriod}
                 </Badge>
                 <Badge className="bg-purple-50 text-purple-600 border-purple-200 text-xs">
@@ -226,7 +226,7 @@ export function AdminReportScheduler({ accessToken }: AdminReportSchedulerProps)
                 <span className="text-sm font-medium text-gray-700">Included Metrics:</span>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {selectedTemplate.includedMetrics.map((metric) => (
-                    <Badge key={metric} className="bg-blue-50 text-blue-600 border-blue-200">
+                    <Badge key={metric} className="bg-[#FFF1F1] text-[#BE322D] border-[#F4D6D5]">
                       {metric.replace(/_/g, ' ')}
                     </Badge>
                   ))}
@@ -236,7 +236,7 @@ export function AdminReportScheduler({ accessToken }: AdminReportSchedulerProps)
 
             <div className="flex items-center gap-3">
               <Button
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A]"
                 onClick={async () => {
                   await handleRunNow({
                     id: 'temp',

@@ -73,7 +73,7 @@ export function PharmacyMap({ locations, onMarkerClick }: PharmacyMapProps) {
     const customIcon = leaflet.divIcon({
       html: `
         <div style="
-          background: linear-gradient(135deg, #0048ff 0%, #0066ff 100%);
+          background: linear-gradient(135deg, #BE322D 0%, #F16365 100%);
           width: 36px;
           height: 36px;
           border-radius: 50% 50% 50% 0;
@@ -107,7 +107,7 @@ export function PharmacyMap({ locations, onMarkerClick }: PharmacyMapProps) {
             font-weight: 600;
             font-size: 16px;
             margin: 0 0 8px 0;
-            color: #0048ff;
+            color: #BE322D;
           ">${location.name}</h3>
           <p style="
             font-size: 13px;
@@ -119,11 +119,11 @@ export function PharmacyMap({ locations, onMarkerClick }: PharmacyMapProps) {
             font-size: 13px;
             color: #666;
             margin: 0 0 10px 0;
-          ">📞 <a href="tel:${location.phone}" style="color: #0048ff; text-decoration: none;">${location.phone}</a></p>
+          ">📞 <a href="tel:${location.phone}" style="color: #BE322D; text-decoration: none;">${location.phone}</a></p>
           <button
             onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}', '_blank')"
             style="
-              background: linear-gradient(135deg, #0048ff 0%, #0066ff 100%);
+              background: linear-gradient(135deg, #BE322D 0%, #F16365 100%);
               color: white;
               border: none;
               padding: 10px 16px;
@@ -158,10 +158,10 @@ export function PharmacyMap({ locations, onMarkerClick }: PharmacyMapProps) {
     return (
       <div
         className="w-full h-[400px] rounded-xl flex items-center justify-center"
-        style={{ backgroundColor: "#E8ECFF" }}
+        style={{ backgroundColor: "#FFF1F1" }}
       >
         <div className="text-center">
-          <MapPin className="w-12 h-12 mx-auto mb-3" style={{ color: "#0048ff" }} />
+          <MapPin className="w-12 h-12 mx-auto mb-3" style={{ color: "#BE322D" }} />
           <p className="text-sm text-gray-600">Loading map...</p>
         </div>
       </div>
@@ -172,7 +172,7 @@ export function PharmacyMap({ locations, onMarkerClick }: PharmacyMapProps) {
     <div
       ref={mapRef}
       className="w-full h-[400px] rounded-xl overflow-hidden border-2"
-      style={{ borderColor: "#E8ECFF" }}
+      style={{ borderColor: "#F4D6D5" }}
     />
   );
 }

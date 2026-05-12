@@ -8,6 +8,13 @@ import fetchSpeechAudio from '@/services/ttsService';
 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./ui/dialog";
 import { useApp } from "@/providers/AppProvider";
 import { ChatCitation, requestChatCompletion } from "@/services/chatbotService";
 import { FeedbackService } from "@/services/feedbackService";
@@ -61,8 +68,11 @@ export function ChatInterface({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playingId, setPlayingId] = useState<string | undefined>(undefined);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportMessageId, setReportMessageId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("");
 
-  const langMap: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
+  const langMap: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ha': 'ha-NG' };
 
   const togglePlay = async (id: string, text: string, langCode?: string) => {
     if (playingId === id) {
@@ -255,7 +265,7 @@ export function ChatInterface({
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
-      const langCodes: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ga': 'en-GH' };
+      const langCodes: Record<string, string> = { 'en': 'en-US', 'twi': 'en-GH', 'ewe': 'en-GH', 'ha': 'ha-NG' };
       recognitionRef.current.lang = langCodes[i18n.language] || 'en-US';
       recognitionRef.current.onresult = (event: any) => { setInputValue(event.results[0][0].transcript); setIsListening(false); };
       recognitionRef.current.onerror = () => setIsListening(false);
@@ -446,23 +456,35 @@ export function ChatInterface({
     }
   };
 
-  const handleReport = async (messageId: string) => {
-    const reason = prompt(t('chat.reportPrompt', 'Please describe why you are reporting this message:'));
-    if (!reason) return;
+  const handleReport = (messageId: string) => {
+    setReportMessageId(messageId);
+    setReportReason("");
+    setReportModalOpen(true);
+  };
+
+  const handleSubmitReport = async () => {
+    if (!reportMessageId || !reportReason.trim()) return;
 
     try {
       await ReportService.submitReport({
         session_id: sessionId,
-        message_id: messageId,
-        reason,
+        message_id: reportMessageId,
+        reason: reportReason,
       });
 
       // Mark message as reported
       setMessages(prev => prev.map(msg =>
-        msg.id === messageId ? { ...msg, isReported: true } : msg
+        msg.id === reportMessageId ? { ...msg, isReported: true } : msg
       ));
 
-      logger.info(`Message ${messageId} reported`);
+      logger.info(`Message ${reportMessageId} reported`);
+
+      // Close modal
+      setReportModalOpen(false);
+      setReportMessageId(null);
+      setReportReason("");
+
+      // Show success message
       alert(t('chat.reportSuccess', 'Thank you for your report. We will review it.'));
     } catch (error) {
       logger.error('Failed to submit report', error);
@@ -729,6 +751,54 @@ export function ChatInterface({
         </div>
         
       </div>
+      
+      {/* Report Message Modal */}
+      <Dialog open={reportModalOpen} onOpenChange={setReportModalOpen}>
+        <DialogContent className="rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-[#241515]">
+              {t('chat.reportTitle', 'Report Message')}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-[#6D4A49]">
+              {t('chat.reportPrompt', 'Please describe why you are reporting this message:')}
+            </p>
+            
+            <textarea
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder={t('chat.reportPlaceholder', 'Enter your reason here...')}
+              className="w-full p-3 rounded-xl border border-[#F1D5D4] bg-white text-[#241515] placeholder-[#9A7A79] text-sm focus:outline-none focus:border-[#BE322D] focus:ring-1 focus:ring-[#BE322D] resize-none"
+              rows={4}
+            />
+          </div>
+
+          <DialogFooter className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setReportModalOpen(false);
+                setReportReason("");
+              }}
+              className="rounded-xl"
+            >
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                void handleSubmitReport();
+              }}
+              disabled={!reportReason.trim()}
+              className="rounded-xl bg-[#BE322D] hover:bg-[#A82B27] text-white"
+            >
+              {t('common.submit', 'Submit Report')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

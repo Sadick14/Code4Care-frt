@@ -1,0 +1,287 @@
+{
+	"common": {
+		"online": "Layi",
+		"cancel": "Soke",
+		"save": "Ajiye",
+		"delete": "Goge",
+		"success": "Nasara",
+		"error": "Kuskure",
+		"loading": "Ana lodawa...",
+		"privacyFirst": "Sirri da farko",
+		"privacyNotice": "Bayananka yana kasancewa a wannan na'urar. Ba mu bin diddigin kai.",
+		"followUpKey": "Shigar da mabudin biyo baya",
+		"setNickname": "Saita suna",
+		"changeNickname": "Canja suna",
+		"logout": "Fita",
+		"settings": "Saituna"
+	},
+	"nav": {
+		"chat": "Tattaunawa mai aminci",
+		"story": "Labarinka",
+		"myths": "Warware tatsuniyoyi",
+		"support": "Taimako da asibitoci",
+		"pharmacy": "Horar da magani",
+		"settings": "Saituna"
+	},
+	"chat": {
+		"welcome": "Barka da dawowa, {{name}}!",
+		"anonymous": "Ba a san suna ba",
+		"typing": "Bot yana rubutu...",
+		"placeholder": "Rubuta tambayarka...",
+		"voiceInput": "Danna don magana",
+		"voiceListening": "Ana sauraro...",
+		"statusGuest": "Tattaunawa ba tare da suna ba",
+		"statusLoggedIn": "An shiga da suna",
+		"initialMessage": "Sannu! Ina nan don taimaka maka da duk wani tambaya game da lafiyar jima'i da haihuwa. Duk abin da muka tattauna yana sirri ne. Me kake so ka sani?",
+		"consultantMessage": "Sannu! Ni mai ba da shawara ne na Room 1221. Ina nan don bayar da tallafi da shiriya kan lafiyar jima'i da haihuwa. Tattaunawarmu cikakkiyar sirri ce. Ta yaya zan taimake ka yau?",
+		"quickReplies": {
+			"contraception": "Ka gaya mani game da hanyoyin kariya",
+			"sti": "Menene STI?",
+			"pregnancy": "Menene alamun daukar ciki?"
+		},
+		"voicePrompt": "Yi magana yanzu...",
+		"consultantConnected": "An hade da mai ba da shawara",
+		"endConsultant": "Kammala zaman mai ba da shawara",
+		"clearChat": "Share tattaunawa",
+		"clearChatDesc": "Kana da tabbaci? Wannan zai goge duk sakonnin da ke wannan na'urar.",
+		"clearChatMsg": "An share tarihin tattaunawa",
+		"logoutTitle": "Kammala zama",
+		"logoutDesc": "Wannan zai sake saita duk saitunanka kuma ya share bayananka daga wannan na'urar.",
+		"logoutConfirm": "Kammala zama",
+		"logoutSuccess": "An kammala zama cikin nasara",
+		"reportTitle": "Rahoton Sako",
+		"reportPrompt": "Da fatan ka bayyana dalilin da yasa kake rahoton wannan sakon:",
+		"reportPlaceholder": "Rubuta dalilinka a nan...",
+		"reportSuccess": "Na gode da rahotonka. Za mu duba shi.",
+		"reportError": "An kasa aika rahoto. Da fatan a sake gwadawa.",
+		"talkToConsultant": "Mai ba da shawara",
+		"consultantModeActive": "Kwararre yana aiki",
+		"suggestionsLabel": "Abubuwan da za a fara tattaunawa:"
+	},
+	"settings": {
+		"title": "Saituna",
+		"language": "Harshe",
+		"retention": "Adana sako",
+		"chooseLanguage": "Zabi harshe",
+		"chooseRetention": "Zabi tsawon lokacin adana hirarrakinka",
+		"botName": "Sunan chatbot",
+		"dataForGood": "Bayanan amfani domin alheri",
+		"analyticsDesc": "Raba bayanan amfani na sirri don taimaka mana ingantawa."
+	},
+	"onboarding": {
+		"page1": {
+			"title": "Barka da zuwa Room 1221",
+			"subtitle": "Wurin ka mai aminci don tallafin SRHR",
+			"features": {
+				"anonymous": { "title": "100% ba tare da suna ba", "desc": "Ba a tattara bayanan kai tsaye ba. Sirrinka shi ne fifiko." },
+				"expert": { "title": "Shawarwarin kwararru", "desc": "Samun ingantattun bayanai na SRHR daga amintattun tushe." },
+				"youth": { "title": "Na matasa", "desc": "An tsara shi musamman domin matasa a Ghana." }
+			},
+			"next": "Fara"
+		},
+		"page2": {
+			"title": "Hadu da abokin ka na AI",
+			"subtitle": "Ka ba chatbot ɗinka suna mai kyau!",
+			"placeholder": "misali, Ada, Kojo, Friend...",
+			"label": "Wane suna kake so in dauka?",
+			"skip": "Tsallake (Yi amfani da tsohon suna)",
+			"continue": "Ci gaba",
+			"defaultName": "Aboki"
+		},
+		"page3": {
+			"title": "Taimaka mana mu tsara tallafinka",
+			"subtitle": "Shekarunka da jinsinka suna taimaka mana mu bayar da shiriya mafi dacewa da aminci.",
+			"finish": "Fara Tattaunawa",
+			"age": {
+				"label": "Rukunin shekaru",
+				"options": {
+					"10-14": "10-14",
+					"15-19": "15-19",
+					"20-24": "20-24",
+					"25+": "25+"
+				}
+			},
+			"gender": {
+				"label": "Ganin kai",
+				"options": {
+					"female": "Mace",
+					"male": "Namiji",
+					"non-binary": "Ba na binary ba",
+					"prefer-not-say": "Fi son ban fada ba"
+				}
+			},
+			"region": {
+				"label": "Yanki a Ghana",
+				"placeholder": "Zabi yankinka",
+				"options": {
+					"greater-accra": "Greater Accra",
+					"ashanti": "Ashanti",
+					"western": "Western",
+					"western-north": "Western North",
+					"central": "Central",
+					"eastern": "Eastern",
+					"volta": "Volta",
+					"oti": "Oti",
+					"northern": "Northern",
+					"savannah": "Savannah",
+					"north-east": "North East",
+					"upper-east": "Upper East",
+					"upper-west": "Upper West",
+					"bono": "Bono",
+					"bono-east": "Bono East",
+					"ahafo": "Ahafo"
+				}
+			}
+		}
+	},
+	"nickname": {
+		"title": "Barka da zuwa Room 1221",
+		"desc": "Wuri mai aminci, ba tare da suna ba, don tallafin SRHR. Saita suna don keɓance kwarewarka, ko ka yi hira ba tare da suna ba.",
+		"label": "Suna (na zaɓi)",
+		"placeholder": "Shigar da sunanka",
+		"skip": "Yi hira ba tare da suna ba",
+		"continue": "Ci gaba",
+		"privacy": "Sirrinka shi ne fifiko. Ba mu tattara bayanan kai ko adana bayanan gano kai."
+	},
+	"myths": {
+		"title": "Warware tatsuniyoyi",
+		"subtitle": "Raba gaskiya daga labaran karya",
+		"labels": { "myth": "TATSUNIYA", "fact": "GAKIYA" },
+		"list": [
+			{
+				"category": "Ciki",
+				"myth": "Ba za ka iya daukar ciki a karo na farko da ka yi jima'i ba",
+				"fact": "Wannan KARYA ce. Ciki na iya faruwa a duk lokacin da aka yi jima'i ba tare da kariya ba, har ma a karo na farko.",
+				"source": "Jagorar SRH Ghana"
+			}
+		]
+	},
+	"stories": {
+		"title": "Yanayin Labari",
+		"subtitle": "Koyo ta hanyar yanayi masu mu'amala",
+		"list": [
+			{
+				"title": "Biki",
+				"scenario": "Abokiyar Sarah ta gayyace ta zuwa biki inda za a sha barasa. Me Sarah ya kamata ta yi?",
+				"choices": ["Zabi A", "Zabi B", "Zabi C", "Yi magana da babba amintacce"],
+				"correct": 3,
+				"feedback": ["Tukwici...", "Tukwici...", "Tukwici...", "Daidai! Kullum ka tuntubi babba amintacce."]
+			}
+		]
+	},
+	"support": {
+		"title": "Taimako da asibitoci",
+		"subtitle": "Samun taimako da neman ayyuka masu kyau ga matasa",
+		"tabs": { "crisis": "Taimakon gaggawa", "clinics": "Nemo asibitoci" },
+		"callNow": "Kira",
+		"legal": {
+			"title": "Muhimman bayanan doka",
+			"age": "Shekarar izinin jima'i a Ghana: shekara 16",
+			"desc": "Duk wata hulda ta jima'i da wanda bai kai shekara 16 ba haramun ne. Da fatan a tuntubi hukuma idan ya zama dole."
+		},
+		"emergency": {
+			"prefix": "A GAGGAWA",
+			"text": "Kira 191 ga 'Yan sanda ko 193 ga motar daukar marasa lafiya nan take."
+		},
+		"hotlines": [
+			{
+				"id": 1,
+				"type": "Cin zarafi / Tashin hankali",
+				"contact": "Layin DOVVSU",
+				"phone": "055-1000-900",
+				"description": "Domin tashin hankali a gida da cin zarafin jima'i."
+			},
+			{
+				"id": 2,
+				"type": "Lafiyar kwakwalwa",
+				"contact": "Hukumar Lafiyar Kwakwalwa",
+				"phone": "050-911-4396",
+				"description": "Shawara da goyon bayan gaggawar lafiyar kwakwalwa."
+			},
+			{
+				"id": 3,
+				"type": "Bayanan SRH",
+				"contact": "Layin Matasan PPAG",
+				"phone": "0302-219-038",
+				"description": "Shawara mai dacewa da matasa, tura wurare, da bayanin ayyuka."
+			},
+			{
+				"id": 4,
+				"type": "Tsarin Iyali",
+				"contact": "MSI Reproductive Choices Ghana",
+				"phone": "0302-234-040",
+				"description": "Shiriya kan kariya da ayyukan lafiyar haihuwa."
+			},
+			{
+				"id": 5,
+				"type": "Samar da kayayyaki / Tsarin Iyali",
+				"contact": "Teburin Tallafin DKT Ghana",
+				"phone": "0302-772-799",
+				"description": "Tallafi kan samun kayan kariya, tura wurare, da abokan hulda."
+			}
+		]
+	},
+	"clinics": {
+		"title": "Nemo asibitoci masu kyau ga matasa",
+		"search": "Bincika ta wuri...",
+		"filterAll": "Duka",
+		"filterClinic": "Asibitoci",
+		"filterPharmacy": "Magunguna",
+		"locationBtn": "Nemo mafi kusa",
+		"locating": "Ana nemo...",
+		"nearest": "Mafi kusa",
+		"list": [
+			{
+				"id": 1,
+				"name": "Asibitocin Matasan PPAG",
+				"type": "Clinic",
+				"services": ["Shawarar hana daukar ciki", "Gwajin STI", "Gwajin HIV", "Shawarar matasa"],
+				"centers": [
+					{
+						"id": "ppag-accra",
+						"address": "Asylum Down, Accra",
+						"phone": "0302-219-038",
+						"hours": "Litini-Jumma'a: 8 na safe - 5 na yamma",
+						"coordinates": { "lat": 5.5717, "lng": -0.2057 }
+					},
+					{
+						"id": "ppag-kumasi",
+						"address": "Adum, Kumasi",
+						"phone": "0302-219-038",
+						"hours": "Litini-Jumma'a: 8 na safe - 5 na yamma",
+						"coordinates": { "lat": 6.6885, "lng": -1.6244 }
+					},
+					{
+						"id": "ppag-tamale",
+						"address": "Tsakiyar Tamale",
+						"phone": "0302-219-038",
+						"hours": "Litini-Jumma'a: 8 na safe - 5 na yamma",
+						"coordinates": { "lat": 9.4075, "lng": -0.8533 }
+					}
+				]
+			},
+			{
+				"id": 2,
+				"name": "Cibiyoyin MSI Reproductive Choices",
+				"type": "Clinic",
+				"services": ["Tsarin iyali", "Hanyoyin kariya", "Shawara mai aminci", "Tallafin bayan kulawa"],
+				"centers": [
+					{
+						"id": "msi-accra",
+						"address": "Osu, Accra",
+						"phone": "0302-234-040",
+						"hours": "Litini-Jumma'a: 8 na safe - 5 na yamma",
+						"coordinates": { "lat": 5.5580, "lng": -0.1866 }
+					},
+					{
+						"id": "msi-kumasi",
+						"address": "Amakom, Kumasi",
+						"phone": "0302-234-040",
+						"hours": "Litini-Jumma'a: 8 na safe - 5 na yamma",
+						"coordinates": { "lat": 6.6885, "lng": -1.6244 }
+					}
+				]
+			}
+		]
+	}
+}
