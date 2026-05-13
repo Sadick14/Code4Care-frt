@@ -125,7 +125,6 @@ export function UsersSessionsPage({ session }: UsersSessionsPageProps) {
             { label: `New ${periodLabel}`, value: newUsers.toLocaleString(), icon: UserPlus, color: 'text-green-600', bg: 'bg-green-50' },
             { label: 'Returning', value: returning.toLocaleString(), icon: UserCheck, color: 'text-violet-600', bg: 'bg-violet-50' },
             { label: 'Retention Rate', value: retentionRate > 0 ? `${retentionRate.toFixed(1)}%` : '—', icon: Activity, color: 'text-teal-600', bg: 'bg-teal-50' },
-            { label: 'Avg Session', value: avgSessionMin > 0 ? `${avgSessionMin.toFixed(0)}m` : '—', icon: Monitor, color: 'text-orange-600', bg: 'bg-orange-50' },
           ].map((item) => {
             const Icon = item.icon;
             return (

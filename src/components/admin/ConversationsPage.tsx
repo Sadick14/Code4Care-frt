@@ -118,8 +118,6 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Total Conversations', value: total.toLocaleString(), icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
-            { label: 'Total Messages', value: totalMessages.toLocaleString(), icon: TrendingUp, color: 'text-violet-600', bg: 'bg-violet-50' },
-            { label: 'Avg Messages / Conv', value: avgMsgPerConv > 0 ? avgMsgPerConv.toFixed(1) : '—', icon: MessageSquare, color: 'text-teal-600', bg: 'bg-teal-50' },
             { label: 'Avg Bot Response', value: avgResponseMs > 0 ? `${avgResponseMs}ms` : '—', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50' },
           ].map((item) => {
             const Icon = item.icon;
@@ -143,25 +141,6 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
           })}
         </div>
 
-        {/* Topic Engagement */}
-        <Card className="p-5 border-[#E8ECFF] bg-white">
-          <h3 className="font-semibold text-gray-900 mb-4 text-sm">Topic Engagement (Top 12)</h3>
-          {loading ? <Skeleton className="h-56 w-full" /> : topicData.length === 0 ? (
-            <div className="h-56 flex items-center justify-center text-sm text-gray-400">No topic data available</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={topicData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" horizontal={false} />
-                <XAxis type="number" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="name" type="category" width={130} stroke="#9CA3AF" tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ fontSize: 12 }} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} name="Inquiries">
-                  {topicData.map((_, i) => <Cell key={i} fill={TOPIC_COLORS[i % TOPIC_COLORS.length]} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </Card>
 
         {/* Conversation Table */}
         <Card className="border-[#E8ECFF] bg-white overflow-hidden">

@@ -20,9 +20,6 @@ export type AdminSection =
   | 'users'
   | 'conversations'
   | 'safety'
-  | 'engagement'
-  | 'support'
-  | 'knowledge'
   | 'audit';
 
 interface AdminSidebarProps {
@@ -43,10 +40,7 @@ const navigationItems: {
   { id: 'users',         label: 'Users & Sessions',     icon: Users,            desc: 'Demographics & retention' },
   { id: 'conversations', label: 'Conversations',         icon: MessageSquare,    desc: 'Chat volume & topics' },
   { id: 'safety',        label: 'Safety & Crisis',       icon: AlertTriangle,    desc: 'Crisis & escalations' },
-  { id: 'engagement',    label: 'Feature Engagement',   icon: Sparkles,         desc: 'Stories, myths & resources' },
-  { id: 'support',       label: 'Support & Consultants',icon: HeadphonesIcon,   desc: 'Queue & SLA tracking' },
-  { id: 'knowledge',     label: 'Knowledge Base',       icon: BookOpen,         desc: 'Documents & citations' },
-  { id: 'audit',         label: 'Admin & Audit',        icon: Shield,           desc: 'Reports & audit log' },
+   { id: 'audit',         label: 'Admin & Audit',        icon: Shield,           desc: 'Reports & audit log' },
 ];
 
 export function AdminSidebar({

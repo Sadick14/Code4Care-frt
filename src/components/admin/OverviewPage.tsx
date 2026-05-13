@@ -122,8 +122,6 @@ export function OverviewPage({ session }: OverviewPageProps) {
   const satisfaction = getNumber(analytics?.summary ?? {}, 'average_satisfaction');
   const crisisTotal = getNumber(analytics?.safety ?? {}, 'crisis_interventions');
   const panicTotal = getNumber(analytics?.safety ?? {}, 'panic_exits_total');
-  const openEscalations = stats?.escalations_today ?? 0;
-  const pendingReports = stats?.pending_reports ?? 0;
 
   const periodLabel = period === 'today' ? 'Today' : period === 'week' ? 'This Week' : 'This Month';
 
@@ -166,118 +164,7 @@ export function OverviewPage({ session }: OverviewPageProps) {
           <KpiCard label="Avg Response" value={avgResponseMs > 0 ? `${avgResponseMs}ms` : '—'} sub="Bot response time" icon={Clock} color="bg-teal-500" loading={loading} />
           <KpiCard label="Satisfaction" value={satisfaction > 0 ? `${satisfaction.toFixed(1)}/5` : '—'} sub="Average rating" icon={Heart} color="bg-pink-500" loading={loading} />
           <KpiCard label="Crisis Events" value={crisisTotal} sub={`${panicTotal} panic button uses`} icon={ShieldAlert} color="bg-red-500" loading={loading} />
-          <KpiCard label="Open Issues" value={openEscalations + pendingReports} sub={`${pendingReports} reports pending`} icon={AlertTriangle} color="bg-amber-500" loading={loading} />
         </motion.div>
-
-        {/* Safety snapshot alert strip */}
-        {!loading && (openEscalations > 0 || pendingReports > 0 || crisisTotal > 0) && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap gap-2">
-            {crisisTotal > 0 && (
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
-                <AlertTriangle className="w-4 h-4" /> <span><strong>{crisisTotal}</strong> crisis events {periodLabel.toLowerCase()}</span>
-              </div>
-            )}
-            {openEscalations > 0 && (
-              <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-700">
-                <Zap className="w-4 h-4" /> <span><strong>{openEscalations}</strong> open escalations today</span>
-              </div>
-            )}
-            {pendingReports > 0 && (
-              <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-sm text-orange-700">
-                <FileText className="w-4 h-4" /> <span><strong>{pendingReports}</strong> reports awaiting review</span>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-          {/* Activity Trend */}
-          <Card className="lg:col-span-2 p-5 border-[#E8ECFF] bg-white">
-            <h3 className="font-semibold text-gray-900 mb-4 text-sm">Activity Trend</h3>
-            {loading ? (
-              <Skeleton className="h-56 w-full" />
-            ) : trends.length === 0 ? (
-              <div className="h-56 flex items-center justify-center text-sm text-gray-400">No trend data available</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={trends}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-                  <XAxis dataKey="timestamp" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#9CA3AF" tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ fontSize: 12, border: '1px solid #E8ECFF' }} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line type="monotone" dataKey="value" stroke="#006d77" strokeWidth={2} dot={false} name="Activity" />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </Card>
-
-          {/* Platform split */}
-          <Card className="p-5 border-[#E8ECFF] bg-white">
-            <h3 className="font-semibold text-gray-900 mb-4 text-sm">Platform Split</h3>
-            {loading ? (
-              <Skeleton className="h-56 w-full" />
-            ) : platformData.length === 0 ? (
-              <div className="h-56 flex items-center justify-center text-sm text-gray-400">No platform data</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie data={platformData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                    {platformData.map((_, i) => <Cell key={i} fill={PLATFORM_COLORS[i % PLATFORM_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </Card>
-        </div>
-
-        {/* Language distribution */}
-        <Card className="p-5 border-[#E8ECFF] bg-white">
-          <h3 className="font-semibold text-gray-900 mb-4 text-sm">Language Distribution</h3>
-          {loading ? (
-            <Skeleton className="h-40 w-full" />
-          ) : langData.length === 0 ? (
-            <div className="h-40 flex items-center justify-center text-sm text-gray-400">No language data</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={langData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" horizontal={false} />
-                <XAxis type="number" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="name" type="category" stroke="#9CA3AF" tick={{ fontSize: 12 }} width={60} />
-                <Tooltip contentStyle={{ fontSize: 12, border: '1px solid #E8ECFF' }} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} name="Sessions">
-                  {langData.map((_, i) => <Cell key={i} fill={LANG_COLORS[i % LANG_COLORS.length]} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </Card>
-
-        {/* Admin stats mini-row */}
-        {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { label: 'Total Conversations', value: stats.total_conversations, icon: MessageSquare },
-              { label: 'Active Sessions Today', value: stats.active_sessions_today, icon: Users },
-              { label: 'Safety Flags Today', value: stats.safety_flags_today, icon: ShieldAlert },
-              { label: 'Positive Feedback', value: stats.feedback_positive, icon: Heart },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <Card key={item.label} className="p-4 border-[#E8ECFF] bg-white flex items-center gap-3">
-                  <Icon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                  <div>
-                    <p className="text-xs text-gray-500">{item.label}</p>
-                    <p className="text-lg font-bold text-gray-900">{item.value?.toLocaleString() ?? '—'}</p>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );
