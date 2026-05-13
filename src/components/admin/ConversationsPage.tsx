@@ -160,7 +160,7 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
                     new Date(c.last_active_at).toLocaleString('en-GB'),
                     String(c.message_count),
                     c.language ?? 'en',
-                    c.is_escalated ? 'Escalated' : c.has_safety_flags ? 'Safety Flag' : 'Normal',
+                    c.ended_at ? 'Ended' : 'Active',
                   ]),
                 }}
               />
@@ -237,6 +237,11 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
+                          {conv.ended_at ? (
+                            <Badge className="text-xs bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-100">Ended</Badge>
+                          ) : (
+                            <Badge className="text-xs bg-green-100 text-green-700 border-green-200 hover:bg-green-100">Active</Badge>
+                          )}
                           {conv.is_escalated && (
                             <Badge className="text-xs bg-red-100 text-red-700 border-red-200 hover:bg-red-100">Escalated</Badge>
                           )}
@@ -244,9 +249,6 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
                             <Badge className="text-xs bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">
                               <AlertCircle className="w-3 h-3 mr-1" />Safety flag
                             </Badge>
-                          )}
-                          {!conv.is_escalated && !conv.has_safety_flags && (
-                            <Badge variant="outline" className="text-xs text-gray-500">Normal</Badge>
                           )}
                         </div>
                       </td>

@@ -142,6 +142,7 @@ export interface AdminConversationListItem {
   message_count: number;
   created_at: string;
   last_active_at: string;
+  ended_at?: string | null;
   is_escalated: boolean;
   has_safety_flags: boolean;
 }
