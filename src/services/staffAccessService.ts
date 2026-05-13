@@ -137,6 +137,7 @@ export interface AdminConversationListItem {
   id: string;
   session_id: string;
   user_nickname?: string;
+  platform?: string;
   language: string;
   message_count: number;
   created_at: string;

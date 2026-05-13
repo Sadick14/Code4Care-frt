@@ -213,6 +213,15 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
                       <td className="px-4 py-3">
                         <p className="text-xs font-medium text-gray-900">{conv.user_nickname ?? 'Anonymous'}</p>
                         <p className="text-xs text-gray-400 font-mono">…{conv.session_id.slice(-8)}</p>
+                        {conv.platform && (
+                          <span className={`inline-block mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                            conv.platform === 'whatsapp' ? 'bg-green-100 text-green-700' :
+                            conv.platform === 'telegram' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-500'
+                          }`}>
+                            {conv.platform === 'whatsapp' ? 'WhatsApp' : conv.platform === 'telegram' ? 'Telegram' : 'Web'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-600">
                         <div>{formatDate(conv.created_at)}</div>
