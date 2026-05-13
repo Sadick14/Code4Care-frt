@@ -53,14 +53,14 @@ export function IntroScreen({ onStart, selectedLanguage, onSkip }: IntroScreenPr
   const lang = content[selectedLanguage as keyof typeof content] || content.en;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom, #FFFFFF 0%, #F8FAFE 100%)' }}>
-      <Card className="max-w-md w-full p-8" style={{ backgroundColor: 'white', boxShadow: '0 4px 24px rgba(0, 72, 255, 0.1)', borderRadius: '1.5rem' }}>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom, #FFFFFF 0%, #FFF8F8 50%, #FFF1F1 100%)' }}>
+      <Card className="max-w-md w-full p-8" style={{ backgroundColor: 'white', boxShadow: '0 4px 24px rgba(190, 50, 45, 0.15)', borderRadius: '1.5rem' }}>
         <div className="text-center mb-6">
           <div 
             className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center" 
             style={{ 
               background: 'linear-gradient(135deg, #BE322D 0%, #F16365 100%)',
-              boxShadow: '0 4px 16px rgba(0, 72, 255, 0.3)'
+              boxShadow: '0 4px 16px rgba(190, 50, 45, 0.25)'
             }}
           >
             <svg className="w-10 h-10" fill="none" stroke="white" viewBox="0 0 24 24">
@@ -94,7 +94,7 @@ export function IntroScreen({ onStart, selectedLanguage, onSkip }: IntroScreenPr
           style={{ 
             background: 'linear-gradient(135deg, #BE322D 0%, #F16365 100%)',
             color: 'white',
-            boxShadow: '0 4px 16px rgba(0, 72, 255, 0.3)'
+            boxShadow: '0 4px 16px rgba(190, 50, 45, 0.25)'
           }}
         >
           {lang.button}

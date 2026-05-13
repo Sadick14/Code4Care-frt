@@ -1,7 +1,6 @@
-import React from 'react';
 import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Lock, CheckCircle, Globe, ShieldCheck } from 'lucide-react';
 
 interface DesktopHeroIntroProps {
   onComplete: () => void;
@@ -44,7 +43,8 @@ export function DesktopHeroIntro({ onComplete }: DesktopHeroIntroProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <span className="inline-block px-4 py-2 rounded-full bg-[#FFF1F1] text-[#BE322D] font-semibold text-sm border border-[#F4D6D5]">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFF1F1] text-[#BE322D] font-semibold text-sm border border-[#F4D6D5]">
+                <ShieldCheck className="w-4 h-4" />
                 Welcome to Room 1221
               </span>
             </motion.div>
@@ -79,15 +79,18 @@ export function DesktopHeroIntro({ onComplete }: DesktopHeroIntroProps) {
             className="space-y-3 pt-4"
           >
             {[
-              { icon: '🔒', text: 'Fully anonymous with no personal data' },
-              { icon: '✓', text: 'Expert guidance from trusted sources' },
-              { icon: '🌍', text: 'Designed for youth in Ghana' },
-            ].map((feature, idx) => (
-              <div key={idx} className="flex items-center gap-3">
-                <span className="text-2xl">{feature.icon}</span>
-                <span className="text-[#241515] font-medium">{feature.text}</span>
-              </div>
-            ))}
+              { icon: Lock, text: 'Fully anonymous with no personal data' },
+              { icon: CheckCircle, text: 'Expert guidance from trusted sources' },
+              { icon: Globe, text: 'Designed for youth in Ghana' },
+            ].map((feature, idx) => {
+              const Icon = feature.icon;
+              return (
+                <div key={idx} className="flex items-center gap-3">
+                  <Icon className="w-6 h-6 text-[#BE322D] flex-shrink-0" />
+                  <span className="text-[#241515] font-medium">{feature.text}</span>
+                </div>
+              );
+            })}
           </motion.div>
 
           {/* CTA Button */}
