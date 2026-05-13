@@ -58,7 +58,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
 async function fetchAuditLogs(page: number, token?: string): Promise<AuditLogResponse | null> {
   if (!API_BASE_URL) return null;
   try {
-    const res = await fetch(`${API_BASE_URL}/admin/audit-logs?page=${page}&page_size=20`, {
+    const res = await fetch(`${API_BASE_URL}/admin/audit-logs?page=${page}&limit=20`, {
       headers: {
         Accept: 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
