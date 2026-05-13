@@ -193,7 +193,7 @@ export function Pharmacy() {
                 <button
                   onClick={() => openMapSearch("pharmacy near me")}
                   disabled={loading}
-                  className="rounded-3xl bg-gradient-to-br from-[#BE322D] to-[#E25B56] p-6 text-white text-left"
+                  className="rounded-3xl bg-[#BE322D] p-6 text-white text-left"
                 >
                   <Navigation className="w-7 h-7 mb-4" />
                   <h3 className="text-2xl font-bold">Find Pharmacies</h3>

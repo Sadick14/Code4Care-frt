@@ -87,7 +87,7 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
   return (
     <div className="h-full overflow-y-auto bg-gradient-to-b from-[#FFF8F8] via-white to-[#FFF1F1] p-4 md:p-6 lg:p-8">
       <div className="mx-auto w-full max-w-4xl space-y-6">
-        <div className="rounded-3xl border border-[#F4D6D5] bg-gradient-to-r from-[#BE322D] via-[#F16365] to-[#F8A6A8] p-6 text-white shadow-xl shadow-[#F5D5D5]">
+        <div className="rounded-3xl border border-[#F4D6D5] bg-[#BE322D] p-6 text-white shadow-xl shadow-[#F5D5D5]">
           <div className="flex items-start gap-4">
             <div className="mt-1 rounded-2xl border border-white/30 bg-white/20 p-3">
               <Shield className="h-6 w-6" />
@@ -167,7 +167,7 @@ export function SettingsPage({ onClearChat, onLogout, onResetPWADismissal }: Set
                     }}
                     className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
                       active
-                        ? "border-[#BE322D] bg-gradient-to-r from-[#BE322D] to-[#F16365] text-white shadow-md shadow-[#F5D5D5]/80"
+                        ? "border-[#BE322D] bg-[#BE322D] text-white shadow-md shadow-[#F5D5D5]/80"
                         : "border-[#F4D6D5] bg-white text-[#6D4A49] hover:border-[#BE322D] hover:bg-[#FFF1F1] hover:text-[#BE322D]"
                     }`}
                   >

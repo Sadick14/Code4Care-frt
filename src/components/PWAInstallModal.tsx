@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Download, X } from 'lucide-react';
+import { Download, X, Zap, Lock, HardDrive } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 
@@ -84,21 +84,24 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
               <div className="px-6 py-6">
                 <div className="space-y-4 mb-6">
                   {[
-                    { icon: '⚡', text: 'Fast access - no app store needed' },
-                    { icon: '🔒', text: 'Works offline with full functionality' },
-                    { icon: '💾', text: 'Minimal storage on your device' },
-                  ].map((feature, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 + idx * 0.05 }}
-                      className="flex items-center gap-3"
-                    >
-                      <span className="text-xl flex-shrink-0">{feature.icon}</span>
-                      <span className="text-sm text-[#5B77B8]">{feature.text}</span>
-                    </motion.div>
-                  ))}
+                    { Icon: Zap, text: 'Fast access - no app store needed' },
+                    { Icon: Lock, text: 'Works offline with full functionality' },
+                    { Icon: HardDrive, text: 'Minimal storage on your device' },
+                  ].map((feature, idx) => {
+                    const { Icon, text } = feature;
+                    return (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 + idx * 0.05 }}
+                        className="flex items-center gap-3"
+                      >
+                        <Icon className="w-5 h-5 text-[#BE322D] flex-shrink-0" />
+                        <span className="text-sm text-[#5B77B8]">{text}</span>
+                      </motion.div>
+                    );
+                  })}
                 </div>
 
                 {/* Buttons */}

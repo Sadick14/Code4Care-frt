@@ -223,7 +223,7 @@ export function StoryMode() {
   return (
     <div className="h-full overflow-y-auto bg-gradient-to-b from-white via-[#FFF8F8] to-[#FFF1F1] p-4">
       <div className={`${viewMode === "catalog" ? "max-w-6xl" : "max-w-3xl"} mx-auto pb-12`}>
-        <div className="mb-8 rounded-3xl border border-[#F4D6D5] bg-gradient-to-r from-[#BE322D] via-[#F16365] to-[#F39A9B] p-6 text-white shadow-xl shadow-[#F5D5D5]">
+        <div className="mb-8 rounded-3xl border border-[#F4D6D5] bg-[#BE322D] p-6 text-white shadow-xl shadow-[#F5D5D5]">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-1">{t("stories.title", "Story Mode")}</h1>

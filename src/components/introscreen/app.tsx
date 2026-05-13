@@ -29,7 +29,7 @@ function MobileIntroLayout({
       <div className="md:hidden relative h-dvh w-full bg-white flex flex-col overflow-hidden">
         <button
           onClick={onSkip}
-          className="absolute right-5 top-[calc(env(safe-area-inset-top)+1rem)] z-20 bg-gradient-to-r from-[#BE322D] to-[#F16365] text-white px-5 py-3 rounded-2xl font-semibold shadow-md"
+          className="absolute right-5 top-[calc(env(safe-area-inset-top)+1rem)] z-20 bg-[#BE322D] text-white px-5 py-3 rounded-2xl font-semibold shadow-md"
         >
           Skip
         </button>
@@ -62,7 +62,7 @@ function MobileIntroLayout({
           </div>
           <button
             onClick={onNext}
-            className="w-full max-w-sm bg-gradient-to-r from-[#BE322D] to-[#F16365] text-white font-semibold py-3 rounded-full text-base active:scale-[0.98]"
+            className="w-full max-w-sm bg-[#BE322D] text-white font-semibold py-3 rounded-full text-base active:scale-[0.98]"
           >
             {buttonText}
           </button>

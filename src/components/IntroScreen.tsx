@@ -92,7 +92,7 @@ export function IntroScreen({ onStart, selectedLanguage, onSkip }: IntroScreenPr
           onClick={onStart}
           className="w-full rounded-2xl hover:scale-105 active:scale-95 transition-all"
           style={{ 
-            background: 'linear-gradient(135deg, #BE322D 0%, #F16365 100%)',
+            background: '#BE322D 0%',
             color: 'white',
             boxShadow: '0 4px 16px rgba(190, 50, 45, 0.25)'
           }}

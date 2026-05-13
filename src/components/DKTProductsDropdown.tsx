@@ -96,7 +96,7 @@ export function DKTProducts() {
                 onClick={() => setSelectedCategory(category)}
                 className={`inline-flex items-center whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
                   active
-                    ? "border-[#BE322D] bg-gradient-to-r from-[#BE322D] to-[#F16365] text-white"
+                    ? "border-[#BE322D] bg-[#BE322D] text-white"
                     : "border-[#F4D6D5] bg-[#FFF8F8] text-[#6D4A49] hover:border-[#F16365]"
                 }`}
               >
@@ -205,28 +205,10 @@ export function DKTProducts() {
                             </div>
                           </div>
 
-                          {/* Action Buttons */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-                            <Button className="h-10 rounded-xl bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A] text-white font-semibold w-full">
-                              <ShoppingBag className="w-4 h-4 mr-2" />
-                              Order Now
-                            </Button>
-                            <Button
-                              asChild
-                              variant="outline"
-                              className="h-10 rounded-full border-[#F4D6D5] text-[#BE322D] hover:bg-[#FFF1F1] w-full inline-flex items-center justify-center"
-                            >
-                              <a href={`tel:${supportTel}`}>
-                                <PhoneCall className="w-4 h-4 mr-2" />
-                                Call to Order
-                              </a>
-                            </Button>
-                          </div>
-
                           {/* Info Box */}
                           <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-800">
                             <p>
-                              <strong>Tip:</strong> Availability varies by location. Call ahead or visit your nearest pharmacy to confirm stock.
+                              <strong>Tip:</strong> Availability varies by location. Visit your nearest pharmacy to confirm stock.
                             </p>
                           </div>
                         </motion.div>
@@ -253,34 +235,6 @@ export function DKTProducts() {
         </p>
       </div>
 
-      {/* Info Banner */}
-      <Card className="p-4 sm:p-5 bg-gradient-to-r from-[#FFF1F1] to-[#FFF8F8] border-[#F4D6D5] rounded-2xl">
-        <p className="text-sm text-[#241515] leading-relaxed">
-          <strong>About DKT International:</strong> DKT International is a leading non-profit organization providing
-          high-quality, affordable family planning and reproductive health products across Ghana and Africa.
-          All products are sourced through verified channels and meet international quality standards.
-        </p>
-        <p className="text-sm text-[#241515] mt-2 leading-relaxed">
-          <strong>Support line:</strong> {primarySupportLine?.region || "Head Office"} - {primarySupportLine?.phone || "0302772799"}
-        </p>
-        <p className="text-sm text-[#241515] mt-1 leading-relaxed">
-          <strong>Location:</strong> {primarySupportLine?.location || "Dzorwulu, Accra"}
-        </p>
-        <p className="text-sm text-[#241515] mt-1 leading-relaxed">
-          <strong>Email:</strong> {primarySupportLine?.email || "info@dktghana.org"}
-        </p>
-                          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {regionalSupportLines.map((line) => (
-            <a
-              key={`${line.region}-${line.phone}`}
-                                href={`tel:${line.phone}`}
-                                className="text-xs text-[#241515] bg-white/70 border border-[#F4D6D5] rounded-lg px-3 py-2 hover:bg-white break-words"
-            >
-              <strong>{line.region}:</strong> {line.phone}
-            </a>
-          ))}
-        </div>
-      </Card>
     </div>
   );
 }

@@ -95,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {isActive && (
                       <motion.div 
                         layoutId="active-nav"
-                        className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#BE322D] to-[#F16365]"
+                        className="absolute inset-0 rounded-2xl bg-[#BE322D]"
                       />
                     )}
                     <Icon className={`relative z-10 w-5 h-5 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:translate-x-1'}`} />
@@ -150,7 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => handleLanguageChange(lang.code)}
                   className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                     i18n.resolvedLanguage?.split('-')[0] === lang.code
-                      ? 'bg-gradient-to-r from-[#BE322D] to-[#F16365] text-white border-[#BE322D] shadow-md shadow-[#F5D5D5]/70' 
+                      ? 'bg-[#BE322D] text-white border-[#BE322D] shadow-md shadow-[#F5D5D5]/70' 
                       : 'bg-sidebar text-sidebar-foreground/70 border-sidebar-border hover:border-[#BE322D] hover:bg-[#FFF1F1] hover:text-[#BE322D]'
                   }`}
                 >

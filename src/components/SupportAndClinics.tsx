@@ -55,7 +55,7 @@ export function SupportAndClinics() {
                   </div>
                   <Button 
                     asChild
-                    className="w-full h-12 rounded-2xl bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A] shadow-lg shadow-[#F5D5D5]"
+                    className="w-full h-12 rounded-2xl bg-[#BE322D] hover:from-[#9F2622] hover:to-[#DD575A] shadow-lg shadow-[#F5D5D5]"
                   >
                     <a href={`tel:${hotline.phone.replace(/\s/g, '')}`}>
                       {t('support.callNow')}: {hotline.phone}
