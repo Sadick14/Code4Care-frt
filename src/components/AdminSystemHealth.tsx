@@ -269,7 +269,7 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
           <h1 className="text-3xl font-bold text-gray-900">System Health</h1>
           <p className="text-gray-500">Monitor core service health and review system audit activity.</p>
         </div>
-        <Button variant="outline" className="gap-2 border-[#E8ECFF] hover:bg-gray-50" onClick={handleExport}>
+        <Button variant="outline" className="gap-2 border-[#F4D6D5] hover:bg-[#FFF1F1] text-[#BE322D]" onClick={handleExport}>
           <Download className="w-4 h-4" />
           Export
         </Button>
@@ -282,7 +282,7 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
             key={range}
             variant={timeRange === range ? 'default' : 'outline'}
             onClick={() => setTimeRange(range)}
-            className={timeRange === range ? 'bg-blue-600 hover:bg-blue-700' : 'border-[#E8ECFF] hover:bg-gray-50'}
+            className={timeRange === range ? 'bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A]' : 'border-[#F4D6D5] hover:bg-[#FFF1F1]'}
           >
             Last {range === '1h' ? '1 Hour' : range === '6h' ? '6 Hours' : '24 Hours'}
           </Button>
@@ -295,7 +295,7 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
           ? Array.from({ length: 6 }).map((_, i) => <MetricSkeleton key={i} />)
           : metrics.map((metric, idx) => (
             <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-              <Card className="p-4 bg-white border-[#E8ECFF] hover:border-blue-200 transition-colors">
+              <Card className="p-4 bg-white border-[#F4D6D5] hover:border-[#F16365] transition-colors">
                 <div className="flex items-start justify-between mb-2">
                   <div>{metric.icon}</div>
                   {getStatusBadge(metric.status)}
@@ -323,7 +323,7 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Card className="p-6 bg-white border-[#E8ECFF]">
           <h3 className="text-gray-900 font-semibold mb-4 flex items-center gap-2">
-            <Server className="w-4 h-4 text-blue-600" />
+            <Server className="w-4 h-4 text-[#BE322D]" />
             Response Time & Error Rate
           </h3>
           {isLoadingPerformance ? (
@@ -340,7 +340,7 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
                   labelStyle={{ color: '#111827' }}
                 />
                 <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="response" stroke="#3B82F6" name="Response (ms)" strokeWidth={2} />
+                <Line yAxisId="left" type="monotone" dataKey="response" stroke="#BE322D" name="Response (ms)" strokeWidth={2} />
                 <Bar yAxisId="right" dataKey="errors" fill="#EF4444" name="Errors" opacity={0.6} />
               </ComposedChart>
             </ResponsiveContainer>

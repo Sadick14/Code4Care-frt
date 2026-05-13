@@ -70,7 +70,7 @@ export function ReferralSection() {
         <Button 
           onClick={requestLocation} 
           disabled={loadingLocation}
-          className="rounded-2xl h-12 px-6 bg-white text-blue-600 border border-blue-100 hover:bg-blue-50"
+          className="rounded-2xl h-12 px-6 bg-white text-[#BE322D] border border-[#F4D6D5] hover:bg-[#FFF1F1]"
         >
           {loadingLocation ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Locate className="w-5 h-5 mr-2" />}
           {t('clinics.locationBtn')}
@@ -94,7 +94,7 @@ export function ReferralSection() {
                       ))}
                     </div>
                   </div>
-                  <Badge className="bg-blue-600 px-3 py-1 rounded-full">{clinic.type}</Badge>
+                  <Badge className="bg-[#BE322D] px-3 py-1 rounded-full text-white">{clinic.type}</Badge>
                 </div>
 
                 <div className="space-y-3">
@@ -121,10 +121,10 @@ export function ReferralSection() {
                             )}
                          </div>
                          <div className="flex gap-2">
-                            <Button asChild variant="outline" className="flex-1 rounded-xl h-10 border-blue-100 text-blue-600">
+                             <Button asChild variant="outline" className="flex-1 rounded-xl h-10 border-[#F4D6D5] text-[#BE322D] hover:bg-[#FFF1F1]">
                                <a href={`tel:${center.phone}`}><Phone className="w-4 h-4 mr-2" /> Call</a>
                             </Button>
-                            <Button asChild className="flex-1 rounded-xl h-10 bg-blue-600">
+                             <Button asChild className="flex-1 rounded-xl h-10 bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A]">
                                <a href={`https://www.google.com/maps/search/?api=1&query=${center.coordinates.lat},${center.coordinates.lng}`} target="_blank" rel="noreferrer">
                                   <Navigation className="w-4 h-4 mr-2" /> Directions
                                </a>
@@ -138,7 +138,7 @@ export function ReferralSection() {
                 {clinic.centers.length > 1 && (
                   <Button 
                     variant="ghost" 
-                    className="w-full mt-4 text-slate-400 hover:text-blue-600"
+                    className="w-full mt-4 text-slate-400 hover:text-[#BE322D]"
                     onClick={() => setExpandedClinics(prev => isExpanded ? prev.filter(id => id !== clinic.id) : [...prev, clinic.id])}
                   >
                     {isExpanded ? <ChevronUp className="w-4 h-4 mr-2" /> : <ChevronDown className="w-4 h-4 mr-2" />}

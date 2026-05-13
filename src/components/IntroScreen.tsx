@@ -53,21 +53,21 @@ export function IntroScreen({ onStart, selectedLanguage, onSkip }: IntroScreenPr
   const lang = content[selectedLanguage as keyof typeof content] || content.en;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom, #FFFFFF 0%, #F8FAFE 100%)' }}>
-      <Card className="max-w-md w-full p-8" style={{ backgroundColor: 'white', boxShadow: '0 4px 24px rgba(0, 72, 255, 0.1)', borderRadius: '1.5rem' }}>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom, #FFFFFF 0%, #FFF8F8 50%, #FFF1F1 100%)' }}>
+      <Card className="max-w-md w-full p-8" style={{ backgroundColor: 'white', boxShadow: '0 4px 24px rgba(190, 50, 45, 0.15)', borderRadius: '1.5rem' }}>
         <div className="text-center mb-6">
           <div 
             className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center" 
             style={{ 
-              background: 'linear-gradient(135deg, #0048ff 0%, #0066ff 100%)',
-              boxShadow: '0 4px 16px rgba(0, 72, 255, 0.3)'
+              background: 'linear-gradient(135deg, #BE322D 0%, #F16365 100%)',
+              boxShadow: '0 4px 16px rgba(190, 50, 45, 0.25)'
             }}
           >
             <svg className="w-10 h-10" fill="none" stroke="white" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
-          <h1 className="mb-2" style={{ color: '#0048ff' }}>{lang.title}</h1>
+          <h1 className="mb-2" style={{ color: '#BE322D' }}>{lang.title}</h1>
           <p className="text-gray-600">{lang.subtitle}</p>
         </div>
 
@@ -78,7 +78,7 @@ export function IntroScreen({ onStart, selectedLanguage, onSkip }: IntroScreenPr
         <div className="space-y-3 mb-8">
           {lang.features.map((feature, index) => (
             <div key={index} className="flex items-start gap-3">
-              <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#0048ff' }}>
+              <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#BE322D' }}>
                 <svg className="w-3 h-3" fill="white" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
@@ -92,9 +92,9 @@ export function IntroScreen({ onStart, selectedLanguage, onSkip }: IntroScreenPr
           onClick={onStart}
           className="w-full rounded-2xl hover:scale-105 active:scale-95 transition-all"
           style={{ 
-            background: 'linear-gradient(135deg, #0048ff 0%, #0066ff 100%)',
+            background: '#BE322D 0%',
             color: 'white',
-            boxShadow: '0 4px 16px rgba(0, 72, 255, 0.3)'
+            boxShadow: '0 4px 16px rgba(190, 50, 45, 0.25)'
           }}
         >
           {lang.button}

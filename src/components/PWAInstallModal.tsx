@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Download, X } from 'lucide-react';
+import { Download, X, Zap, Lock, HardDrive } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 
@@ -52,7 +52,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
           >
             <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
               {/* Header with gradient background */}
-              <div className="relative overflow-hidden bg-gradient-to-r from-[#0048ff] to-[#0066ff] px-6 py-8 text-white">
+              <div className="relative overflow-hidden bg-gradient-to-r from-[#BE322D] to-[#F16365] px-6 py-8 text-white">
                 {/* Decorative blob */}
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
 
@@ -84,28 +84,31 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
               <div className="px-6 py-6">
                 <div className="space-y-4 mb-6">
                   {[
-                    { icon: '⚡', text: 'Fast access - no app store needed' },
-                    { icon: '🔒', text: 'Works offline with full functionality' },
-                    { icon: '💾', text: 'Minimal storage on your device' },
-                  ].map((feature, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 + idx * 0.05 }}
-                      className="flex items-center gap-3"
-                    >
-                      <span className="text-xl flex-shrink-0">{feature.icon}</span>
-                      <span className="text-sm text-[#5B77B8]">{feature.text}</span>
-                    </motion.div>
-                  ))}
+                    { Icon: Zap, text: 'Fast access - no app store needed' },
+                    { Icon: Lock, text: 'Works offline with full functionality' },
+                    { Icon: HardDrive, text: 'Minimal storage on your device' },
+                  ].map((feature, idx) => {
+                    const { Icon, text } = feature;
+                    return (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 + idx * 0.05 }}
+                        className="flex items-center gap-3"
+                      >
+                        <Icon className="w-5 h-5 text-[#BE322D] flex-shrink-0" />
+                        <span className="text-sm text-[#5B77B8]">{text}</span>
+                      </motion.div>
+                    );
+                  })}
                 </div>
 
                 {/* Buttons */}
                 <div className="flex gap-3">
                   <Button
                     onClick={onInstall}
-                    className="flex-1 h-12 rounded-xl bg-gradient-to-r from-[#0048ff] to-[#0066ff] hover:from-[#0040dd] hover:to-[#005cdd] text-white font-semibold shadow-lg shadow-blue-200 hover:shadow-xl transition-all"
+                    className="flex-1 h-12 rounded-xl bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A] text-white font-semibold shadow-lg shadow-[#F5D5D5] hover:shadow-xl transition-all"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Install
@@ -113,7 +116,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                   <Button
                     onClick={handleDismiss}
                     variant="outline"
-                    className="flex-1 h-12 rounded-xl border-2 border-[#CFE0FF] text-[#0048ff] font-semibold hover:bg-[#F7FAFF]"
+                    className="flex-1 h-12 rounded-xl border-2 border-[#F4D6D5] text-[#BE322D] font-semibold hover:bg-[#FFF1F1]"
                   >
                     Later
                   </Button>

@@ -83,7 +83,7 @@ export function MythBusters() {
     <div className="h-full overflow-y-auto p-4 bg-gradient-to-b from-white to-[#F8FAFE]">
       <div className="max-w-4xl mx-auto pb-8">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-blue-600 mb-2">{t('myths.title')}</h1>
+          <h1 className="text-4xl font-bold text-[#BE322D] mb-2">{t('myths.title')}</h1>
           <p className="text-gray-500">{t('myths.subtitle')}</p>
         </div>
 
@@ -124,14 +124,14 @@ export function MythBusters() {
               transition={{ delay: idx * 0.05 }}
             >
               <Card
-                className="p-6 cursor-pointer border-[#E8ECFF] hover:border-blue-200 transition-all hover:shadow-xl"
+                className="p-6 cursor-pointer border-[#F4D6D5] hover:border-[#F16365] transition-all hover:shadow-xl"
                 onClick={() => handleMythClick(item)}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-none px-3 py-1">
+                    <Badge variant="secondary" className="bg-[#FFF1F1] text-[#BE322D] border-none px-3 py-1">
                     {item.category}
                   </Badge>
-                  {selectedMyth === item.id && <div className="w-2 h-2 rounded-full bg-blue-600" />}
+                    {selectedMyth === item.id && <div className="w-2 h-2 rounded-full bg-[#BE322D]" />}
                 </div>
 
                 <div className="space-y-4">
@@ -163,7 +163,7 @@ export function MythBusters() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="w-full text-blue-600 hover:bg-blue-50 bg-white border border-blue-50 rounded-xl"
+                            className="w-full text-[#BE322D] hover:bg-[#FFF1F1] bg-white border border-[#F4D6D5] rounded-xl"
                             onClick={(e) => { e.stopPropagation(); handleCopy(`${item.myth}\nFact: ${item.fact}`, item); }}
                           >
                             <Copy className="w-4 h-4 mr-2" />

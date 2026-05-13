@@ -120,7 +120,7 @@ export default function OnboardingScreen({ onComplete, sessionId, language = 'en
             className="max-w-md w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-none bg-white rounded-3xl shadow-2xl p-5 sm:p-8 overflow-y-auto"
           >
             <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-100 relative">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#BE322D] to-[#F16365] flex items-center justify-center shadow-lg shadow-[#F5D5D5] relative">
                 <Bot className="w-8 h-8 text-white" />
                 <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-yellow-400" />
               </div>
@@ -135,14 +135,14 @@ export default function OnboardingScreen({ onComplete, sessionId, language = 'en
                   value={botName}
                   onChange={(e) => setBotName(e.target.value)}
                   placeholder={t("onboarding.page2.placeholder")}
-                  className="h-12 pl-10 rounded-xl border-gray-200 focus:border-blue-500"
+                  className="h-12 pl-10 rounded-xl border-gray-200 focus:border-[#BE322D]"
                 />
                 <Bot className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
               </div>
             </div>
 
             <div className="space-y-3">
-              <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg">
+              <Button onClick={handleContinue} className="w-full h-12 rounded-xl bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A] text-base sm:text-lg">
                 {t("onboarding.page2.continue")}
               </Button>
               <Button onClick={handleSkip} variant="ghost" className="w-full h-12 text-gray-500">
@@ -164,7 +164,7 @@ export default function OnboardingScreen({ onComplete, sessionId, language = 'en
             </Button>
 
             <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#BE322D] to-[#F16365] flex items-center justify-center shadow-lg shadow-[#F5D5D5]">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t("onboarding.page3.title", "Help us personalize your support")}</h1>
@@ -230,7 +230,7 @@ export default function OnboardingScreen({ onComplete, sessionId, language = 'en
             <Button
               onClick={handleContinue}
               disabled={!canSubmitDemographics}
-              className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-base sm:text-lg disabled:opacity-60"
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A] text-base sm:text-lg disabled:opacity-60"
             >
               {t("onboarding.page3.finish", "Start Chat")}
             </Button>

@@ -35,7 +35,7 @@ export function AdminSidebar({
       <div className="p-6 border-b border-[#E8ECFF]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#BE322D] to-[#F16365] flex items-center justify-center">
               <BarChart3 className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -72,24 +72,24 @@ export function AdminSidebar({
                 whileTap={{ scale: 0.98 }}
                 className={`w-full group rounded-lg px-3 py-3 transition-all duration-200 relative overflow-hidden ${
                   isActive
-                    ? 'bg-blue-50 border border-blue-200'
+                    ? 'bg-[#FFF1F1] border border-[#F4D6D5]'
                     : 'hover:bg-gray-50 text-gray-700 hover:text-gray-900'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-5 h-5 transition-transform ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                  <Icon className={`w-5 h-5 transition-transform ${isActive ? 'text-[#BE322D]' : 'text-gray-400 group-hover:text-gray-600'}`} />
                   <div className="text-left flex-1">
-                    <div className={`text-sm font-semibold ${isActive ? 'text-blue-600' : 'text-gray-700'}`}>
+                    <div className={`text-sm font-semibold ${isActive ? 'text-[#BE322D]' : 'text-gray-700'}`}>
                       {item.label}
                     </div>
-                    <div className={`text-[11px] ${isActive ? 'text-blue-500' : 'text-gray-500'}`}>
+                    <div className={`text-[11px] ${isActive ? 'text-[#F16365]' : 'text-gray-500'}`}>
                       {item.desc}
                     </div>
                   </div>
                   {isActive && (
                     <motion.div
                       layoutId="active-indicator"
-                      className="w-1.5 h-1.5 rounded-full bg-blue-600"
+                      className="w-1.5 h-1.5 rounded-full bg-[#BE322D]"
                     />
                   )}
                 </div>
@@ -99,7 +99,7 @@ export function AdminSidebar({
         </div>
       </ScrollArea>
 
-      <Separator className="bg-[#E8ECFF]" />
+      <Separator className="bg-[#F4D6D5]" />
 
       {/* Footer */}
       <div className="p-4">

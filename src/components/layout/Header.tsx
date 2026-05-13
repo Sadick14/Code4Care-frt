@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shield, Menu, UserCheck, AlertCircle, User } from "lucide-react";
-import { dktSupportLines } from '@/data/dktProducts';
 import { useApp } from '@/providers/AppProvider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,12 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const [showConsultantModal, setShowConsultantModal] = React.useState(false);
 
-  const dktPrimary =
-    dktSupportLines && dktSupportLines.length > 0
-      ? dktSupportLines[0]
-      : undefined;
-
-  const consultantPhone = dktPrimary?.phone || '';
+  const consultantPhone = '1221';
 
   const handleCallConsultant = () => {
     setShowConsultantModal(false);
@@ -36,7 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="bg-white border-b border-[#E8ECFF] flex-shrink-0 sticky top-0 z-50 px-4 py-3 shadow-sm">
+      <header className="bg-white border-b border-[#F4D6D5] flex-shrink-0 sticky top-0 z-50 px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
 
           {/* LEFT SIDE */}
@@ -52,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             <div className="flex min-w-0 flex-col">
               <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                <Shield className="w-4 h-4 text-[#0048ff]" />
+                <Shield className="w-4 h-4 text-[#BE322D]" />
                 <h1 className="min-w-0 truncate font-bold leading-none text-gray-900">
                   {botName}
                 </h1>

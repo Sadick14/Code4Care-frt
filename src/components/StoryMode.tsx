@@ -129,10 +129,9 @@ export function StoryMode() {
           await FeatureAnalyticsService.logStoryEvent({
             session_id: sessionId,
             story_id: selectedModuleId,
-            event_type: 'completed',
-            module_name: module?.title || selectedModuleId,
-            score_achieved: score,
-            total_questions: stories.length,
+            story_title: module?.title || selectedModuleId,
+            action: 'completed',
+            progress_percentage: 100,
           });
           logger.info(`Story module completed: ${selectedModuleId} - Score: ${score}/${stories.length}`);
         } catch (error) {
@@ -163,20 +162,10 @@ export function StoryMode() {
       setTimeout(() => setShowCelebration(false), 1500);
     }
 
-    // Track answer event
+    // Per-question tracking is intentionally omitted because the analytics endpoint
+    // expects story-level events (started/completed/abandoned). Keep local logging.
     if (sessionId && story) {
-      try {
-        await FeatureAnalyticsService.logStoryEvent({
-          session_id: sessionId,
-          story_id: selectedModuleId,
-          event_type: isCorrect ? 'question_correct' : 'question_incorrect',
-          module_name: currentModule?.title || selectedModuleId,
-          question_index: currentIdx,
-          choice_selected: idx,
-        });
-      } catch (error) {
-        logger.error('Failed to log story answer event', error);
-      }
+      logger.info(`Answered question ${currentIdx} for ${selectedModuleId}: choice=${idx} correct=${isCorrect}`);
     }
   };
 
@@ -212,8 +201,9 @@ export function StoryMode() {
         await FeatureAnalyticsService.logStoryEvent({
           session_id: sessionId,
           story_id: moduleId,
-          event_type: 'started',
-          module_name: module?.title || moduleId,
+          story_title: module?.title || moduleId,
+          action: 'started',
+          progress_percentage: 0,
         });
         logger.info(`Story module started: ${moduleId}`);
       } catch (error) {
@@ -231,9 +221,9 @@ export function StoryMode() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-gradient-to-b from-[#f2f7ff] via-white to-[#eef5ff] p-4">
+    <div className="h-full overflow-y-auto bg-gradient-to-b from-white via-[#FFF8F8] to-[#FFF1F1] p-4">
       <div className={`${viewMode === "catalog" ? "max-w-6xl" : "max-w-3xl"} mx-auto pb-12`}>
-        <div className="mb-8 rounded-3xl border border-[#CFE0FF] bg-gradient-to-r from-[#0048ff] via-[#0066ff] to-[#00a3ff] p-6 text-white shadow-xl shadow-blue-100">
+        <div className="mb-8 rounded-3xl border border-[#F4D6D5] bg-[#BE322D] p-6 text-white shadow-xl shadow-[#F5D5D5]">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-1">{t("stories.title", "Story Mode")}</h1>
@@ -267,7 +257,7 @@ export function StoryMode() {
                 <Card
                   key={module.id}
                   onClick={() => startModuleQuiz(module.id)}
-                  className="cursor-pointer border-[#D5E4FF] bg-white shadow-sm hover:shadow-xl hover:shadow-blue-100/70 hover:-translate-y-1 transition-all rounded-2xl overflow-hidden"
+                  className="cursor-pointer border-[#F4D6D5] bg-white shadow-sm hover:shadow-xl hover:shadow-[#F5D5D5]/70 hover:-translate-y-1 transition-all rounded-2xl overflow-hidden"
                 >
                   <div className={`relative h-44 overflow-hidden bg-gradient-to-br ${moduleIcon.background}`}>
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.75),transparent_48%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.45),transparent_38%)]" />
@@ -277,17 +267,17 @@ export function StoryMode() {
                       </div>
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <p className="text-base font-bold text-[#0B225A] leading-tight drop-shadow-sm">{module.title}</p>
+                      <p className="text-base font-bold text-[#241515] leading-tight drop-shadow-sm">{module.title}</p>
                     </div>
                   </div>
                   <div className="p-4">
-                    <p className="text-sm text-[#5A77B0] min-h-10">{module.description}</p>
+                    <p className="text-sm text-[#6D4A49] min-h-10">{module.description}</p>
 
                     <div className="mt-4 flex items-center justify-between">
-                      <span className="inline-flex items-center rounded-full bg-[#ECF3FF] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2E58A5]">
+                      <span className="inline-flex items-center rounded-full bg-[#FFF1F1] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#BE322D]">
                         {module.stories.length} {t("stories.scenarios", "scenarios")}
                       </span>
-                      <span className="text-xs font-semibold text-[#0048ff]">
+                      <span className="text-xs font-semibold text-[#BE322D]">
                         {t("stories.startModule", "Start Module")}
                       </span>
                     </div>
@@ -308,22 +298,22 @@ export function StoryMode() {
             </div>
           </Card>
         ) : isCompleted ? (
-          <Card className="p-8 border-[#CFE0FF] shadow-xl rounded-3xl overflow-hidden relative bg-white">
+          <Card className="p-8 border-[#F4D6D5] shadow-xl rounded-3xl overflow-hidden relative bg-white">
             <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0048ff] to-[#00a3ff] mx-auto flex items-center justify-center shadow-lg shadow-blue-100">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#BE322D] to-[#F16365] mx-auto flex items-center justify-center shadow-lg shadow-[#F5D5D5]">
                 <Trophy className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-[#0F2A6B] mt-5">{t("stories.completedTitle", "Great work!")}</h2>
-              <p className="text-[#4A66A8] mt-2">
+              <h2 className="text-2xl font-bold text-[#241515] mt-5">{t("stories.completedTitle", "Great work!")}</h2>
+              <p className="text-[#6D4A49] mt-2">
                 {t("stories.completedBody", "You completed all scenarios and strengthened your SRHR safety decisions.")}
               </p>
               <p className="text-sm text-[#3D5D9C] mt-2">{currentModule?.title}</p>
-              <p className="text-lg font-semibold text-[#0048ff] mt-4">
+              <p className="text-lg font-semibold text-[#BE322D] mt-4">
                 {t("stories.finalScore", "Final Score")}: {score}/{stories.length}
               </p>
 
               <div className="mt-7">
-                <Button onClick={restartStories} className="rounded-xl bg-[#0048ff] hover:bg-[#003eda] h-11 px-5">
+                <Button onClick={restartStories} className="rounded-xl bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A] h-11 px-5">
                   <RotateCcw className="w-4 h-4 mr-2" />
                   {t("stories.restart", "Try Again")}
                 </Button>

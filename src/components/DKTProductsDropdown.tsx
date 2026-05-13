@@ -65,11 +65,11 @@ export function DKTProducts() {
     
 
       {/* Search and Filter */}
-      <Card className="p-4 sm:p-5 border-[#D8E7FF] rounded-2xl bg-white shadow-sm">
+      <Card className="p-4 sm:p-5 border-[#F4D6D5] rounded-2xl bg-white shadow-sm">
         <div className="space-y-3 sm:space-y-4 mb-4">
           <div>
-            <h3 className="text-base font-semibold text-[#1D3D79]">Search DKT products</h3>
-            <p className="text-xs sm:text-sm text-[#5F7CB3] mt-1">
+            <h3 className="text-base font-semibold text-[#241515]">Search DKT products</h3>
+            <p className="text-xs sm:text-sm text-[#6D4A49] mt-1">
               Filter products by name, use, or category to find the right option faster.
             </p>
           </div>
@@ -85,7 +85,7 @@ export function DKTProducts() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {categories.map((category) => {
+              {categories.map((category) => {
             const active = selectedCategory === category;
             const meta = category === "all" ? null : CATEGORY_META[category];
             const CategoryIcon = meta?.icon ?? ShoppingBag;
@@ -96,8 +96,8 @@ export function DKTProducts() {
                 onClick={() => setSelectedCategory(category)}
                 className={`inline-flex items-center whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
                   active
-                    ? "border-[#0048ff] bg-[#0048ff] text-white"
-                    : "border-[#D1E3FF] bg-[#F7FAFF] text-[#45639E] hover:border-[#90B3FF]"
+                    ? "border-[#BE322D] bg-[#BE322D] text-white"
+                    : "border-[#F4D6D5] bg-[#FFF8F8] text-[#6D4A49] hover:border-[#F16365]"
                 }`}
               >
                 <span className="inline-flex items-center gap-2 leading-none">
@@ -125,14 +125,14 @@ export function DKTProducts() {
               >
                 <Card
                   onClick={() => toggleProduct(product.id)}
-                  className="cursor-pointer border-[#D8E7FF] hover:border-[#0048ff] transition-all rounded-2xl overflow-hidden group"
+                  className="cursor-pointer border-[#F4D6D5] hover:border-[#F16365] transition-all rounded-2xl overflow-hidden group"
                 >
                   <div className="p-4 sm:p-5">
                     {/* Product Header */}
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                          <Badge className="inline-flex items-center gap-1.5 bg-blue-100 text-blue-700 border-blue-200">
+                          <Badge className="inline-flex items-center gap-1.5 bg-[#FFF1F1] text-[#BE322D] border-[#F4D6D5]">
                             {(() => {
                               const BadgeIcon = CATEGORY_META[product.category]?.icon ?? ShoppingBag;
                               return <BadgeIcon className="h-3.5 w-3.5" />;
@@ -143,7 +143,7 @@ export function DKTProducts() {
                             {product.availability}
                           </span>
                         </div>
-                        <h3 className="text-base sm:text-lg font-bold text-[#0F2A6B] group-hover:text-[#0048ff] transition-colors break-words">
+                        <h3 className="text-base sm:text-lg font-bold text-[#241515] group-hover:text-[#BE322D] transition-colors break-words">
                           {product.name}
                         </h3>
                         <p className="text-sm text-gray-600 mt-1 leading-relaxed">{product.description}</p>
@@ -169,16 +169,16 @@ export function DKTProducts() {
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="mt-4 pt-4 border-t border-[#E1ECFF] space-y-4"
+                            className="mt-4 pt-4 border-t border-[#F4D6D5] space-y-4"
                         >
                           {/* Uses */}
                           <div>
                             <h4 className="font-semibold text-[#0F2A6B] mb-2 text-sm">Uses & Benefits:</h4>
-                            <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-2">
                               {product.uses.map((use, idx) => (
                                 <span
                                   key={idx}
-                                  className="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100 max-w-full break-words"
+                                  className="text-xs bg-[#FFF1F1] text-[#BE322D] px-3 py-1.5 rounded-full border border-[#F4D6D5] max-w-full break-words"
                                 >
                                   ✓ {use}
                                 </span>
@@ -205,28 +205,10 @@ export function DKTProducts() {
                             </div>
                           </div>
 
-                          {/* Action Buttons */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-                            <Button className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold w-full">
-                              <ShoppingBag className="w-4 h-4 mr-2" />
-                              Order Now
-                            </Button>
-                            <Button
-                              asChild
-                              variant="outline"
-                              className="h-10 rounded-full border-blue-200 text-blue-600 hover:bg-blue-50 w-full inline-flex items-center justify-center"
-                            >
-                              <a href={`tel:${supportTel}`}>
-                                <PhoneCall className="w-4 h-4 mr-2" />
-                                Call to Order
-                              </a>
-                            </Button>
-                          </div>
-
                           {/* Info Box */}
                           <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-800">
                             <p>
-                              <strong>Tip:</strong> Availability varies by location. Call ahead or visit your nearest pharmacy to confirm stock.
+                              <strong>Tip:</strong> Availability varies by location. Visit your nearest pharmacy to confirm stock.
                             </p>
                           </div>
                         </motion.div>
@@ -238,10 +220,10 @@ export function DKTProducts() {
             );
           })
         ) : (
-          <Card className="p-10 rounded-3xl border-[#D8E7FF] text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-            <ShoppingBag className="w-10 h-10 text-blue-400 mx-auto mb-3" />
-            <h3 className="font-semibold text-[#1D3D79]">No products found</h3>
-            <p className="text-sm text-[#5F7CB3] mt-1">Try a different search term or filter.</p>
+          <Card className="p-10 rounded-3xl border-[#F4D6D5] text-center bg-gradient-to-br from-[#FFF1F1] to-[#FDECEC]">
+            <ShoppingBag className="w-10 h-10 text-[#BE322D] mx-auto mb-3" />
+            <h3 className="font-semibold text-[#241515]">No products found</h3>
+            <p className="text-sm text-[#6D4A49] mt-1">Try a different search term or filter.</p>
           </Card>
         )}
       </div>
@@ -253,34 +235,6 @@ export function DKTProducts() {
         </p>
       </div>
 
-      {/* Info Banner */}
-      <Card className="p-4 sm:p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 rounded-2xl">
-        <p className="text-sm text-blue-900 leading-relaxed">
-          <strong>About DKT International:</strong> DKT International is a leading non-profit organization providing
-          high-quality, affordable family planning and reproductive health products across Ghana and Africa.
-          All products are sourced through verified channels and meet international quality standards.
-        </p>
-        <p className="text-sm text-blue-900 mt-2 leading-relaxed">
-          <strong>Support line:</strong> {primarySupportLine?.region || "Head Office"} - {primarySupportLine?.phone || "0302772799"}
-        </p>
-        <p className="text-sm text-blue-900 mt-1 leading-relaxed">
-          <strong>Location:</strong> {primarySupportLine?.location || "Dzorwulu, Accra"}
-        </p>
-        <p className="text-sm text-blue-900 mt-1 leading-relaxed">
-          <strong>Email:</strong> {primarySupportLine?.email || "info@dktghana.org"}
-        </p>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {regionalSupportLines.map((line) => (
-            <a
-              key={`${line.region}-${line.phone}`}
-              href={`tel:${line.phone}`}
-              className="text-xs text-blue-900 bg-white/70 border border-blue-200 rounded-lg px-3 py-2 hover:bg-white break-words"
-            >
-              <strong>{line.region}:</strong> {line.phone}
-            </a>
-          ))}
-        </div>
-      </Card>
     </div>
   );
 }

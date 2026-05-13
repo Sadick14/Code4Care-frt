@@ -4,18 +4,19 @@ import { initReactI18next } from 'react-i18next';
 import en from './en.json';
 import twi from './twi.json';
 import ewe from './ewe.json';
-import ga from './ga.json';
+import ha from './ha.json';
 
 const resources = {
   en: { translation: en },
   twi: { translation: twi },
   ewe: { translation: ewe },
-  ga: { translation: ga }
+  ha: { translation: ha }
 };
 
 // Simple manual detection to avoid external dependency
 const getInitialLanguage = () => {
   const saved = localStorage.getItem('room1221_language');
+  if (saved === 'ga') return 'ha';
   if (saved) return saved;
   return 'en';
 };
