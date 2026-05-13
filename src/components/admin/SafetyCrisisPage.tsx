@@ -138,8 +138,6 @@ export function SafetyCrisisPage({ session }: SafetyCrisisPageProps) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
             { label: 'Crisis Events', value: crisisTotal, icon: AlertTriangle, bg: 'bg-red-100', color: 'text-red-600', border: 'border-red-200' },
-            { label: 'Interventions Triggered', value: interventions, icon: Shield, bg: 'bg-orange-100', color: 'text-orange-600', border: 'border-orange-200' },
-            { label: 'Escalated to Human', value: escalatedHuman, icon: UserCheck, bg: 'bg-amber-100', color: 'text-amber-600', border: 'border-amber-200' },
             { label: 'Panic Button Uses', value: panicTotal, icon: Zap, bg: 'bg-yellow-100', color: 'text-yellow-700', border: 'border-yellow-200' },
             { label: 'Users Followed Up', value: followedUp, icon: PhoneCall, bg: 'bg-green-100', color: 'text-green-600', border: 'border-green-200' },
           ].map((item) => {
