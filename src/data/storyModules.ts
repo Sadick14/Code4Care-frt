@@ -4,6 +4,7 @@ export interface StoryItem {
   choices: string[];
   correct: number;
   feedback: string[];
+  source?: string;
 }
 
 export interface StoryModule {
@@ -14,359 +15,342 @@ export interface StoryModule {
 }
 
 const englishModules: StoryModule[] = [
+
   {
-    id: "puberty-body-changes",
-    title: "Puberty and Body Changes",
-    description: "Understand normal body changes and when to ask for help.",
-    stories: [
+    "id": "puberty-body-changes",
+    "title": "Puberty and Body Changes",
+    "description": "Navigate the physical and emotional shifts of growing up with confidence.",
+    "stories": [
       {
-        title: "First Signs of Puberty",
-        scenario:
-          "Yaw notices new body changes and feels embarrassed. His friends are making jokes. What is the healthiest response?",
-        choices: [
-          "Ignore it and believe something is wrong with him",
-          "Ask a trusted adult or health worker if his changes are normal",
-          "Buy random medicine online",
-          "Stop eating to delay growth"
+        "title": "First Signs of Puberty",
+        "scenario": "Yaw notices his body is changing in ways he didn't expect. He feels self-conscious because his friends are starting to tease him. What is the most helpful way for him to handle this?",
+        "choices": [
+          "Keep his feelings hidden and assume something is wrong with him",
+          "Talk to a trusted adult or school counselor to understand if these changes are normal",
+          "Search for and buy 'growth' supplements online",
+          "Restrict his eating habits to try and slow down his physical development"
         ],
-        correct: 1,
-        feedback: [
-          "Ignoring fear can increase anxiety.",
-          "Correct. Trusted guidance helps normalize puberty and reduce fear.",
-          "Unverified medicine is unsafe.",
-          "Food restriction harms health and development."
-        ]
+        "correct": 1,
+        "feedback": [
+          "Suppressing worries can lead to more anxiety. It's better to get the facts.",
+          "Correct! Speaking with a trusted adult helps normalize the process and provides peace of mind.",
+          "Unverified products from the internet can be extremely dangerous to your health.",
+          "Proper nutrition is vital during puberty; restricting food can cause long-term health issues."
+        ],
+        "source": "World Health Organization (WHO) - Adolescent Development"
       },
       {
-        title: "Wet Dreams and Myths",
-        scenario:
-          "Kojo has his first wet dream and worries he is sick. What should he do?",
-        choices: [
-          "Feel ashamed and tell no one",
-          "Understand it can be a normal puberty event and ask questions if worried",
-          "Use harmful herbal mixtures",
-          "Avoid sleep"
+        "title": "Wet Dreams and Myths",
+        "scenario": "Kojo wakes up and realizes he has had his first wet dream. He feels confused and worried that he might be ill. What should he do?",
+        "choices": [
+          "Keep it a secret and feel ashamed",
+          "Learn that this is a natural part of puberty and ask a mentor if he's still worried",
+          "Try unverified herbal mixtures to make it stop",
+          "Try to stay awake at night to prevent it from happening again"
         ],
-        correct: 1,
-        feedback: [
-          "Shame can make normal experiences feel frightening.",
-          "Correct. Wet dreams are often normal during puberty.",
-          "Harmful remedies can cause injury.",
-          "Lack of sleep harms mental and physical health."
-        ]
+        "correct": 1,
+        "feedback": [
+          "Feeling ashamed of a natural biological process creates unnecessary stress.",
+          "Correct! Wet dreams are a normal sign of healthy development in many young men.",
+          "Herbal mixtures for puberty changes can be toxic or cause physical harm.",
+          "Sleep deprivation is harmful to your mental and physical well-being."
+        ],
+        "source": "NHS - Physical changes in boys during puberty"
       },
       {
-        title: "Growth Spurts at Different Times",
-        scenario:
-          "Amidu notices he is shorter than some friends and thinks he is falling behind. What is the best response?",
-        choices: [
-          "Assume something is permanently wrong",
-          "Remember everyone develops at a different pace and ask a trusted adult if concerned",
-          "Take unknown supplements from a friend",
-          "Skip meals to become taller faster"
+        "title": "Growth Spurts",
+        "scenario": "Amidu feels frustrated because most of his classmates are getting taller while he still feels 'small.' He's worried he'll never grow. What is the best perspective to have?",
+        "choices": [
+          "Assume he has a permanent growth deficiency",
+          "Remember that everyone has a unique biological clock and talk to a professional if concerned",
+          "Take unknown pills a friend claims will help him 'bulk up'",
+          "Skip meals to try and force a growth spurt"
         ],
-        correct: 1,
-        feedback: [
-          "Comparing yourself constantly can create unnecessary stress.",
-          "Correct. Growth timing varies a lot during puberty.",
-          "Unverified supplements can be unsafe.",
-          "Skipping meals harms growth and energy."
-        ]
+        "correct": 1,
+        "feedback": [
+          "Constant comparison to others is a major source of unnecessary stress.",
+          "Correct! Puberty happens at different speeds for everyone; there is a wide range for 'normal.'",
+          "Never take supplements or medication that hasn't been prescribed to you by a doctor.",
+          "Skipping meals actually deprives your body of the fuel it needs to grow."
+        ],
+        "source": "CDC - Healthy Growth and Development"
       },
       {
-        title: "Body Odor and Hygiene",
-        scenario:
-          "A girl notices stronger body odor after school sports and feels embarrassed. What should she do?",
-        choices: [
-          "Hide from everyone and stop exercising",
-          "Shower regularly, wear clean clothes, and ask about hygiene if needed",
-          "Use harsh chemicals on the skin",
-          "Avoid drinking water all day"
+        "title": "Acne and Skin Changes",
+        "scenario": "Ama notices she's getting acne breakouts on her face and feels embarrassed. What should she understand about this?",
+        "choices": [
+          "Acne only happens to 'dirty' people and she should stop washing",
+          "Acne is a common part of puberty caused by hormonal changes",
+          "She should use any product online to quickly clear her skin",
+          "Acne means something is seriously wrong with her body"
         ],
-        correct: 1,
-        feedback: [
-          "Avoiding activities is not the only option.",
-          "Correct. Hygiene changes can help manage normal puberty body odor.",
-          "Harsh products can irritate skin.",
-          "Hydration supports health and activity."
-        ]
+        "correct": 1,
+        "feedback": [
+          "Acne is not caused by poor hygiene during puberty.",
+          "Correct! Hormonal changes during puberty often cause acne in many teens.",
+          "Unverified skin products can irritate skin more or cause harm.",
+          "Acne is a normal part of puberty, not a sign of serious illness."
+        ],
+        "source": "American Academy of Dermatology - Teen Skin Health"
       },
       {
-        title: "Acne and Skin Changes",
-        scenario:
-          "A teenager gets acne and wants to scrub it hard until it disappears. What is safest?",
-        choices: [
-          "Scrub aggressively several times a day",
-          "Use gentle washing and ask a health worker about skin care if needed",
-          "Pick at every spot until it bleeds",
-          "Use random oil mixtures from social media"
+        "title": "Mood Swings During Puberty",
+        "scenario": "Kwesi notices his moods change quickly during puberty—happy one moment, frustrated the next. What's helpful to know?",
+        "choices": [
+          "Mood swings mean something is wrong and he should hide them",
+          "Hormonal changes during puberty can cause mood shifts; it's normal and temporary",
+          "He should try to ignore all his feelings",
+          "Mood changes only happen to girls during puberty"
         ],
-        correct: 1,
-        feedback: [
-          "Aggressive scrubbing can worsen irritation.",
-          "Correct. Gentle skin care is usually better for acne.",
-          "Picking can cause infection and scarring.",
-          "Social media remedies are not always safe."
-        ]
+        "correct": 1,
+        "feedback": [
+          "Mood changes are a normal part of the process, not something to hide.",
+          "Correct! Hormonal fluctuations affect mood in many teens of all genders.",
+          "Feelings matter and should not be ignored—they're part of growing up.",
+          "Both boys and girls experience mood changes during puberty."
+        ],
+        "source": "American Psychological Association - Adolescent Emotional Development"
       },
       {
-        title: "Voice Changes and Embarrassment",
-        scenario:
-          "A boy's voice cracks in class and everyone laughs. What is the healthiest response?",
-        choices: [
-          "Quit speaking forever",
-          "Accept it as a normal change and speak to someone trusted if it feels upsetting",
-          "Force the voice to change with medicine",
-          "Start shouting to prove nothing changed"
+        "title": "Voice Changes",
+        "scenario": "Kofi's voice is cracking and getting deeper during puberty. He feels self-conscious about it. What should he know?",
+        "choices": [
+          "Voice changes are permanent damage he caused",
+          "Voice changes are a temporary normal part of puberty",
+          "He should force his voice to stay high to avoid embarrassment",
+          "Voice changes only happen to boys, never to girls"
         ],
-        correct: 1,
-        feedback: [
-          "Avoiding speech can increase shame.",
-          "Correct. Voice changes are common in puberty.",
-          "Medicine is not needed for normal development.",
-          "Trying to overcompensate can feel stressful."
-        ]
+        "correct": 1,
+        "feedback": [
+          "Voice changes are not damage—they're a natural development.",
+          "Correct! Voice changes happen to many teens; the voice usually settles within 1-2 years.",
+          "Forcing your voice to stay high is uncomfortable and doesn't work.",
+          "Girls' voices deepen too during puberty, though often less noticeably."
+        ],
+        "source": "Mayo Clinic - Voice Changes During Puberty"
       },
       {
-        title: "Hair Growth and Privacy",
-        scenario:
-          "A young person notices new hair growth and worries classmates will tease them. What is a good response?",
-        choices: [
-          "Shave everything immediately without learning how",
-          "Remember body hair is a normal puberty change and ask for support if needed",
-          "Use dangerous removal chemicals",
-          "Stop going to school"
+        "title": "Body Hair Growth",
+        "scenario": "Aba suddenly has more body hair in new places and feels unsure if it's normal. What should she know?",
+        "choices": [
+          "Body hair growth during puberty is abnormal and dangerous",
+          "Hair growth is a normal part of puberty in all teens",
+          "She should use any hair removal method without research",
+          "Body hair means her hormones are broken"
         ],
-        correct: 1,
-        feedback: [
-          "Rushing can lead to cuts or irritation.",
-          "Correct. Body hair changes are common in puberty.",
-          "Dangerous products can burn skin.",
-          "School avoidance does not solve the problem."
-        ]
+        "correct": 1,
+        "feedback": [
+          "Body hair growth is a completely normal part of development.",
+          "Correct! Increased body hair is one of the changes of puberty for most teens.",
+          "Research is important before choosing any hair removal method.",
+          "Body hair is a sign hormones are working normally and development is on track."
+        ],
+        "source": "AAFP - Family Medicine Update on Adolescent Development"
       },
       {
-        title: "Mood Swings at Home",
-        scenario:
-          "Tariq feels extra emotional and snaps at family members, then feels guilty. What is the healthiest next step?",
-        choices: [
-          "Keep everything bottled up forever",
-          "Talk to someone trusted about the changes and practice calming skills",
-          "Take random pills from a cabinet",
-          "Stop sleeping to stay in control"
+        "title": "Breast Development Changes",
+        "scenario": "Esi notices her breasts are tender and growing at different rates. She's worried something is wrong. What is accurate?",
+        "choices": [
+          "Unequal breast growth means there's definitely a problem",
+          "Breast tenderness and unequal growth are common during development",
+          "She should immediately get medical surgery",
+          "Breast changes mean she has a disease"
         ],
-        correct: 1,
-        feedback: [
-          "Bottling emotions can make stress worse.",
-          "Correct. Mood changes can happen during puberty and support helps.",
-          "Taking unknown pills is unsafe.",
-          "Sleep is important for mood and health."
-        ]
+        "correct": 1,
+        "feedback": [
+          "Unequal or asymmetrical breast growth is very common.",
+          "Correct! Tender, growing, and slightly uneven breasts are normal during puberty.",
+          "Surgery is not needed for normal asymmetry—most people have naturally unequal breasts.",
+          "Breast changes are normal development, not a sign of disease."
+        ],
+        "source": "American College of Obstetricians and Gynecologists - Breast Development"
       },
       {
-        title: "When to Ask for Help",
-        scenario:
-          "A teen has sudden pain and bleeding that seems unusual. What should they do?",
-        choices: [
-          "Hide it and hope it disappears",
-          "Tell a trusted adult or health worker and get checked",
-          "Ask a friend to guess what it is",
-          "Use only social media advice"
+        "title": "Sexual Feelings During Puberty",
+        "scenario": "Korede notices he's having new feelings and attractions during puberty and feels confused. What is helpful to understand?",
+        "choices": [
+          "Sexual feelings during puberty are abnormal and should be completely ignored",
+          "Sexual feelings are a normal part of development; education and respect matter",
+          "Sexual feelings mean he must act on them immediately",
+          "Sexual feelings only happen to adults, not teens"
         ],
-        correct: 1,
-        feedback: [
-          "Delaying help can make problems harder to manage.",
-          "Correct. New or severe symptoms should be checked by a professional.",
-          "Friends cannot diagnose medical concerns.",
-          "Online advice cannot replace assessment."
-        ]
+        "correct": 1,
+        "feedback": [
+          "Sexual feelings are a normal part of healthy development.",
+          "Correct! Attraction and sexual feelings are natural during puberty in most teens.",
+          "Feeling something does not mean you must act on it. Choice and readiness matter.",
+          "Sexual feelings commonly begin during puberty and continue into adulthood."
+        ],
+        "source": "American Academy of Pediatrics - Adolescent Sexuality Information"
       }
     ]
   },
   {
-    id: "menstrual-health",
-    title: "Menstrual Health",
-    description: "Learn practical period care, comfort, and warning signs.",
-    stories: [
+    "id": "menstrual-health",
+    "title": "Menstrual Health",
+    "description": "Essential knowledge for managing your period with comfort and dignity.",
+    "stories": [
       {
-        title: "First Period at School",
-        scenario:
-          "Esi gets her first period during class and feels panicked. What should she do first?",
-        choices: [
-          "Stay silent and hide bloodstains all day",
-          "Ask a trusted teacher, nurse, or friend for menstrual support",
-          "Use unsafe materials from the floor",
-          "Skip washing for several days"
+        "title": "First Period at School",
+        "scenario": "Esi starts her first period while in the middle of a lesson. She is worried about staining her clothes. What is her best first step?",
+        "choices": [
+          "Stay in her seat all day and hope no one notices",
+          "Discreetly ask a teacher, the school nurse, or a friend for help and a pad",
+          "Use any scrap paper or fabric found on the floor as a temporary pad",
+          "Stop washing the area to try and make the bleeding stop"
         ],
-        correct: 1,
-        feedback: [
-          "Silence may increase stress and discomfort.",
-          "Correct. Trusted support helps with hygiene and confidence.",
-          "Unsafe materials increase infection risk.",
-          "Hygiene is important during periods."
-        ]
+        "correct": 1,
+        "feedback": [
+          "Sitting in discomfort increases anxiety. Taking action will help you feel more secure.",
+          "Correct! Most schools have resources or people ready to help you manage this common situation.",
+          "Using dirty or un-sanitized materials can lead to serious infections.",
+          "Maintaining cleanliness is actually more important when you are on your period."
+        ],
+        "source": "UNICEF - Menstrual Hygiene Management"
       },
       {
-        title: "Painful Cramps",
-        scenario:
-          "Akos notices severe period pain every month that affects school attendance. What is best?",
-        choices: [
-          "Endure pain without support forever",
-          "Track symptoms and visit a clinic for advice",
-          "Take anyone else's medication blindly",
-          "Stop drinking water entirely"
+        "title": "Painful Cramps",
+        "scenario": "Akos experiences such painful cramps every month that she has to stay home from school. What should she do?",
+        "choices": [
+          "Accept the pain as an unavoidable part of being a woman",
+          "Track her symptoms and visit a healthcare provider to discuss pain management",
+          "Borrow a friend’s strong prescription painkillers",
+          "Stop drinking fluids entirely during her cycle"
         ],
-        correct: 1,
-        feedback: [
-          "Untreated severe pain can affect wellbeing.",
-          "Correct. Persistent severe pain should be assessed by professionals.",
-          "Unsafe medication use is dangerous.",
-          "Hydration supports health during menstruation."
-        ]
+        "correct": 1,
+        "feedback": [
+          "While some discomfort is common, severe pain that stops your life should be addressed.",
+          "Correct! A doctor can help determine if the pain is normal and suggest safe ways to manage it.",
+          "Sharing prescription medication is dangerous and can lead to bad reactions.",
+          "Staying hydrated can actually help reduce bloating and ease some discomfort."
+        ],
+        "source": "Mayo Clinic - Menstrual Cramps Diagnosis & Treatment"
       },
       {
-        title: "Period Tracking",
-        scenario:
-          "A teen wants to predict their next period more accurately. What is helpful?",
-        choices: [
-          "Guess every month with no record",
-          "Track dates and symptoms in a calendar or app",
-          "Ignore all changes in the body",
-          "Take random pills each cycle"
-        ],
-        correct: 1,
-        feedback: [
-          "Guessing makes planning harder.",
-          "Correct. Tracking can help prepare for periods and notice changes.",
-          "Ignoring symptoms can hide health issues.",
-          "Random pills are unsafe."
-        ]
-      },
-      {
-        title: "Changing Pads on Time",
-        scenario:
-          "Mina uses one pad all day because she is worried others will notice. What is the safest response?",
-        choices: [
-          "Keep it on for as long as possible",
-          "Change it regularly and carry supplies discreetly",
-          "Never wash the area",
-          "Use the same pad the next day too"
-        ],
-        correct: 1,
-        feedback: [
-          "Long use can increase discomfort and odor.",
-          "Correct. Regular changes support hygiene and comfort.",
-          "Cleaning helps prevent irritation.",
-          "Reusing pads is not hygienic."
-        ]
-      },
-      {
-        title: "Severe Bleeding",
-        scenario:
-          "A girl soaks through pads very quickly and feels weak. What should she do?",
-        choices: [
-          "Ignore it because periods are always like this",
-          "Tell a trusted adult and seek medical advice soon",
-          "Exercise harder to stop bleeding",
-          "Take someone else's medicine"
-        ],
-        correct: 1,
-        feedback: [
-          "Heavy bleeding can be a health concern.",
-          "Correct. Unusually heavy bleeding should be checked.",
-          "Exercise does not treat heavy bleeding.",
-          "Unprescribed medicine can be harmful."
-        ]
-      },
-      {
-        title: "Managing Cramps at School",
-        scenario:
-          "A student has cramps during class and wants relief without panicking. What helps most?",
-        choices: [
+        "title": "Managing Cramps at School",
+        "scenario": "A student has cramps during class and wants relief without panicking. What helps most?",
+        "choices": [
           "Hide silently and refuse all support",
           "Ask a teacher or nurse for support and use healthy coping steps",
           "Leave school without telling anyone",
           "Take unknown herbs from a stranger"
         ],
-        correct: 1,
-        feedback: [
+        "correct": 1,
+        "feedback": [
           "Silent suffering can make pain feel worse.",
           "Correct. Trusted support can help manage period pain safely.",
           "Leaving without support can be risky.",
           "Unknown herbs may be unsafe."
-        ]
+        ],
+        "source": "American College of Obstetricians and Gynecologists (ACOG) - Dysmenorrhea"
       },
       {
-        title: "Swimming During a Period",
-        scenario:
-          "A teen is invited to swim while on their period and feels unsure. What is true?",
-        choices: [
+        "title": "Swimming During a Period",
+        "scenario": "A teen is invited to swim while on their period and feels unsure. What is true?",
+        "choices": [
           "Swimming is never possible during a period",
           "With the right menstrual products and comfort, many people can swim safely",
           "You must stay out of water for a month",
           "A period means all exercise must stop"
         ],
-        correct: 1,
-        feedback: [
+        "correct": 1,
+        "feedback": [
           "Periods do not automatically ban swimming.",
           "Correct. Many people can stay active during menstruation.",
           "There is no month-long restriction.",
           "Movement is usually still possible if the person feels well."
-        ]
+        ],
+        "source": "Tampax & Kotex - Menstrual Health and Activity"
       },
       {
-        title: "Handling Leaks",
-        scenario:
-          "A student worries about leaking onto clothes at school. What is a helpful plan?",
-        choices: [
+        "title": "Handling Leaks",
+        "scenario": "A student worries about leaking onto clothes at school. What is a helpful plan?",
+        "choices": [
           "Never leave the house again",
           "Carry backup pads, dark clothing, and know where to get support",
           "Use toilet paper alone all day",
           "Avoid drinking water"
         ],
-        correct: 1,
-        feedback: [
+        "correct": 1,
+        "feedback": [
           "Avoiding life entirely is not practical.",
           "Correct. Preparation can reduce stress and embarrassment.",
           "Toilet paper is not a reliable long-term option.",
           "Hydration is still important."
-        ]
+        ],
+        "source": "World Health Organization (WHO) - Menstrual Hygiene Management"
       },
       {
-        title: "Period Stigma",
-        scenario:
-          "Someone says periods are shameful and should be hidden from everyone. What is the best response?",
-        choices: [
+        "title": "Period Stigma",
+        "scenario": "Someone says periods are shameful and should be hidden from everyone. What is the best response?",
+        "choices": [
           "Agree and stay silent",
           "Explain that menstruation is normal and deserves respect",
           "Make fun of other people too",
           "Pretend periods do not exist"
         ],
-        correct: 1,
-        feedback: [
+        "correct": 1,
+        "feedback": [
           "Silence can keep stigma alive.",
           "Correct. Respectful conversation helps reduce shame.",
           "Mocking others worsens stigma.",
           "Ignoring reality does not help anyone."
-        ]
+        ],
+        "source": "UNICEF - Breaking Period Stigma in Schools"
       },
       {
-        title: "Missing School Plans",
-        scenario:
-          "A student worries a period will make them miss important school work. What helps most?",
-        choices: [
+        "title": "Missing School Plans",
+        "scenario": "A student worries a period will make them miss important school work. What helps most?",
+        "choices": [
           "Stop attending school every month",
           "Plan ahead with supplies and let a trusted adult know if support is needed",
           "Pretend nothing will ever happen",
           "Use random painkillers in advance"
         ],
-        correct: 1,
-        feedback: [
+        "correct": 1,
+        "feedback": [
           "Planning can reduce disruption.",
           "Correct. Preparation helps keep school life on track.",
           "Ignoring the issue can increase stress.",
           "Medication should be used carefully and with guidance."
-        ]
+        ],
+        "source": "UNESCO - Education for Adolescent Health and Wellbeing"
+      },
+      {
+        "title": "Period Tracking and Predictions",
+        "scenario": "A student wants to know when her period will come so she can prepare. What is helpful?",
+        "choices": [
+          "Periods are completely random and impossible to predict",
+          "Tracking cycles can help predict when a period might come, though cycles can vary",
+          "Period tracking is shameful and should never be done",
+          "Only doctors can predict periods, not individuals"
+        ],
+        "correct": 1,
+        "feedback": [
+          "Some cycles follow patterns; tracking can help.",
+          "Correct. Many teens track their cycles to prepare and plan ahead.",
+          "Tracking is a practical and helpful health tool.",
+          "Individuals can learn their own cycle patterns over time."
+        ],
+        "source": "American College of Obstetricians and Gynecologists - Menstrual Cycle Tracking"
+      },
+      {
+        "title": "Period Myths and Facts",
+        "scenario": "Amira hears that she shouldn't swim, shower, or exercise during her period. What is true?",
+        "choices": [
+          "All activities must stop during a period",
+          "Most people can exercise, bathe, and swim safely during their period",
+          "Water magically stops the menstrual cycle",
+          "periods only happen indoors away from water"
+        ],
+        "correct": 1,
+        "feedback": [
+          "Activity restrictions are often myths without medical basis.",
+          "Correct. Most teens can stay active, clean, and even swim during their period.",
+          "Water does not stop menstruation; waterproof products are available.",
+          "Periods occur regardless of environment or water exposure."
+        ],
+        "source": "World Health Organization - Menstruation and Activities"
       }
     ]
   },
@@ -391,7 +375,8 @@ const englishModules: StoryModule[] = [
           "Correct. Consent must be clear, free, and ongoing.",
           "Ignoring consent can cause harm and legal consequences.",
           "Threats are abusive and unsafe."
-        ]
+        ],
+        source: "Scarleteen & Advocates for Youth - Consent Resources"
       },
       {
         title: "Digital Pressure",
@@ -409,7 +394,8 @@ const englishModules: StoryModule[] = [
           "Correct. Consent and digital safety matter online too.",
           "Forwarding intimate content can still be harmful.",
           "Anonymity does not remove risk once shared."
-        ]
+        ],
+        source: "Internet Watch Foundation - Online Safety for Young People"
       },
       {
         title: "Asking Before Touching",
@@ -427,7 +413,8 @@ const englishModules: StoryModule[] = [
           "Correct. Simple questions show respect for boundaries.",
           "Assumptions are not consent.",
           "Jokes do not replace permission."
-        ]
+        ],
+        source: "Planned Parenthood - Consent Definition and Examples"
       },
       {
         title: "Changing Your Mind",
@@ -445,7 +432,8 @@ const englishModules: StoryModule[] = [
           "Correct. Ongoing consent matters in every situation.",
           "Honesty should be respected, not punished.",
           "Ignoring boundaries can cause harm."
-        ]
+        ],
+        source: "Sexual Assault Resource Center - Consent and Communication"
       },
       {
         title: "Peer Pressure",
@@ -463,7 +451,8 @@ const englishModules: StoryModule[] = [
           "Correct. Boundaries can protect safety and confidence.",
           "Pressure is not your fault.",
           "Delay can increase stress."
-        ]
+        ],
+        source: "Amaze.org - Peer Pressure and Decision Making for Teens"
       },
       {
         title: "Sharing Screenshots",
@@ -481,7 +470,8 @@ const englishModules: StoryModule[] = [
           "Correct. Respecting privacy is part of healthy boundaries.",
           "Manipulating messages is harmful and dishonest.",
           "Jokes can still hurt and violate trust."
-        ]
+        ],
+        source: "Cyber Civil Rights Initiative - Digital Privacy and Respect"
       },
       {
         title: "Saying No to a Date",
@@ -499,7 +489,8 @@ const englishModules: StoryModule[] = [
           "Correct. Honest communication is kinder and safer.",
           "Confusion can lead to more pressure.",
           "Guilt is not consent."
-        ]
+        ],
+        source: "Scarleteen - Respectful Communication in Relationships"
       },
       {
         title: "Respecting Space",
@@ -517,7 +508,8 @@ const englishModules: StoryModule[] = [
           "Correct. Space can help calm a conflict.",
           "Rumors damage trust.",
           "Showing up uninvited can feel invasive."
-        ]
+        ],
+        source: "Psychology Today - Healthy Conflict Resolution in Relationships"
       },
       {
         title: "Using Alcohol as Pressure",
@@ -535,7 +527,8 @@ const englishModules: StoryModule[] = [
           "Correct. Consent cannot be built on pressure or intoxication.",
           "Care should never look like coercion.",
           "Consent is still required."
-        ]
+        ],
+        source: "RAINN (Rape, Abuse & Incest National Network) - Substance Use and Consent"
       },
       {
         title: "Walking Away Safely",
@@ -553,7 +546,8 @@ const englishModules: StoryModule[] = [
           "Correct. Leaving a risky situation is a valid boundary.",
           "Escalation can increase danger.",
           "Ignoring discomfort does not protect anyone."
-        ]
+        ],
+        source: "National Domestic Violence Hotline - Safety Planning for Young People"
       }
     ]
   },
@@ -578,7 +572,8 @@ const englishModules: StoryModule[] = [
           "Correct. Condoms plus informed planning is safer.",
           "Online tips should be verified with health professionals.",
           "Inconsistent use lowers protection."
-        ]
+        ],
+        source: "Planned Parenthood - Birth Control Methods Comparison"
       },
       {
         title: "Emergency Contraception Timing",
@@ -596,7 +591,8 @@ const englishModules: StoryModule[] = [
           "Correct. Emergency contraception works best as soon as possible.",
           "Painkillers do not prevent pregnancy.",
           "Pregnancy risk can still exist after condom failure."
-        ]
+        ],
+        source: "American College of Obstetricians and Gynecologists - Emergency Contraception"
       },
       {
         title: "Missed Pill",
@@ -614,7 +610,8 @@ const englishModules: StoryModule[] = [
           "Correct. Reading the guidance helps after a missed pill.",
           "One mistake does not mean all protection is gone forever.",
           "Taking random pills is unsafe."
-        ]
+        ],
+        source: "NHS - Getting the Most Out of the Pill"
       },
       {
         title: "Withdrawal Method Myths",
@@ -632,7 +629,8 @@ const englishModules: StoryModule[] = [
           "Correct. Proven methods offer better protection.",
           "Pregnancy can still happen.",
           "Age does not make withdrawal reliable."
-        ]
+        ],
+        source: "Guttmacher Institute - Contraceptive Efficacy Comparison"
       },
       {
         title: "Dual Protection",
@@ -650,7 +648,8 @@ const englishModules: StoryModule[] = [
           "Correct. Dual protection improves safety.",
           "Online tips should be verified with professionals.",
           "Changing methods without guidance can reduce protection."
-        ]
+        ],
+        source: "CDC - Sexual Health - Contraception Information"
       },
       {
         title: "Talking to a Pharmacist",
@@ -668,7 +667,8 @@ const englishModules: StoryModule[] = [
           "Correct. Trusted professionals can explain options safely.",
           "Strangers online are not a safe source.",
           "Rumors can be misleading."
-        ]
+        ],
+        source: "International Planned Parenthood Federation - Youth-Friendly Services"
       },
       {
         title: "Fertility After Stopping Contraception",
@@ -686,7 +686,8 @@ const englishModules: StoryModule[] = [
           "Correct. Many people become fertile again after stopping contraception.",
           "Contraception is designed to prevent pregnancy, not harm fertility.",
           "Contraception does not make pregnancy impossible forever."
-        ]
+        ],
+        source: "American Fertility Association - Contraception and Fertility"
       },
       {
         title: "Condom Storage",
@@ -704,7 +705,8 @@ const englishModules: StoryModule[] = [
           "Correct. Storage matters for effectiveness.",
           "Stretching can cause tears.",
           "Freezing can also damage the material."
-        ]
+        ],
+        source: "California Department of Public Health - Condom Storage Guidelines"
       },
       {
         title: "Choosing a Long-Acting Method",
@@ -722,7 +724,8 @@ const englishModules: StoryModule[] = [
           "Correct. A clinician can explain methods and side effects.",
           "Decisions made without information can be risky.",
           "Friends may not know what fits your needs."
-        ]
+        ],
+        source: "World Health Organization - Contraceptive Choices"
       },
       {
         title: "Partner Discussion",
@@ -740,7 +743,8 @@ const englishModules: StoryModule[] = [
           "Correct. Shared decisions work best with honest communication.",
           "Avoiding the issue can increase risk.",
           "Reliable health information is better than social media guesses."
-        ]
+        ],
+        source: "Our Bodies Ourselves - Shared Decision Making in Relationships"
       }
     ]
   },
@@ -952,7 +956,8 @@ const englishModules: StoryModule[] = [
           "Correct. Early confirmation helps informed next steps.",
           "Unsafe methods can cause serious harm.",
           "Only testing can confirm pregnancy status."
-        ]
+        ],
+        source: "American Pregnancy Association - Early Pregnancy Steps"
       },
       {
         title: "Antenatal Start",
@@ -970,7 +975,8 @@ const englishModules: StoryModule[] = [
           "Correct. Early antenatal care improves outcomes.",
           "Unprescribed drugs may be unsafe in pregnancy.",
           "Regular checkups are important even without emergencies."
-        ]
+        ],
+        source: "WHO - Antenatal Care for Positive Pregnancy Experience"
       },
       {
         title: "Confirming a Test",
@@ -988,7 +994,8 @@ const englishModules: StoryModule[] = [
           "Correct. Confirming the result helps planning and support.",
           "Random medicine can be harmful.",
           "Support is important after a pregnancy test."
-        ]
+        ],
+        source: "Planned Parenthood - Pregnancy Test Confirmation"
       },
       {
         title: "Warning Signs in Pregnancy",
@@ -1006,7 +1013,8 @@ const englishModules: StoryModule[] = [
           "Correct. Prompt care can protect mother and baby.",
           "Exercise does not replace medical assessment.",
           "Hydration is still important."
-        ]
+        ],
+        source: "Mayo Clinic - Pregnancy Warning Signs"
       },
       {
         title: "Nutrition Support",
@@ -1024,7 +1032,8 @@ const englishModules: StoryModule[] = [
           "Correct. Nutrition supports healthy pregnancy.",
           "Unknown pills may be unsafe.",
           "Energy drinks are not a pregnancy plan."
-        ]
+        ],
+        source: "Academy of Nutrition and Dietetics - Pregnancy Nutrition"
       },
       {
         title: "Support After an Unplanned Pregnancy",
@@ -1042,7 +1051,8 @@ const englishModules: StoryModule[] = [
           "Correct. Trusted support helps with safe decisions.",
           "Public posts can expose privacy.",
           "Unsafe methods can cause serious harm."
-        ]
+        ],
+        source: "American College of Obstetricians and Gynecologists - Pregnancy Support Services"
       },
       {
         title: "Avoiding Unsafe Methods",
@@ -1060,7 +1070,8 @@ const englishModules: StoryModule[] = [
           "Correct. Medical guidance is safer than dangerous shortcuts.",
           "Secrecy can increase harm.",
           "Unknown pills are not safe."
-        ]
+        ],
+        source: "World Health Organization - Safe Abortion Care Guidelines"
       },
       {
         title: "Clinic Visits",
@@ -1078,7 +1089,8 @@ const englishModules: StoryModule[] = [
           "Correct. Routine care helps catch issues early.",
           "Care matters throughout pregnancy.",
           "Friends cannot provide medical monitoring."
-        ]
+        ],
+        source: "NHS - Regular Antenatal Checks"
       },
       {
         title: "Birth Planning",
@@ -1096,7 +1108,8 @@ const englishModules: StoryModule[] = [
           "Correct. Preparation supports safer delivery.",
           "Last-minute planning is stressful.",
           "Reliable support should come from trusted health services too."
-        ]
+        ],
+        source: "Cochrane - Birth Plan Communication"
       },
       {
         title: "Emotional Support",
@@ -1114,7 +1127,8 @@ const englishModules: StoryModule[] = [
           "Correct. Support is important in pregnancy decisions.",
           "Judgment can make things harder.",
           "Fear is a reason to ask for help, not avoid it."
-        ]
+        ],
+        source: "British Association for Psychopharmacology - Adolescent Pregnancy Support"
       }
     ]
   },
@@ -1139,7 +1153,8 @@ const englishModules: StoryModule[] = [
           "Correct. Control and monitoring are relationship red flags.",
           "Patterns matter, not excuses.",
           "Healthy communication respects autonomy."
-        ]
+        ],
+        source: "National Domestic Violence Hotline - Healthy vs Unhealthy Relationships"
       },
       {
         title: "Conflict Resolution",
@@ -1157,7 +1172,8 @@ const englishModules: StoryModule[] = [
           "Correct. Respectful dialogue and accountability build trust.",
           "Public shaming harms safety and trust.",
           "Extended silence can escalate conflict."
-        ]
+        ],
+        source: "Gottman Institute - Conflict Resolution in Relationships"
       },
       {
         title: "Respecting Alone Time",
@@ -1175,7 +1191,8 @@ const englishModules: StoryModule[] = [
           "Correct. Healthy relationships allow individual space.",
           "Constant demands are not respectful.",
           "Punishment does not solve conflict."
-        ]
+        ],
+        source: "Psychology Today - Personal Space in Relationships"
       },
       {
         title: "Apologizing Well",
@@ -1193,7 +1210,8 @@ const englishModules: StoryModule[] = [
           "Correct. Accountability matters.",
           "Blame shifts avoid responsibility.",
           "Real repair usually needs direct conversation."
-        ]
+        ],
+        source: "Greater Good Science Center - The Art of Apology"
       },
       {
         title: "Social Media Boundaries",
@@ -1211,7 +1229,8 @@ const englishModules: StoryModule[] = [
           "Correct. Boundary respect matters online too.",
           "Not every relationship needs total access.",
           "Patterns of control can matter a lot."
-        ]
+        ],
+        source: "Pew Research Center - Digital Privacy in Relationships"
       },
       {
         title: "Supporting a Friend",
@@ -1229,7 +1248,8 @@ const englishModules: StoryModule[] = [
           "Correct. Support and belief can make a huge difference.",
           "Gossip can increase danger.",
           "Abuse is never the survivor's fault."
-        ]
+        ],
+        source: "National Coalition Against Domestic Violence - Supporting Friends"
       },
       {
         title: "Healthy Jealousy?",
@@ -1265,7 +1285,8 @@ const englishModules: StoryModule[] = [
           "Correct. Balance supports wellbeing.",
           "Personal needs still matter.",
           "Control is not a healthy goal."
-        ]
+        ],
+        source: "Greater Good Science Center - Friendships and Romantic Love"
       },
       {
         title: "Saying No to Pressure",
@@ -1283,7 +1304,8 @@ const englishModules: StoryModule[] = [
           "Correct. Boundaries deserve respect.",
           "Avoiding conflict is not worth ignoring safety.",
           "Pressure is not proof of love."
-        ]
+        ],
+        source: "Planned Parenthood - Setting Boundaries in Relationships"
       },
       {
         title: "Red Flag Patterns",
@@ -1301,7 +1323,8 @@ const englishModules: StoryModule[] = [
           "Correct. Patterns matter in relationship safety.",
           "Harm is not a game.",
           "Control is not commitment."
-        ]
+        ],
+        source: "Psychology Today - Recognizing Relationship Red Flags"
       }
     ]
   },
@@ -1326,7 +1349,8 @@ const englishModules: StoryModule[] = [
           "Correct. Support seeking is a strength, not a weakness.",
           "Alcohol can worsen mental health symptoms.",
           "Major decisions should be made with support and planning."
-        ]
+        ],
+        source: "Mental Health Foundation - Help-Seeking for Young People"
       },
       {
         title: "Panic in Public",
@@ -1344,7 +1368,8 @@ const englishModules: StoryModule[] = [
           "Correct. Calm support and safety-first action helps.",
           "Abandonment can worsen panic.",
           "Forcing activity can intensify symptoms."
-        ]
+        ],
+        source: "Anxiety and Depression Association of America - Panic Disorder"
       },
       {
         title: "Trouble Sleeping",
@@ -1362,7 +1387,8 @@ const englishModules: StoryModule[] = [
           "Correct. Routine and support can improve sleep.",
           "Energy drinks can worsen sleep problems.",
           "Basic self-care still matters."
-        ]
+        ],
+        source: "American Academy of Sleep Medicine - Sleep for Adolescents"
       },
       {
         title: "Overthinking a Mistake",
@@ -1380,7 +1406,8 @@ const englishModules: StoryModule[] = [
           "Correct. Compassion helps people recover from mistakes.",
           "Suppressing feelings does not solve them.",
           "Isolation can increase distress."
-        ]
+        ],
+        source: "Center for Healthy Minds - Self-Compassion Research"
       },
       {
         title: "Grief and Stress",
@@ -1398,7 +1425,8 @@ const englishModules: StoryModule[] = [
           "Correct. Support can ease the burden of grief.",
           "Feelings cannot be switched off on command.",
           "Acknowledging loss matters."
-        ]
+        ],
+        source: "American Psychological Association - Grief and Loss"
       },
       {
         title: "Coping Without Substances",
@@ -1416,7 +1444,8 @@ const englishModules: StoryModule[] = [
           "Correct. Healthy coping is safer than substances.",
           "Unknown pills are dangerous.",
           "Support and coping strategies are more effective."
-        ]
+        ],
+        source: "SAMHSA - Healthy Coping Strategies for Youth"
       },
       {
         title: "When To Ask For Help",
@@ -1434,7 +1463,8 @@ const englishModules: StoryModule[] = [
           "Correct. Early support can prevent worsening distress.",
           "Silence can increase isolation.",
           "Exhaustion does not heal emotional pain."
-        ]
+        ],
+        source: "Mental Health Foundation - When to Seek Help"
       },
       {
         title: "Self-Harm Warning Signs",
@@ -1452,7 +1482,8 @@ const englishModules: StoryModule[] = [
           "Correct. Immediate support is important.",
           "Minimizing distress can be dangerous.",
           "Isolation can increase risk."
-        ]
+        ],
+        source: "American Foundation for Suicide Prevention - Safety Planning"
       },
       {
         title: "Grounding in the Moment",
@@ -1470,7 +1501,8 @@ const englishModules: StoryModule[] = [
           "Correct. Grounding can reduce intense stress in the moment.",
           "Exhaustion is not a coping skill.",
           "Conflict usually increases stress."
-        ]
+        ],
+        source: "DBT Linehan Institute - Mindfulness and Grounding"
       },
       {
         title: "Checking In Daily",
@@ -1488,7 +1520,8 @@ const englishModules: StoryModule[] = [
           "Correct. Tracking can help identify triggers and supports.",
           "Harsh judgment can worsen symptoms.",
           "Support is useful before things become perfect."
-        ]
+        ],
+        source: "Cambridge University Press - Mental Health Tracking and Recovery"
       }
     ]
   }
