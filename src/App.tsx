@@ -404,7 +404,7 @@ function AppContent() {
   }
 
   if (showPanicScreen) {
-    return <PanicScreen onExit={() => setShowPanicScreen(false)} />;
+    return <PanicScreen onExit={() => setShowPanicScreen(false)} sessionId={sessionId} />;
   }
 
   return (

@@ -10,7 +10,7 @@ import { logger } from '@/utils/logger';
 
 export interface PanicEventRequest {
   session_id: string;
-  action: 'activated' | 'dismissed';
+  action: 'initiated' | 'exited';
   time_active_seconds?: number;
 }
 

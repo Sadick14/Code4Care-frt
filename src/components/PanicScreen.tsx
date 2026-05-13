@@ -19,7 +19,7 @@ export function PanicScreen({ onExit, sessionId }: PanicScreenProps) {
     if (sessionId) {
       SafetyService.logPanicEvent({
         session_id: sessionId,
-        action: 'activated',
+        action: 'initiated',
         time_active_seconds: 0,
       }).catch((error) => {
         logger.error('Failed to log panic activation', error);
@@ -53,7 +53,7 @@ export function PanicScreen({ onExit, sessionId }: PanicScreenProps) {
         const timeActiveSeconds = Math.floor((Date.now() - activationTimeRef.current) / 1000);
         await SafetyService.logPanicEvent({
           session_id: sessionId,
-          action: 'dismissed',
+          action: 'exited',
           time_active_seconds: timeActiveSeconds,
         });
         logger.info(`Panic screen dismissed after ${timeActiveSeconds} seconds`);
