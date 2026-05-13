@@ -242,13 +242,16 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
                           ) : (
                             <Badge className="text-xs bg-green-100 text-green-700 border-green-200 hover:bg-green-100">Active</Badge>
                           )}
-                          {conv.is_escalated && (
-                            <Badge className="text-xs bg-red-100 text-red-700 border-red-200 hover:bg-red-100">Escalated</Badge>
+                          {conv.has_crisis && (
+                            <Badge className="text-xs bg-red-100 text-red-700 border-red-200 hover:bg-red-100">
+                              <AlertCircle className="w-3 h-3 mr-1" />Crisis
+                            </Badge>
+                          )}
+                          {conv.has_panic && (
+                            <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">Panic</Badge>
                           )}
                           {conv.has_safety_flags && (
-                            <Badge className="text-xs bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">
-                              <AlertCircle className="w-3 h-3 mr-1" />Safety flag
-                            </Badge>
+                            <Badge className="text-xs bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">Safety flag</Badge>
                           )}
                         </div>
                       </td>

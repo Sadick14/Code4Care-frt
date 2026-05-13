@@ -145,6 +145,8 @@ export interface AdminConversationListItem {
   ended_at?: string | null;
   is_escalated: boolean;
   has_safety_flags: boolean;
+  has_crisis?: boolean;
+  has_panic?: boolean;
 }
 
 export interface AdminConversationListResponse {
