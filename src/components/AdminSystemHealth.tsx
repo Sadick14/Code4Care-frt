@@ -1,26 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Server, Zap, AlertTriangle, CheckCircle2, TrendingUp, Database, FileText, Clock3, Download } from 'lucide-react';
+import { FileText, Clock3, Download } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { motion } from 'motion/react';
-import {
-  Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
-} from 'recharts';
-import { HealthMetricsService } from '@/services/healthMetricsService';
 import { AuditLogService } from '@/services/auditLogService';
-import { getNumber } from '@/utils/analyticsUtils';
 import { buildAdminExportFilename, downloadJsonFile } from '@/utils/adminExport';
 import { logger } from '@/utils/logger';
-
-interface SystemMetric {
-  name: string;
-  value: string | number;
-  unit: string;
-  status: 'healthy' | 'warning' | 'critical';
-  trend: number;
-  icon: React.ReactNode;
-}
 
 interface AdminSystemHealthProps {
   selectedLanguage: string;
@@ -43,70 +29,8 @@ interface PerformanceData {
 
 export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystemHealthProps) {
   void selectedLanguage;
-  const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h'>('1h');
-  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
-  const [isLoadingPerformance, setIsLoadingPerformance] = useState(true);
   const [isLoadingAudit, setIsLoadingAudit] = useState(true);
-  const [healthMetrics, setHealthMetrics] = useState<any | null>(null);
-  const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-
-  // Load health metrics
-  useEffect(() => {
-    let mounted = true;
-
-    const loadMetrics = async () => {
-      setIsLoadingMetrics(true);
-      try {
-        const metrics = await HealthMetricsService.getHealthMetrics(accessToken);
-        if (mounted) {
-          setHealthMetrics(metrics);
-        }
-      } catch (error) {
-        logger.error('Failed to load health metrics', error);
-        setHealthMetrics(null);
-      } finally {
-        if (mounted) {
-          setIsLoadingMetrics(false);
-        }
-      }
-    };
-
-    void loadMetrics();
-    return () => { mounted = false; };
-  }, []);
-
-  // Load performance data
-  useEffect(() => {
-    let mounted = true;
-
-    const loadPerformance = async () => {
-      setIsLoadingPerformance(true);
-      try {
-        const response = await HealthMetricsService.getPerformanceHistory(timeRange, accessToken);
-        if (mounted) {
-          // Transform api response to chart format
-          const transformed = response.data.map((point) => ({
-            time: point.time,
-            response: point.response_time_ms,
-            errors: Math.round(point.error_rate * 100),
-            uptime: point.uptime_percent,
-          }));
-          setPerformanceData(transformed);
-        }
-      } catch (error) {
-        logger.error('Failed to load performance data', error);
-        setPerformanceData([]);
-      } finally {
-        if (mounted) {
-          setIsLoadingPerformance(false);
-        }
-      }
-    };
-
-    void loadPerformance();
-    return () => { mounted = false; };
-  }, [timeRange]);
 
   // Load audit logs
   useEffect(() => {
@@ -146,99 +70,6 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
     return () => { mounted = false; };
   }, []);
 
-
-  // Compute response-time trend from performance history (first half vs second half)
-  const rtTrend = (() => {
-    if (performanceData.length < 4) return 0;
-    const half = Math.floor(performanceData.length / 2);
-    const older = performanceData.slice(0, half).map(d => d.response).filter(v => v > 0);
-    const newer = performanceData.slice(half).map(d => d.response).filter(v => v > 0);
-    if (!older.length || !newer.length) return 0;
-    const avgOlder = older.reduce((a, b) => a + b, 0) / older.length;
-    const avgNewer = newer.reduce((a, b) => a + b, 0) / newer.length;
-    return Number(((avgNewer - avgOlder) / avgOlder * 100).toFixed(1));
-  })();
-
-  const metrics: SystemMetric[] = healthMetrics ? [
-    {
-      name: 'Avg Response Time',
-      value: getNumber(healthMetrics?.metrics, 'api_response_time', 'apiResponseTime', 'response_time_avg_ms') || getNumber(healthMetrics, 'response_time_avg_ms'),
-      unit: 'ms',
-      status: (getNumber(healthMetrics?.metrics, 'api_response_time', 'apiResponseTime', 'response_time_avg_ms') || getNumber(healthMetrics, 'response_time_avg_ms')) > 1000 ? 'warning' : 'healthy',
-      trend: rtTrend,
-      icon: <Zap className="w-5 h-5 text-blue-400" />,
-    },
-    {
-      name: 'System Uptime',
-      value: getNumber(healthMetrics?.metrics, 'system_uptime', 'systemUptime', 'uptime_percent') || getNumber(healthMetrics, 'uptime_percent'),
-      unit: '%',
-      status: (getNumber(healthMetrics?.metrics, 'system_uptime', 'systemUptime', 'uptime_percent') || 100) < 99 ? 'warning' : 'healthy',
-      trend: 0,
-      icon: <Activity className="w-5 h-5 text-green-400" />,
-    },
-    {
-      name: 'Error Rate',
-      value: getNumber(healthMetrics?.metrics, 'error_rate', 'errorRate', 'error_rate').toFixed(2),
-      unit: '/min',
-      status: getNumber(healthMetrics?.metrics, 'error_rate', 'errorRate', 'error_rate') > 1 ? 'warning' : 'healthy',
-      trend: 0,
-      icon: <AlertTriangle className="w-5 h-5 text-yellow-400" />,
-    },
-    {
-      name: 'Active Sessions',
-      value: getNumber(healthMetrics?.metrics, 'active_engagements', 'activeEngagements', 'active_sessions') || getNumber(healthMetrics, 'active_sessions'),
-      unit: 'today',
-      status: 'healthy',
-      trend: 0,
-      icon: <Server className="w-5 h-5 text-purple-400" />,
-    },
-    {
-      name: 'Overall Status',
-      value: healthMetrics?.overall_status === 'healthy' ? 'Healthy' : healthMetrics?.overall_status === 'degraded' ? 'Degraded' : 'Unhealthy',
-      unit: '',
-      status: healthMetrics?.overall_status === 'healthy' ? 'healthy' : healthMetrics?.overall_status === 'degraded' ? 'warning' : 'critical',
-      trend: 0,
-      icon: <Activity className="w-5 h-5 text-green-400" />,
-    },
-    {
-      name: 'DB Messages/hr',
-      value: getNumber(healthMetrics?.metrics, 'database_queries', 'databaseQueries', 'database_queries'),
-      unit: '/hr',
-      status: 'healthy',
-      trend: 0,
-      icon: <Database className="w-5 h-5 text-cyan-400" />,
-    },
-  ] : [];
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'healthy':
-        return <Badge className="bg-green-50 text-green-600 border-green-200"><CheckCircle2 className="w-3 h-3 mr-1" /> Healthy</Badge>;
-      case 'warning':
-        return <Badge className="bg-yellow-50 text-yellow-600 border-yellow-200"><AlertTriangle className="w-3 h-3 mr-1" /> Warning</Badge>;
-      case 'critical':
-        return <Badge className="bg-red-50 text-red-600 border-red-200"><AlertTriangle className="w-3 h-3 mr-1" /> Critical</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  const MetricSkeleton = () => (
-    <Card className="p-4 bg-white border-[#E8ECFF]">
-      <div className="flex items-start justify-between mb-2">
-        <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
-        <div className="w-16 h-6 bg-gray-200 rounded animate-pulse" />
-      </div>
-      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2" />
-      <div className="h-8 w-16 bg-gray-200 rounded animate-pulse" />
-      <div className="h-3 w-20 bg-gray-200 rounded animate-pulse mt-2" />
-    </Card>
-  );
-
-  const ChartSkeleton = () => (
-    <div className="h-80 w-full bg-gray-100 rounded-lg animate-pulse" />
-  );
-
   const LogSkeleton = () => (
     <div className="flex items-start justify-between gap-4 rounded-lg border border-[#E8ECFF] bg-gray-50 p-3">
       <div className="space-y-1 width-full">
@@ -250,14 +81,10 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
   );
 
   const handleExport = () => {
-    downloadJsonFile(buildAdminExportFilename('system-health'), {
-      section: 'system-health',
+    downloadJsonFile(buildAdminExportFilename('system-audit'), {
+      section: 'system-audit',
       generatedAt: new Date().toISOString(),
-      timeRange,
-      metrics,
-      performanceData,
       auditLogs,
-      healthMetrics,
     });
   };
 
@@ -266,93 +93,20 @@ export function AdminSystemHealth({ selectedLanguage, accessToken }: AdminSystem
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">System Health</h1>
-          <p className="text-gray-500">Monitor core service health and review system audit activity.</p>
+          <h1 className="text-3xl font-bold text-gray-900">System Audit</h1>
+          <p className="text-gray-500">Review system audit activity.</p>
         </div>
         <Button variant="outline" className="gap-2 border-[#F4D6D5] hover:bg-[#FFF1F1] text-[#BE322D]" onClick={handleExport}>
           <Download className="w-4 h-4" />
           Export
         </Button>
       </div>
-
-      {/* Time Range Selector */}
-      <div className="flex gap-2">
-        {(['1h', '6h', '24h'] as const).map((range) => (
-          <Button
-            key={range}
-            variant={timeRange === range ? 'default' : 'outline'}
-            onClick={() => setTimeRange(range)}
-            className={timeRange === range ? 'bg-gradient-to-r from-[#BE322D] to-[#F16365] hover:from-[#9F2622] hover:to-[#DD575A]' : 'border-[#F4D6D5] hover:bg-[#FFF1F1]'}
-          >
-            Last {range === '1h' ? '1 Hour' : range === '6h' ? '6 Hours' : '24 Hours'}
-          </Button>
-        ))}
-      </div>
-
-      {/* Core Metrics */}
-      <div className="grid grid-cols-3 gap-4">
-        {isLoadingMetrics || metrics.length === 0
-          ? Array.from({ length: 6 }).map((_, i) => <MetricSkeleton key={i} />)
-          : metrics.map((metric, idx) => (
-            <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-              <Card className="p-4 bg-white border-[#F4D6D5] hover:border-[#F16365] transition-colors">
-                <div className="flex items-start justify-between mb-2">
-                  <div>{metric.icon}</div>
-                  {getStatusBadge(metric.status)}
-                </div>
-                <h3 className="text-sm text-gray-600 mb-1">{metric.name}</h3>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-gray-900">{metric.value}</span>
-                  <span className="text-gray-500 text-sm">{metric.unit}</span>
-                </div>
-                <div className={`text-xs mt-2 flex items-center gap-1 ${metric.trend < 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {metric.trend !== 0 && (
-                    <>
-                      <TrendingUp className={`w-3 h-3 ${metric.trend < 0 ? 'rotate-180' : ''}`} />
-                      {Math.abs(metric.trend)}% from 1h ago
-                    </>
-                  )}
-                  {metric.trend === 0 && <span>Stable</span>}
-                </div>
-              </Card>
-            </motion.div>
-          )) }
-      </div>
-
-      {/* Service Health and System Logs */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <Card className="p-6 bg-white border-[#E8ECFF]">
-          <h3 className="text-gray-900 font-semibold mb-4 flex items-center gap-2">
-            <Server className="w-4 h-4 text-[#BE322D]" />
-            Response Time & Error Rate
-          </h3>
-          {isLoadingPerformance ? (
-            <ChartSkeleton />
-          ) : performanceData?.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" />
-                <XAxis dataKey="time" stroke="#9CA3AF" />
-                <YAxis yAxisId="left" stroke="#9CA3AF" />
-                <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #E8ECFF', borderRadius: '8px' }}
-                  labelStyle={{ color: '#111827' }}
-                />
-                <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="response" stroke="#BE322D" name="Response (ms)" strokeWidth={2} />
-                <Bar yAxisId="right" dataKey="errors" fill="#EF4444" name="Errors" opacity={0.6} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-80 flex items-center justify-center text-gray-500">No performance data available</div>
-          )}
-        </Card>
-
+      {/* System Audit */}
+      <div className="grid grid-cols-1 gap-4">
         <Card className="p-6 bg-white border-[#E8ECFF]">
           <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <FileText className="w-4 h-4 text-green-600" />
-            System Logs
+            Audit Logs
           </h3>
           <p className="mb-3 text-xs text-gray-500">User and system events captured across the platform.</p>
           <div className="space-y-3">
