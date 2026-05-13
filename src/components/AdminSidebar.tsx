@@ -1,10 +1,29 @@
-import { BarChart3, Users, LogOut, X, AlertCircle, FileText, Database } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Users,
+  MessageSquare,
+  AlertTriangle,
+  Sparkles,
+  HeadphonesIcon,
+  BookOpen,
+  Shield,
+  LogOut,
+  X,
+} from 'lucide-react';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
 import { motion } from 'motion/react';
 
-type AdminSection = 'dashboard' | 'users' | 'safety' | 'reports' | 'health';
+export type AdminSection =
+  | 'overview'
+  | 'users'
+  | 'conversations'
+  | 'safety'
+  | 'engagement'
+  | 'support'
+  | 'knowledge'
+  | 'audit';
 
 interface AdminSidebarProps {
   currentSection: AdminSection;
@@ -14,32 +33,40 @@ interface AdminSidebarProps {
   onClose?: () => void;
 }
 
+const navigationItems: {
+  id: AdminSection;
+  label: string;
+  icon: React.ElementType;
+  desc: string;
+}[] = [
+  { id: 'overview',      label: 'Overview',             icon: LayoutDashboard,  desc: 'Executive summary & KPIs' },
+  { id: 'users',         label: 'Users & Sessions',     icon: Users,            desc: 'Demographics & retention' },
+  { id: 'conversations', label: 'Conversations',         icon: MessageSquare,    desc: 'Chat volume & topics' },
+  { id: 'safety',        label: 'Safety & Crisis',       icon: AlertTriangle,    desc: 'Crisis & escalations' },
+  { id: 'engagement',    label: 'Feature Engagement',   icon: Sparkles,         desc: 'Stories, myths & resources' },
+  { id: 'support',       label: 'Support & Consultants',icon: HeadphonesIcon,   desc: 'Queue & SLA tracking' },
+  { id: 'knowledge',     label: 'Knowledge Base',       icon: BookOpen,         desc: 'Documents & citations' },
+  { id: 'audit',         label: 'Admin & Audit',        icon: Shield,           desc: 'Reports & audit log' },
+];
+
 export function AdminSidebar({
   currentSection,
   setCurrentSection,
   onLogout,
   isMobile = false,
-  onClose
+  onClose,
 }: AdminSidebarProps) {
-  const navigationItems = [
-    { id: 'dashboard' as AdminSection, label: 'Analytics Dashboard', icon: BarChart3, desc: 'View metrics & insights' },
-    { id: 'users' as AdminSection, label: 'User Management', icon: Users, desc: 'Manage user accounts' },
-    { id: 'safety' as AdminSection, label: 'Safety & Crisis', icon: AlertCircle, desc: 'Monitor incidents' },
-    //{ id: 'reports' as AdminSection, label: 'Reports', icon: FileText, desc: 'Generate reports' },
-    { id: 'health' as AdminSection, label: 'System Audit', icon: Database, desc: 'Review audit activity' },
-  ];
-
   return (
     <div className="flex flex-col h-full bg-white text-gray-900">
       {/* Header */}
-      <div className="p-6 border-b border-[#E8ECFF]">
+      <div className="p-5 border-b border-[#E8ECFF]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#BE322D] to-[#F16365] flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-white" />
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#BE322D] to-[#F16365] flex items-center justify-center flex-shrink-0">
+              <LayoutDashboard className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-lg leading-tight text-gray-900">Room 1221</h2>
+              <h2 className="font-bold text-base leading-tight text-gray-900">Room 1221</h2>
               <p className="text-[10px] text-gray-500 uppercase tracking-wider">Admin Panel</p>
             </div>
           </div>
@@ -53,10 +80,10 @@ export function AdminSidebar({
 
       {/* Navigation */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-2">
-          <div className="text-xs font-bold text-gray-500 uppercase tracking-widest px-3 mb-4">
-            Management
-          </div>
+        <div className="p-3 space-y-0.5">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 pt-2 pb-3">
+            Analytics
+          </p>
 
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -68,28 +95,32 @@ export function AdminSidebar({
                   setCurrentSection(item.id);
                   onClose?.();
                 }}
-                whileHover={{ x: 4 }}
+                whileHover={{ x: 3 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full group rounded-lg px-3 py-3 transition-all duration-200 relative overflow-hidden ${
+                className={`w-full group rounded-lg px-3 py-2.5 transition-all duration-150 ${
                   isActive
                     ? 'bg-[#FFF1F1] border border-[#F4D6D5]'
                     : 'hover:bg-gray-50 text-gray-700 hover:text-gray-900'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-5 h-5 transition-transform ${isActive ? 'text-[#BE322D]' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                  <div className="text-left flex-1">
-                    <div className={`text-sm font-semibold ${isActive ? 'text-[#BE322D]' : 'text-gray-700'}`}>
+                <div className="flex items-center gap-2.5">
+                  <Icon
+                    className={`w-4 h-4 flex-shrink-0 ${
+                      isActive ? 'text-[#BE322D]' : 'text-gray-400 group-hover:text-gray-600'
+                    }`}
+                  />
+                  <div className="text-left flex-1 min-w-0">
+                    <div className={`text-sm font-medium truncate ${isActive ? 'text-[#BE322D]' : 'text-gray-700'}`}>
                       {item.label}
                     </div>
-                    <div className={`text-[11px] ${isActive ? 'text-[#F16365]' : 'text-gray-500'}`}>
+                    <div className={`text-[10px] truncate ${isActive ? 'text-[#F16365]' : 'text-gray-400'}`}>
                       {item.desc}
                     </div>
                   </div>
                   {isActive && (
                     <motion.div
-                      layoutId="active-indicator"
-                      className="w-1.5 h-1.5 rounded-full bg-[#BE322D]"
+                      layoutId="active-dot"
+                      className="w-1.5 h-1.5 rounded-full bg-[#BE322D] flex-shrink-0"
                     />
                   )}
                 </div>
@@ -101,14 +132,14 @@ export function AdminSidebar({
 
       <Separator className="bg-[#F4D6D5]" />
 
-      {/* Footer */}
-      <div className="p-4">
+      <div className="p-3">
         <Button
           onClick={onLogout}
-          className="w-full rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 gap-2 font-semibold"
+          variant="ghost"
+          className="w-full justify-start gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 font-medium text-sm"
         >
           <LogOut className="w-4 h-4" />
-          Logout
+          Sign out
         </Button>
       </div>
     </div>
