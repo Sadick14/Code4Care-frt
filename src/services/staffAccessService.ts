@@ -136,6 +136,7 @@ export interface AdminStaffAvailabilityResponse {
 export interface AdminConversationListItem {
   id: string;
   session_id: string;
+  user_nickname?: string;
   language: string;
   message_count: number;
   created_at: string;

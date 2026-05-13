@@ -7,6 +7,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, UserPlus, UserCheck, Activity, Monitor, Smartphone, Tablet } from 'lucide-react';
+import { ExportButton } from './ExportButton';
 import { RealAnalyticsService } from '@/services/realAnalyticsService';
 import { getNumber } from '@/utils/analyticsUtils';
 import { StaffSession } from '@/services/staffAccessService';
@@ -107,13 +108,32 @@ export function UsersSessionsPage({ session }: UsersSessionsPageProps) {
               <h1 className="text-2xl font-bold text-gray-900">Users & Sessions</h1>
               <p className="text-sm text-gray-500 mt-0.5">Demographics, retention and session analytics</p>
             </div>
-            <div className="flex gap-1 bg-white border border-[#E8ECFF] rounded-lg p-1">
-              {(['today', 'week', 'month'] as Period[]).map((p) => (
-                <button key={p} onClick={() => setPeriod(p)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${period === p ? 'bg-[#BE322D] text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
-                  {p === 'today' ? 'Today' : p === 'week' ? 'Week' : 'Month'}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <ExportButton
+                data={{
+                  title: `Users & Sessions — ${periodLabel}`,
+                  filename: 'users-sessions',
+                  headers: ['Metric', 'Value'],
+                  rows: [
+                    ['Total Sessions', String(totalUsers)],
+                    [`New (${periodLabel})`, String(newUsers)],
+                    ['Returning', String(returning)],
+                    ['Retention Rate', retentionRate > 0 ? `${retentionRate.toFixed(1)}%` : '0%'],
+                    ...ageData.map((d) => [`Age: ${d.name}`, String(d.value)]),
+                    ...genderData.map((d) => [`Gender: ${d.name}`, String(d.value)]),
+                    ...regionData.map((d) => [`Region: ${d.name}`, String(d.value)]),
+                    ...langData.map((d) => [`Language: ${d.name}`, String(d.value)]),
+                  ],
+                }}
+              />
+              <div className="flex gap-1 bg-white border border-[#E8ECFF] rounded-lg p-1">
+                {(['today', 'week', 'month'] as Period[]).map((p) => (
+                  <button key={p} onClick={() => setPeriod(p)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${period === p ? 'bg-[#BE322D] text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    {p === 'today' ? 'Today' : p === 'week' ? 'Week' : 'Month'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </motion.div>

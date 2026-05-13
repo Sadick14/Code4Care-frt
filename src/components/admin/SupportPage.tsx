@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { HeadphonesIcon, Clock, CheckCircle, AlertTriangle, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ExportButton } from './ExportButton';
 import {
   SupportRequestService,
   SupportRequestListItem,
@@ -226,7 +227,23 @@ export function SupportPage({ session }: SupportPageProps) {
         <Card className="border-[#E8ECFF] bg-white overflow-hidden">
           <div className="p-5 border-b border-[#E8ECFF] flex items-center justify-between flex-wrap gap-3">
             <h3 className="font-semibold text-gray-900 text-sm">Request Queue</h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <ExportButton
+                data={{
+                  title: 'Support Request Queue',
+                  filename: 'support-requests',
+                  headers: ['ID', 'Session', 'Nickname', 'Status', 'Urgency', 'Created', 'Assigned To'],
+                  rows: requests.map((r) => [
+                    r.id.slice(-8),
+                    r.session_id ? `…${r.session_id.slice(-8)}` : '—',
+                    r.user_nickname ?? '—',
+                    r.status,
+                    r.urgency,
+                    new Date(r.created_at).toLocaleString('en-GB'),
+                    r.assigned_staff?.name ?? r.assigned_staff?.id?.slice(-8) ?? '—',
+                  ]),
+                }}
+              />
               <select
                 value={statusFilter ?? ''}
                 onChange={(e) => { setStatusFilter((e.target.value || undefined) as SupportRequestStatus | undefined); setPage(1); }}

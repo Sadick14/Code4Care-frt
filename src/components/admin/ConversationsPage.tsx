@@ -6,7 +6,8 @@ import {
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Clock, TrendingUp, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageSquare, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ExportButton } from './ExportButton';
 import {
   StaffAccessService,
   StaffSession,
@@ -146,7 +147,23 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
         <Card className="border-[#E8ECFF] bg-white overflow-hidden">
           <div className="p-5 border-b border-[#E8ECFF] flex items-center justify-between flex-wrap gap-3">
             <h3 className="font-semibold text-gray-900 text-sm">Conversation Log</h3>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <ExportButton
+                data={{
+                  title: 'Conversation Log',
+                  filename: 'conversations',
+                  headers: ['User', 'Session ID', 'Started', 'Last Active', 'Messages', 'Language', 'Status'],
+                  rows: convs.map((c) => [
+                    c.user_nickname ?? 'Anonymous',
+                    `…${c.session_id.slice(-8)}`,
+                    new Date(c.created_at).toLocaleString('en-GB'),
+                    new Date(c.last_active_at).toLocaleString('en-GB'),
+                    String(c.message_count),
+                    c.language ?? 'en',
+                    c.is_escalated ? 'Escalated' : c.has_safety_flags ? 'Safety Flag' : 'Normal',
+                  ]),
+                }}
+              />
               {([
                 { label: 'All', value: null },
                 { label: 'Escalated', value: true },
@@ -171,7 +188,7 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-[#E8ECFF]">
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Session</th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">User</th>
                   <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Started</th>
                   <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Last Active</th>
                   <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Messages</th>
@@ -193,7 +210,10 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
                 ) : (
                   convs.map((conv) => (
                     <tr key={conv.id} className="border-b border-[#E8ECFF] hover:bg-gray-50/50 transition-colors">
-                      <td className="px-4 py-3 font-mono text-xs text-gray-600">…{conv.session_id.slice(-8)}</td>
+                      <td className="px-4 py-3">
+                        <p className="text-xs font-medium text-gray-900">{conv.user_nickname ?? 'Anonymous'}</p>
+                        <p className="text-xs text-gray-400 font-mono">…{conv.session_id.slice(-8)}</p>
+                      </td>
                       <td className="px-4 py-3 text-xs text-gray-600">
                         <div>{formatDate(conv.created_at)}</div>
                         <div className="text-gray-400">{formatTime(conv.created_at)}</div>

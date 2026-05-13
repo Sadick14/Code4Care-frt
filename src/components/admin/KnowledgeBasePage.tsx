@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, FileText, CheckCircle, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ExportButton } from './ExportButton';
 import { logger } from '@/utils/logger';
 
 function Skeleton({ className = '' }: { className?: string }) {
@@ -257,7 +258,23 @@ export function KnowledgeBasePage({ session }: KnowledgeBasePageProps) {
         <Card className="border-[#E8ECFF] bg-white overflow-hidden">
           <div className="p-5 border-b border-[#E8ECFF] flex items-center justify-between flex-wrap gap-3">
             <h3 className="font-semibold text-gray-900 text-sm">All Documents</h3>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <ExportButton
+                data={{
+                  title: 'Knowledge Base Documents',
+                  filename: 'knowledge-base',
+                  headers: ['Title', 'Language', 'Status', 'Topics', 'Chunks', 'Valid Until', 'Created'],
+                  rows: docs.map((d) => [
+                    d.title,
+                    LANG_NAMES[d.language] ?? d.language,
+                    d.status,
+                    (d.topics ?? []).join(', '),
+                    String(d.chunk_count ?? 0),
+                    d.valid_until ? new Date(d.valid_until).toLocaleDateString('en-GB') : '—',
+                    new Date(d.created_at).toLocaleDateString('en-GB'),
+                  ]),
+                }}
+              />
               <select
                 value={statusFilter ?? ''}
                 onChange={(e) => { setStatusFilter(e.target.value || null); setPage(1); }}

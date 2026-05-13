@@ -11,6 +11,7 @@ import {
   Users, MessageSquare, Clock, Heart, AlertTriangle,
   TrendingUp, TrendingDown, FileText, Zap, ShieldAlert,
 } from 'lucide-react';
+import { ExportButton } from './ExportButton';
 import { RealAnalyticsService } from '@/services/realAnalyticsService';
 import { StaffAccessService, StaffSession, AdminDashboardStats } from '@/services/staffAccessService';
 import { getNumber } from '@/utils/analyticsUtils';
@@ -136,18 +137,40 @@ export function OverviewPage({ session }: OverviewPageProps) {
               <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
               <p className="text-sm text-gray-500 mt-0.5">Executive summary · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
             </div>
-            <div className="flex gap-1 bg-white border border-[#E8ECFF] rounded-lg p-1">
-              {(['today', 'week', 'month'] as Period[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPeriod(p)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    period === p ? 'bg-[#BE322D] text-white' : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {p === 'today' ? 'Today' : p === 'week' ? 'Week' : 'Month'}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <ExportButton
+                data={{
+                  title: `Overview — ${periodLabel}`,
+                  filename: 'overview',
+                  headers: ['Metric', 'Value'],
+                  rows: [
+                    ['Total Sessions', String(totalUsers)],
+                    [`Active (${periodLabel})`, String(activeInPeriod)],
+                    ['Total Messages', String(totalMessages)],
+                    [`Messages (${periodLabel})`, String(messagesInPeriod)],
+                    ['Avg Response Time (ms)', String(avgResponseMs)],
+                    ['Avg Satisfaction', satisfaction > 0 ? satisfaction.toFixed(1) : '—'],
+                    ['Crisis Events', String(crisisTotal)],
+                    ['Panic Events', String(panicTotal)],
+                    ['Pending Reports', String(stats?.pending_reports ?? 0)],
+                    ...platformData.map((d) => [`Platform: ${d.name}`, String(d.value)]),
+                    ...langData.map((d) => [`Language: ${d.name}`, String(d.value)]),
+                  ],
+                }}
+              />
+              <div className="flex gap-1 bg-white border border-[#E8ECFF] rounded-lg p-1">
+                {(['today', 'week', 'month'] as Period[]).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPeriod(p)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                      period === p ? 'bg-[#BE322D] text-white' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {p === 'today' ? 'Today' : p === 'week' ? 'Week' : 'Month'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </motion.div>

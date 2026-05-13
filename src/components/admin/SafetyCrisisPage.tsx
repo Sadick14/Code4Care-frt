@@ -6,6 +6,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Shield, Zap, UserCheck, PhoneCall, ArrowRight } from 'lucide-react';
+import { ExportButton } from './ExportButton';
 import { RealAnalyticsService, SafetyAnalyticsResponse } from '@/services/realAnalyticsService';
 import { getNumber } from '@/utils/analyticsUtils';
 import { StaffSession } from '@/services/staffAccessService';
@@ -112,13 +113,33 @@ export function SafetyCrisisPage({ session }: SafetyCrisisPageProps) {
               <h1 className="text-2xl font-bold text-gray-900">Safety & Crisis</h1>
               <p className="text-sm text-gray-500 mt-0.5">Crisis detection, panic events and escalation tracking</p>
             </div>
-            <div className="flex gap-1 bg-white border border-[#E8ECFF] rounded-lg p-1">
-              {(['today', 'week', 'month'] as Period[]).map((p) => (
-                <button key={p} onClick={() => setPeriod(p)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${period === p ? 'bg-[#BE322D] text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
-                  {p === 'today' ? 'Today' : p === 'week' ? 'Week' : 'Month'}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <ExportButton
+                data={{
+                  title: `Safety & Crisis — ${periodLabel}`,
+                  filename: 'safety-crisis',
+                  headers: ['Metric', 'Value'],
+                  rows: [
+                    ['Crisis Events', String(crisisTotal)],
+                    ['Panic Button Uses', String(panicTotal)],
+                    ['Interventions Triggered', String(interventions)],
+                    ['Escalated to Human', String(escalatedHuman)],
+                    ['Followed Up', String(followedUp)],
+                    ['Self-Harm Mentions', String(selfHarm)],
+                    ['Suicidal Ideation Mentions', String(suicidal)],
+                    ['Abuse Mentions', String(abuse)],
+                    ...crisisTypeData.map((d) => [`Crisis Type: ${d.name}`, String(d.value)]),
+                  ],
+                }}
+              />
+              <div className="flex gap-1 bg-white border border-[#E8ECFF] rounded-lg p-1">
+                {(['today', 'week', 'month'] as Period[]).map((p) => (
+                  <button key={p} onClick={() => setPeriod(p)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${period === p ? 'bg-[#BE322D] text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    {p === 'today' ? 'Today' : p === 'week' ? 'Week' : 'Month'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </motion.div>
