@@ -418,7 +418,7 @@ export function StoryMode() {
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
-                            className="mt-4 pt-4 border-t border-black/5 text-sm"
+                            className="mt-4 pt-4 border-t border-black/5 text-sm space-y-3"
                           >
                             <div className="flex gap-2">
                               {isCorrect ? (
@@ -430,6 +430,12 @@ export function StoryMode() {
                                 {isCorrectAnswerDisplay ? `Correct answer! ${story.feedback[idx]}` : story.feedback[idx]}
                               </p>
                             </div>
+                            {isCorrect && story?.source && (
+                              <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                                <p className="text-[10px] text-blue-600 font-semibold uppercase tracking-wider mb-1">{t("common.source", "Source")}</p>
+                                <p className="text-[10px] text-blue-700 italic">{story.source}</p>
+                              </div>
+                            )}
                           </motion.div>
                         )}
                       </button>
