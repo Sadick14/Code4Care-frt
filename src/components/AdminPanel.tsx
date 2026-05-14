@@ -26,9 +26,6 @@ export function AdminPanel({ selectedLanguage, onLogout, session }: AdminPanelPr
       case 'users':         return <UsersSessionsPage session={session} />;
       case 'conversations': return <ConversationsPage session={session} />;
       case 'safety':        return <SafetyCrisisPage session={session} />;
-      case 'engagement':    return <FeatureEngagementPage session={session} />;
-      case 'support':       return <SupportPage session={session} />;
-      case 'knowledge':     return <KnowledgeBasePage session={session} />;
       case 'audit':         return <AdminAuditPage session={session} />;
       default:              return <OverviewPage session={session} />;
     }

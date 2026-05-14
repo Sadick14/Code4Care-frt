@@ -45,7 +45,7 @@ export function NicknameModal({ isOpen, onSubmit, onClose }: NicknameModalProps)
           <div 
             className="w-16 h-16 rounded-2xl flex items-center justify-center" 
             style={{ 
-              background: 'linear-gradient(135deg, #0048ff 0%, #0066ff 100%)',
+              background: '#BE322D',
               boxShadow: '0 4px 16px rgba(0, 72, 255, 0.3)'
             }}
           >
@@ -83,7 +83,7 @@ export function NicknameModal({ isOpen, onSubmit, onClose }: NicknameModalProps)
               type="submit"
               className="flex-1 transition-all rounded-xl hover:scale-105 active:scale-95"
               style={{ 
-                background: 'linear-gradient(135deg, #0048ff 0%, #0066ff 100%)',
+                background: '#BE322D',
                 boxShadow: '0 4px 16px rgba(0, 72, 255, 0.2)'
               }}
               disabled={!nickname.trim()}
