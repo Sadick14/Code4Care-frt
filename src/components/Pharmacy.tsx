@@ -24,18 +24,21 @@ import { DKTProducts } from "./DKTProductsDropdown";
 /* -------------------- DATA -------------------- */
 
 const REGIONS = [
-  "Greater Accra",
-  "Ashanti",
-  "Eastern",
-  "Volta",
-  "Central",
-  "Western",
-  "Northern",
-  "Upper East",
-  "Upper West",
-  "Bono",
-  "Ahafo",
-  "Oti",
+  "Greater Accra Region, ghana",
+  "Ashanti Region, ghana",
+  "Eastern Region, ghana",
+  "Volta Region, ghana",
+  "Central Region, ghana",
+  "Western Region, ghana",
+  "Northern Region, ghana",
+  "Upper East Region, ghana",
+  "Upper West Region, ghana",
+  "Bono Region, ghana",
+  "Ahafo Region, ghana",
+  "Oti Region, ghana",
+  "Western North Region, ghana",
+  "Bono East Region, ghana",
+  "Savannah Region, ghana",
 ];
 
 const CONTACT_DETAILS = {
@@ -48,7 +51,7 @@ const REGION_CONTACTS = [
   { region: "Upper West Region", phone: "0501516867" },
   { region: "Western North Region", phone: "0501516913" },
   { region: "Bono Region", phone: "0501516883" },
-  { region: "Northern Sector", phone: "0501336328" },
+  { region: "Northern Region", phone: "0501336328" },
   { region: "Bono East Region", phone: "0505156874" },
   { region: "Eastern Region", phone: "0501336311" },
   { region: "Accra West / Central", phone: "0501336326" },
@@ -87,6 +90,20 @@ export function Pharmacy() {
   >("healthcare");
 
   /* -------------------- MAP -------------------- */
+
+  const openRegionSearch = (region: string) => {
+    setError(null);
+    setActiveQuery(`pharmacies in ${region}`);
+    const embed = `https://www.google.com/maps?q=${encodeURIComponent(
+      `pharmacies in ${region}`
+    )}&output=embed`;
+    const external = `https://www.google.com/maps/search/${encodeURIComponent(
+      `pharmacies in ${region}`
+    )}`;
+    setMapUrl(embed);
+    setExternalUrl(external);
+    setMapOpen(true);
+  };
 
   const openMapSearch = async (query: SearchType | string) => {
     setError(null);
@@ -167,7 +184,7 @@ export function Pharmacy() {
             <div className="inline-flex rounded-2xl border border-[#F1D5D4] bg-white p-1">
 
               {[
-                { key: "healthcare", label: "Healthcare", icon: Navigation },
+                { key: "healthcare", label: "Health Care", icon: Navigation },
                 { key: "dkt", label: "DKT Products", icon: Pill },
                 { key: "contacts", label: "Regional Contacts", icon: PhoneCall },
               ].map((tab) => (
@@ -231,7 +248,7 @@ export function Pharmacy() {
                     <button
                       key={region}
                       onClick={() =>
-                        openMapSearch(`pharmacies in ${region}`)
+                        openRegionSearch(region)
                       }
                       disabled={loading}
                       className="flex items-center justify-between border rounded-2xl p-3 hover:bg-[#FFF7F7]"
