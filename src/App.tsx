@@ -206,9 +206,18 @@ function AppContent() {
     });
   };
 
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
+    const base = import.meta.env.VITE_API_BASE_URL?.trim();
+    if (base) {
+      try {
+        await fetch(new URL('/v1/session/clear', base).toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+      } catch {}
+    }
     localStorage.removeItem(`room1221_chat_${sessionId}`);
-    setSessionId(Date.now().toString());
     setClearChatTrigger(prev => prev + 1);
     setShowClearDialog(false);
     toast.success(t('chat.clearChatMsg', 'Chat history cleared'));
