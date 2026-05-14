@@ -45,7 +45,7 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
   const [convs, setConvs] = useState<AdminConversationListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [escalatedFilter, setEscalatedFilter] = useState<boolean | null>(null);
+  const [crisisFilter, setCrisisFilter] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [convLoading, setConvLoading] = useState(true);
 
@@ -68,14 +68,14 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
     setConvLoading(true);
 
     StaffAccessService.listConversations(
-      { page, page_size: pageSize, is_escalated: escalatedFilter ?? undefined },
+      { page, page_size: pageSize, has_crisis: crisisFilter ?? undefined },
       session.accessToken,
     )
       .then((r) => { if (mounted) { setConvs(r.conversations ?? []); setTotal(r.total ?? 0); setConvLoading(false); } })
       .catch((e) => { logger.error('conversations', e); if (mounted) setConvLoading(false); });
 
     return () => { mounted = false; };
-  }, [page, escalatedFilter, session.accessToken]);
+  }, [page, crisisFilter, session.accessToken]);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -171,14 +171,14 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
               />
               {([
                 { label: 'All', value: null },
-                { label: 'Escalated', value: true },
+                { label: 'Crisis', value: true },
                 { label: 'Normal', value: false },
               ] as { label: string; value: boolean | null }[]).map((opt) => (
                 <button
                   key={opt.label}
-                  onClick={() => { setEscalatedFilter(opt.value); setPage(1); }}
+                  onClick={() => { setCrisisFilter(opt.value); setPage(1); }}
                   className={`px-3 py-1 text-xs font-medium rounded-full border transition-all ${
-                    escalatedFilter === opt.value
+                    crisisFilter === opt.value
                       ? 'bg-[#BE322D] text-white border-[#BE322D]'
                       : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                   }`}
@@ -247,16 +247,13 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
                           ) : (
                             <Badge className="text-xs bg-green-100 text-green-700 border-green-200 hover:bg-green-100">Active</Badge>
                           )}
-                          {conv.has_crisis && (
-                            <Badge className="text-xs bg-red-100 text-red-700 border-red-200 hover:bg-red-100">
-                              <AlertCircle className="w-3 h-3 mr-1" />Crisis
+                          {(conv.crisis_types ?? []).map((ct) => (
+                            <Badge key={ct} className="text-xs bg-red-100 text-red-700 border-red-200 hover:bg-red-100 capitalize">
+                              <AlertCircle className="w-3 h-3 mr-1" />{ct.replace(/_/g, ' ')}
                             </Badge>
-                          )}
+                          ))}
                           {conv.has_panic && (
                             <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">Panic</Badge>
-                          )}
-                          {conv.has_safety_flags && (
-                            <Badge className="text-xs bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">Safety flag</Badge>
                           )}
                         </div>
                       </td>

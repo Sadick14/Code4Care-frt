@@ -147,6 +147,7 @@ export interface AdminConversationListItem {
   has_safety_flags: boolean;
   has_crisis?: boolean;
   has_panic?: boolean;
+  crisis_types?: string[];
 }
 
 export interface AdminConversationListResponse {
@@ -184,6 +185,7 @@ export interface AdminListConversationsOptions {
   page?: number;
   page_size?: number;
   is_escalated?: boolean | null;
+  has_crisis?: boolean | null;
 }
 
 export interface AdminFeedbackItem {
@@ -832,6 +834,7 @@ export class StaffAccessService {
       page: options.page ?? 1,
       page_size: options.page_size ?? 20,
       is_escalated: options.is_escalated,
+      has_crisis: options.has_crisis,
     }), {
       method: 'GET',
       headers: buildAdminHeaders(token),
