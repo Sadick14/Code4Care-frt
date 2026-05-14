@@ -118,7 +118,7 @@ export function OverviewPage({ session }: OverviewPageProps) {
   const totalUsers = getNumber(analytics?.summary ?? {}, 'total_active_users');
   const activeInPeriod = getNumber(analytics?.summary ?? {}, 'users_in_period');
   const totalMessages = stats?.total_messages ?? getNumber(analytics?.summary ?? {}, 'total_messages');
-  const messagesInPeriod = stats?.messages_today ?? getNumber(analytics?.summary ?? {}, 'messages_in_period');
+  const messagesInPeriod = getNumber(analytics?.summary ?? {}, 'messages_in_period');
   const avgResponseMs = stats?.avg_response_time_ms ?? getNumber(analytics?.performance ?? {}, 'avgResponseTime');
   const satisfaction = getNumber(analytics?.summary ?? {}, 'average_satisfaction');
   const crisisTotal = getNumber(analytics?.safety ?? {}, 'crisis_interventions');

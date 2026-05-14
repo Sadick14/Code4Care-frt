@@ -89,9 +89,12 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
   }, [analytics]);
 
   const totalMessages = getNumber(analytics?.summary ?? {}, 'total_messages');
-  const avgMsgPerConv = getNumber(analytics?.summary ?? {}, 'average_messages_per_session');
+  const messagesInPeriod = getNumber(analytics?.summary ?? {}, 'messages_in_period');
+  const convsInPeriod = getNumber(analytics?.summary ?? {}, 'conversations_in_period');
+  const avgMsgPerConv = convsInPeriod > 0 ? Math.round(messagesInPeriod / convsInPeriod) : 0;
   const avgResponseMs = getNumber(analytics?.performance ?? {}, 'avgResponseTime');
   const escalatedCount = convs.filter((c) => c.is_escalated).length;
+  const periodLabel = period === 'today' ? 'Today' : period === 'week' ? 'This Week' : 'This Month';
 
   return (
     <div className="min-h-screen bg-gray-50/50 p-6">
@@ -119,7 +122,9 @@ export function ConversationsPage({ session }: ConversationsPageProps) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Total Conversations', value: total.toLocaleString(), icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
-            { label: 'Avg Bot Response', value: avgResponseMs > 0 ? `${avgResponseMs}ms` : '—', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50' },
+            { label: 'Total Messages', value: totalMessages.toLocaleString(), icon: MessageSquare, color: 'text-violet-600', bg: 'bg-violet-50' },
+            { label: `Messages (${periodLabel})`, value: messagesInPeriod.toLocaleString(), icon: MessageSquare, color: 'text-teal-600', bg: 'bg-teal-50' },
+            { label: 'Avg Msgs / Conv', value: avgMsgPerConv > 0 ? String(avgMsgPerConv) : '—', icon: MessageSquare, color: 'text-indigo-600', bg: 'bg-indigo-50' },
           ].map((item) => {
             const Icon = item.icon;
             return (

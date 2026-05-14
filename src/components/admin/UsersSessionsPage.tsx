@@ -117,8 +117,6 @@ export function UsersSessionsPage({ session }: UsersSessionsPageProps) {
                   rows: [
                     ['Total Sessions', String(totalUsers)],
                     [`New (${periodLabel})`, String(newUsers)],
-                    ['Returning', String(returning)],
-                    ['Retention Rate', retentionRate > 0 ? `${retentionRate.toFixed(1)}%` : '0%'],
                     ...ageData.map((d) => [`Age: ${d.name}`, String(d.value)]),
                     ...genderData.map((d) => [`Gender: ${d.name}`, String(d.value)]),
                     ...regionData.map((d) => [`Region: ${d.name}`, String(d.value)]),
@@ -139,12 +137,10 @@ export function UsersSessionsPage({ session }: UsersSessionsPageProps) {
         </motion.div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
           {[
             { label: 'Total Sessions', value: totalUsers.toLocaleString(), icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
             { label: `New ${periodLabel}`, value: newUsers.toLocaleString(), icon: UserPlus, color: 'text-green-600', bg: 'bg-green-50' },
-            { label: 'Returning', value: returning.toLocaleString(), icon: UserCheck, color: 'text-violet-600', bg: 'bg-violet-50' },
-            { label: 'Retention Rate', value: retentionRate > 0 ? `${retentionRate.toFixed(1)}%` : '—', icon: Activity, color: 'text-teal-600', bg: 'bg-teal-50' },
           ].map((item) => {
             const Icon = item.icon;
             return (

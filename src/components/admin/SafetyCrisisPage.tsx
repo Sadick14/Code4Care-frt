@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Shield, Zap, UserCheck, PhoneCall, ArrowRight } from 'lucide-react';
+import { AlertTriangle, Zap } from 'lucide-react';
 import { ExportButton } from './ExportButton';
 import { RealAnalyticsService, SafetyAnalyticsResponse } from '@/services/realAnalyticsService';
 import { getNumber } from '@/utils/analyticsUtils';
@@ -99,6 +99,17 @@ export function SafetyCrisisPage({ session }: SafetyCrisisPageProps) {
     return data;
   }, [safety, selfHarm, suicidal, abuse]);
 
+  const eventChartData = useMemo(() => {
+    const bars = [
+      { name: 'Self-Harm', value: selfHarm, fill: '#ef4444' },
+      { name: 'Suicidal Ideation', value: suicidal, fill: '#dc2626' },
+      { name: 'Abuse', value: abuse, fill: '#f97316' },
+      { name: 'Severe Distress', value: Number(safety?.severity_distribution?.['severe_distress'] ?? 0), fill: '#f59e0b' },
+      { name: 'Panic Button', value: panicTotal, fill: '#8b5cf6' },
+    ];
+    return bars;
+  }, [selfHarm, suicidal, abuse, safety, panicTotal]);
+
   const periodLabel = period === 'today' ? 'Today' : period === 'week' ? 'This Week' : 'This Month';
   const hasCrisis = crisisTotal > 0 || panicTotal > 0;
 
@@ -122,12 +133,9 @@ export function SafetyCrisisPage({ session }: SafetyCrisisPageProps) {
                   rows: [
                     ['Crisis Events', String(crisisTotal)],
                     ['Panic Button Uses', String(panicTotal)],
-                    ['Interventions Triggered', String(interventions)],
-                    ['Escalated to Human', String(escalatedHuman)],
-                    ['Followed Up', String(followedUp)],
-                    ['Self-Harm Mentions', String(selfHarm)],
-                    ['Suicidal Ideation Mentions', String(suicidal)],
-                    ['Abuse Mentions', String(abuse)],
+                    ['Self-Harm', String(selfHarm)],
+                    ['Suicidal Ideation', String(suicidal)],
+                    ['Abuse', String(abuse)],
                     ...crisisTypeData.map((d) => [`Crisis Type: ${d.name}`, String(d.value)]),
                   ],
                 }}
@@ -156,11 +164,10 @@ export function SafetyCrisisPage({ session }: SafetyCrisisPageProps) {
         )}
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {[
             { label: 'Crisis Events', value: crisisTotal, icon: AlertTriangle, bg: 'bg-red-100', color: 'text-red-600', border: 'border-red-200' },
             { label: 'Panic Button Uses', value: panicTotal, icon: Zap, bg: 'bg-yellow-100', color: 'text-yellow-700', border: 'border-yellow-200' },
-            { label: 'Users Followed Up', value: followedUp, icon: PhoneCall, bg: 'bg-green-100', color: 'text-green-600', border: 'border-green-200' },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -182,6 +189,46 @@ export function SafetyCrisisPage({ session }: SafetyCrisisPageProps) {
             );
           })}
         </div>
+
+        {/* Crisis & Panic Bar Chart */}
+        <Card className="p-5 border-[#E8ECFF] bg-white">
+          <h3 className="font-semibold text-gray-900 mb-1 text-sm">Crisis Events & Panic Button — {periodLabel}</h3>
+          <p className="text-xs text-gray-400 mb-4">Count of each crisis type detected and panic button presses in the selected period</p>
+          {loading ? (
+            <Skeleton className="h-56 w-full" />
+          ) : eventChartData.every((d) => d.value === 0) ? (
+            <div className="h-56 flex items-center justify-center text-sm text-gray-400">No events recorded {periodLabel.toLowerCase()}</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={eventChartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E8ECFF" vertical={false} />
+                <XAxis dataKey="name" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
+                <YAxis stroke="#9CA3AF" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E8ECFF' }}
+                  formatter={(value: number) => [value, 'Events']}
+                />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]} name="Events">
+                  {eventChartData.map((entry, i) => (
+                    <Cell key={i} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+
+          {/* Legend */}
+          {!loading && (
+            <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[#E8ECFF]">
+              {eventChartData.map((d) => (
+                <div key={d.name} className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: d.fill }} />
+                  <span className="text-xs text-gray-600">{d.name}: <strong>{d.value}</strong></span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );
