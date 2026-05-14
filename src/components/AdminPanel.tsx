@@ -9,6 +9,7 @@ import { FeatureEngagementPage } from './admin/FeatureEngagementPage';
 import { SupportPage } from './admin/SupportPage';
 import { KnowledgeBasePage } from './admin/KnowledgeBasePage';
 import { AdminAuditPage } from './admin/AdminAuditPage';
+import { AdminManagementPage } from './admin/AdminManagementPage';
 import { StaffSession } from '@/services/staffAccessService';
 
 interface AdminPanelProps {
@@ -26,8 +27,9 @@ export function AdminPanel({ selectedLanguage, onLogout, session }: AdminPanelPr
       case 'users':         return <UsersSessionsPage session={session} />;
       case 'conversations': return <ConversationsPage session={session} />;
       case 'safety':        return <SafetyCrisisPage session={session} />;
-      case 'audit':         return <AdminAuditPage session={session} />;
-      default:              return <OverviewPage session={session} />;
+      case 'audit':           return <AdminAuditPage session={session} />;
+      case 'admin-accounts':  return <AdminManagementPage session={session} />;
+      default:                return <OverviewPage session={session} />;
     }
   };
 
@@ -40,6 +42,7 @@ export function AdminPanel({ selectedLanguage, onLogout, session }: AdminPanelPr
           setCurrentSection={setCurrentSection}
           onLogout={onLogout}
           isMobile={false}
+          role={session.role}
         />
       </aside>
 

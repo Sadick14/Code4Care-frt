@@ -2,7 +2,7 @@ import { safeStorage } from '@/utils/safeStorage';
 import { AuthService } from '@/services/authService';
 import { logger } from '@/utils/logger';
 
-export type StaffRole = 'admin' | 'consultant' | 'supervisor' | 'coordinator' | 'viewer' | 'super_admin';
+export type StaffRole = 'admin' | 'consultant' | 'supervisor' | 'coordinator' | 'viewer';
 export type StaffStatus = 'active' | 'inactive';
 export type StaffAvailability = 'available' | 'busy' | 'offline';
 export type SupportRequestStatus = 'waiting' | 'assigned' | 'active' | 'resolved';
@@ -72,10 +72,11 @@ export interface AdminCreateStaffRequest {
 }
 
 export interface AdminUpdateStaffRequest {
-  username: string;
-  email: string;
-  role: StaffRole;
-  is_active: boolean;
+  username?: string;
+  email?: string;
+  password?: string;
+  role?: StaffRole;
+  is_active?: boolean;
 }
 
 export interface AdminStaffRecord {
@@ -254,7 +255,7 @@ function normalizeRole(role: string): StaffRole {
     return 'consultant';
   }
 
-  if (role === 'admin' || role === 'consultant' || role === 'supervisor' || role === 'coordinator' || role === 'viewer' || role === 'super_admin') {
+  if (role === 'admin' || role === 'consultant' || role === 'supervisor' || role === 'coordinator' || role === 'viewer') {
     return role;
   }
 
@@ -262,7 +263,7 @@ function normalizeRole(role: string): StaffRole {
 }
 
 function canAccessDashboard(role: StaffRole) {
-  return role === 'admin' || role === 'consultant' || role === 'super_admin';
+  return role === 'admin' || role === 'consultant' || role === 'supervisor' || role === 'coordinator';
 }
 
 function normalizeAvailability(availability: string): StaffAvailability {
@@ -801,6 +802,57 @@ export class StaffAccessService {
     });
 
     this.saveSupportRequests(requests);
+  }
+
+  static async adminListStaff(accessToken: string): Promise<AdminStaffRecord[]> {
+    const response = await fetch(buildAdminUrl('/admin/staff'), {
+      headers: buildAdminHeaders(accessToken),
+    });
+    if (!response.ok) throw new Error(await readApiError(response));
+    const data = await readJsonResponse<AdminStaffListResponse>(response);
+    return data.staff ?? [];
+  }
+
+  static async adminCreateStaff(
+    payload: AdminCreateStaffRequest,
+    accessToken: string,
+  ): Promise<AdminStaffRecord> {
+    const response = await fetch(buildAdminUrl('/admin/staff'), {
+      method: 'POST',
+      headers: buildAdminHeaders(accessToken),
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response));
+    return readJsonResponse<AdminStaffRecord>(response);
+  }
+
+  static async adminUpdateStaff(
+    staffId: string,
+    payload: AdminUpdateStaffRequest,
+    accessToken: string,
+  ): Promise<AdminStaffRecord> {
+    const body: Record<string, unknown> = {};
+    if (payload.username) body.username = payload.username;
+    if (payload.email) body.email = payload.email;
+    if (payload.password) body.password = payload.password;
+    if (payload.role) body.role = payload.role;
+    if (payload.is_active !== undefined) body.is_active = payload.is_active;
+
+    const response = await fetch(buildAdminUrl(`/admin/staff/${encodePathSegment(staffId)}`), {
+      method: 'PATCH',
+      headers: buildAdminHeaders(accessToken),
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw new Error(await readApiError(response));
+    return readJsonResponse<AdminStaffRecord>(response);
+  }
+
+  static async adminDeleteStaff(staffId: string, accessToken: string): Promise<void> {
+    const response = await fetch(buildAdminUrl(`/admin/staff/${encodePathSegment(staffId)}`), {
+      method: 'DELETE',
+      headers: buildAdminHeaders(accessToken),
+    });
+    if (!response.ok) throw new Error(await readApiError(response));
   }
 
   static async getDashboardStats(accessToken?: string): Promise<AdminDashboardStats> {

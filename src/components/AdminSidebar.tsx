@@ -9,6 +9,7 @@ import {
   Shield,
   LogOut,
   X,
+  UserCog,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -20,7 +21,8 @@ export type AdminSection =
   | 'users'
   | 'conversations'
   | 'safety'
-  | 'audit';
+  | 'audit'
+  | 'admin-accounts';
 
 interface AdminSidebarProps {
   currentSection: AdminSection;
@@ -28,6 +30,7 @@ interface AdminSidebarProps {
   onLogout: () => void;
   isMobile?: boolean;
   onClose?: () => void;
+  role?: string;
 }
 
 const navigationItems: {
@@ -36,11 +39,12 @@ const navigationItems: {
   icon: React.ElementType;
   desc: string;
 }[] = [
-  { id: 'overview',      label: 'Overview',             icon: LayoutDashboard,  desc: 'Executive summary & KPIs' },
-  { id: 'users',         label: 'Users & Sessions',     icon: Users,            desc: 'Demographics & retention' },
-  { id: 'conversations', label: 'Conversations',         icon: MessageSquare,    desc: 'Chat volume & topics' },
-  { id: 'safety',        label: 'Safety & Crisis',       icon: AlertTriangle,    desc: 'Crisis & escalations' },
-   { id: 'audit',         label: 'Admin & Audit',        icon: Shield,           desc: 'Reports & audit log' },
+  { id: 'overview',        label: 'Overview',          icon: LayoutDashboard, desc: 'Executive summary & KPIs' },
+  { id: 'users',           label: 'Users & Sessions',  icon: Users,           desc: 'Demographics & retention' },
+  { id: 'conversations',   label: 'Conversations',     icon: MessageSquare,   desc: 'Chat volume & topics' },
+  { id: 'safety',          label: 'Safety & Crisis',   icon: AlertTriangle,   desc: 'Crisis & escalations' },
+  { id: 'audit',           label: 'Admin & Audit',     icon: Shield,          desc: 'Reports & audit log' },
+  { id: 'admin-accounts',  label: 'Admin Accounts',    icon: UserCog,         desc: 'Manage staff access' },
 ];
 
 export function AdminSidebar({
@@ -49,7 +53,12 @@ export function AdminSidebar({
   onLogout,
   isMobile = false,
   onClose,
+  role,
 }: AdminSidebarProps) {
+  const isAdmin = role === 'admin';
+  const visibleItems = navigationItems.filter(
+    (item) => item.id !== 'admin-accounts' || isAdmin,
+  );
   return (
     <div className="flex flex-col h-full bg-white text-gray-900">
       {/* Header */}
@@ -79,7 +88,7 @@ export function AdminSidebar({
             Analytics
           </p>
 
-          {navigationItems.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentSection === item.id;
             return (

@@ -266,7 +266,7 @@ function AppContent() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     sessionEndedRef.current = true;
     recordSessionAnalytics();
     const durationSeconds = Math.max(0, Math.round((Date.now() - sessionStartedAtRef.current) / 1000));
@@ -276,6 +276,16 @@ function AppContent() {
       ),
       'Failed to track session logout event',
     );
+    const base = import.meta.env.VITE_API_BASE_URL?.trim();
+    if (base) {
+      try {
+        await fetch(new URL('/v1/session/clear', base).toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+      } catch {}
+    }
     resetAll();
     setShowLogoutDialog(false);
     setCurrentSection("chat");
